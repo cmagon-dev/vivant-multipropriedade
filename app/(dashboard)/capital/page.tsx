@@ -35,14 +35,6 @@ export default function CapitalHomePage(): JSX.Element {
 
             {/* Menu Links */}
             <div className="hidden md:flex items-center space-x-8">
-              <a
-                href="https://vivantresidences.com.br"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#1A2F4B] hover:text-[#1A2F4B]/70 transition-colors font-medium text-lg"
-              >
-                Vivant Residences
-              </a>
               <Link
                 href="/dashboard/simulador"
                 className="text-[#1A2F4B] hover:text-[#1A2F4B]/70 transition-colors font-medium text-lg"
