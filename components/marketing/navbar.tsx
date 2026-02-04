@@ -20,12 +20,12 @@ export function Navbar(): JSX.Element {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white shadow-2xl ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-gradient-to-r from-slate-50 via-white to-slate-50 border-b-2 border-vivant-navy/10 ${
         isScrolled
-          ? "shadow-2xl"
-          : "shadow-xl"
+          ? "shadow-xl"
+          : "shadow-md"
       }`}
-      style={{ boxShadow: '0 8px 32px rgba(26, 47, 75, 0.15)' }}
+      style={{ boxShadow: '0 4px 16px rgba(26, 47, 75, 0.08)' }}
     >
       {/* Navbar Principal */}
       <div className="container mx-auto px-4">

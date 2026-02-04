@@ -21,7 +21,7 @@ export default function CapitalHomePage(): JSX.Element {
   return (
     <div className="min-h-screen bg-[#F8F9FA]">
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-2xl" style={{ boxShadow: '0 8px 32px rgba(26, 47, 75, 0.15)' }}>
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-50 via-white to-slate-50 border-b-2 border-vivant-navy/10 shadow-xl" style={{ boxShadow: '0 4px 16px rgba(26, 47, 75, 0.08)' }}>
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-28">
             {/* Logo Vivant Capital */}
