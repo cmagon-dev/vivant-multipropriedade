@@ -25,6 +25,8 @@ const config: Config = {
       colors: {
         "vivant-navy": "#1A2F4B",
         "vivant-gold": "#D4AF37",
+        "vivant-green": "#10B981",
+        "vivant-gold-muted": "#C5A059",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
