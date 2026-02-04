@@ -75,13 +75,17 @@ export function Navbar(): JSX.Element {
 
           {/* Logo Vivant Capital - Direita */}
           <div className="hidden md:block">
-            <Link href="/vivant-capital">
+            <a 
+              href="https://vivantcapital.com.br"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <img 
                 src="/logo-vivant-capital.png" 
                 alt="Vivant Capital" 
                 className="h-40 w-auto cursor-pointer hover:opacity-80 transition-opacity"
               />
-            </Link>
+            </a>
           </div>
 
           {/* Mobile Menu Button */}
@@ -131,13 +135,18 @@ export function Navbar(): JSX.Element {
             >
               Sobre
             </Link>
-            <Link href="/vivant-capital" className="block py-4">
+            <a 
+              href="https://vivantcapital.com.br"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block py-4"
+            >
               <img 
                 src="/logo-vivant-capital.png" 
                 alt="Vivant Capital" 
                 className="h-32 w-auto mx-auto cursor-pointer"
               />
-            </Link>
+            </a>
           </div>
         )}
       </div>
