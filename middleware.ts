@@ -21,6 +21,14 @@ export function middleware(request: NextRequest): NextResponse {
   // Roteamento multi-domínio para produção
   // Vivant Capital → Página de apresentação + Simulador
   if (domain === "vivantcapital.com.br") {
+    // Permitir acesso direto às rotas /dashboard/* (simulador, etc)
+    if (pathname.startsWith("/dashboard")) {
+      const response = NextResponse.next();
+      response.headers.set("x-vivant-domain", "capital");
+      return response;
+    }
+    
+    // Página principal capital
     const url = new URL("/capital", request.url);
     const response = NextResponse.rewrite(url);
     response.headers.set("x-vivant-domain", "capital");
