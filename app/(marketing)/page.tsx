@@ -1496,7 +1496,13 @@ export default function HomePage(): JSX.Element {
               size="lg"
               className="bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-[#1A2F4B] text-lg h-16 px-10 font-semibold"
             >
-              <Link href="/vivant-capital">Conheça a Vivant Capital</Link>
+              <a
+                href="https://vivantcapital.com.br"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Conheça a Vivant Capital
+              </a>
             </Button>
           </div>
         </div>
@@ -1548,12 +1554,14 @@ export default function HomePage(): JSX.Element {
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    href="/vivant-capital"
+                  <a
+                    href="https://vivantcapital.com.br"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="hover:text-white transition"
                   >
                     Vivant Capital (Investimentos)
-                  </Link>
+                  </a>
                 </li>
               </ul>
             </div>

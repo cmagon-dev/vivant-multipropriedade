@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Navbar } from "@/components/marketing/navbar";
 import {
   TrendingUp,
   Shield,
@@ -18,11 +17,9 @@ import {
   Building2,
 } from "lucide-react";
 
-export default function VivantCapitalPage(): JSX.Element {
+export default function CapitalHomePage(): JSX.Element {
   return (
     <div className="min-h-screen bg-[#F8F9FA]">
-      <Navbar />
-
       {/* Hero Section */}
       <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#1A2F4B] via-[#2A4F6B] to-[#1A2F4B]">
         <div className="container mx-auto px-4 relative z-10 text-center pt-20">
@@ -42,17 +39,6 @@ export default function VivantCapitalPage(): JSX.Element {
               Oportunidades exclusivas de investimento em imóveis fracionados
               com alta rentabilidade e segurança jurídica
             </p>
-
-            <Button
-              asChild
-              size="lg"
-              className="bg-white text-[#1A2F4B] hover:bg-white/90 text-lg h-14 px-8"
-            >
-              <Link href="/dashboard/simulador">
-                Acessar Simulador de Viabilidade
-                <Calculator className="ml-2 w-5 h-5" />
-              </Link>
-            </Button>
           </div>
         </div>
       </section>
@@ -303,27 +289,16 @@ export default function VivantCapitalPage(): JSX.Element {
             do seu investimento em minutos
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              asChild
-              size="lg"
-              className="bg-white text-[#1A2F4B] hover:bg-white/90 text-lg h-16 px-10"
-            >
-              <Link href="/dashboard/simulador">
-                Acessar Simulador de Viabilidade
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Link>
-            </Button>
-
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="border-2 border-white text-white hover:bg-white hover:text-[#1A2F4B] text-lg h-16 px-10"
-            >
-              <Link href="/">Voltar para Vivant</Link>
-            </Button>
-          </div>
+          <Button
+            asChild
+            size="lg"
+            className="bg-white text-[#1A2F4B] hover:bg-white/90 text-lg h-16 px-10"
+          >
+            <Link href="/dashboard/simulador">
+              Acessar Simulador de Viabilidade
+              <Calculator className="ml-2 w-5 h-5" />
+            </Link>
+          </Button>
         </div>
       </section>
 
@@ -356,9 +331,14 @@ export default function VivantCapitalPage(): JSX.Element {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/" className="hover:text-white transition">
-                    Vivant Multipropriedade
-                  </Link>
+                  <a
+                    href="https://vivantresidences.com.br"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-white transition"
+                  >
+                    Vivant Residences
+                  </a>
                 </li>
               </ul>
             </div>
