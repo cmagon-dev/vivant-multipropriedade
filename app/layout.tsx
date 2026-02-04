@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { getBrandConfig } from "@/lib/domain";
+import { Analytics } from "@vercel/analytics/next";
 
 // Importação absoluta do CSS global
 import "@/app/globals.css";
@@ -68,6 +69,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         {children}
+        <Analytics />
       </body>
     </html>
   );
