@@ -18,15 +18,15 @@ export default function PortalCotistaPage(): JSX.Element {
               <img 
                 src="/logo-vivant-care.png" 
                 alt="Vivant Care" 
-                className="h-20 w-auto"
+                className="h-16 w-auto"
               />
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Content sem padding extra */}
-      <div className="pt-28 h-full flex items-center justify-center px-4">
+      {/* Content com padding reduzido pela metade */}
+      <div className="pt-32 h-full flex items-center justify-center px-4">
       <div className="w-full max-w-6xl mx-auto grid md:grid-cols-2 gap-6 items-center">
         {/* Login Card */}
         <Card className="border-none shadow-2xl bg-white">
