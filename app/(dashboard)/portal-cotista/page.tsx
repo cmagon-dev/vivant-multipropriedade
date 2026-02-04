@@ -25,8 +25,8 @@ export default function PortalCotistaPage(): JSX.Element {
         </div>
       </nav>
 
-      {/* Content com padding reduzido pela metade */}
-      <div className="pt-32 h-full flex items-center justify-center px-4">
+      {/* Content com padding mínimo */}
+      <div className="pt-32 h-full flex items-start justify-center px-4">
       <div className="w-full max-w-6xl mx-auto grid md:grid-cols-2 gap-6 items-center">
         {/* Login Card */}
         <Card className="border-none shadow-2xl bg-white">
