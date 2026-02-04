@@ -29,7 +29,7 @@ export default function CapitalHomePage(): JSX.Element {
               <img 
                 src="/logo-vivant-capital.png" 
                 alt="Vivant Capital" 
-                className="h-60 w-auto"
+                className="h-24 w-auto"
               />
             </Link>
 
