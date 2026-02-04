@@ -73,8 +73,8 @@ export function Navbar(): JSX.Element {
             </Link>
           </div>
 
-          {/* Logo Vivant Capital - Direita */}
-          <div className="hidden md:block">
+          {/* Logos Vivant Capital e Care - Direita */}
+          <div className="hidden md:flex items-center gap-6">
             <a 
               href="https://vivantcapital.com.br"
               target="_blank"
@@ -83,6 +83,17 @@ export function Navbar(): JSX.Element {
               <img 
                 src="/logo-vivant-capital.png" 
                 alt="Vivant Capital" 
+                className="h-40 w-auto cursor-pointer hover:opacity-80 transition-opacity"
+              />
+            </a>
+            <a 
+              href="https://vivantcare.com.br"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img 
+                src="/logo-vivant-care.png" 
+                alt="Vivant Care" 
                 className="h-40 w-auto cursor-pointer hover:opacity-80 transition-opacity"
               />
             </a>
@@ -144,6 +155,18 @@ export function Navbar(): JSX.Element {
               <img 
                 src="/logo-vivant-capital.png" 
                 alt="Vivant Capital" 
+                className="h-32 w-auto mx-auto cursor-pointer"
+              />
+            </a>
+            <a 
+              href="https://vivantcare.com.br"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block py-4"
+            >
+              <img 
+                src="/logo-vivant-care.png" 
+                alt="Vivant Care" 
                 className="h-32 w-auto mx-auto cursor-pointer"
               />
             </a>
