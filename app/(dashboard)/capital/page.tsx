@@ -71,7 +71,7 @@ export default function CapitalHomePage(): JSX.Element {
                 Diferenciais
               </a>
               <Link
-                href="/dashboard/simulador"
+                href="/dashboard/simulador-investimentos"
                 className="text-[#1A2F4B] hover:text-[#1A2F4B]/70 transition-colors font-medium text-lg"
               >
                 Simulador
@@ -684,8 +684,8 @@ export default function CapitalHomePage(): JSX.Element {
             size="lg"
             className="bg-white text-[#1A2F4B] hover:bg-white/90 text-lg h-16 px-10"
           >
-            <Link href="/dashboard/simulador">
-              Acessar Simulador de Viabilidade
+            <Link href="/dashboard/simulador-investimentos">
+              Acessar Simulador de Investimentos
               <Calculator className="ml-2 w-5 h-5" />
             </Link>
           </Button>
@@ -721,10 +721,10 @@ export default function CapitalHomePage(): JSX.Element {
               <ul className="space-y-2 text-white/70">
                 <li>
                   <Link
-                    href="/dashboard/simulador"
+                    href="/dashboard/simulador-investimentos"
                     className="hover:text-white transition"
                   >
-                    Simulador de Viabilidade
+                    Simulador de Investimentos
                   </Link>
                 </li>
                 <li>
