@@ -23,13 +23,13 @@ export default function CapitalHomePage(): JSX.Element {
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-2xl" style={{ boxShadow: '0 8px 32px rgba(26, 47, 75, 0.15)' }}>
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-28">
+          <div className="flex items-center justify-between h-32">
             {/* Logo Vivant Capital */}
             <Link href="/" className="flex items-center py-2">
               <img 
                 src="/logo-vivant-capital.png" 
                 alt="Vivant Capital" 
-                className="h-40 w-auto"
+                className="h-60 w-auto"
               />
             </Link>
 
@@ -55,7 +55,7 @@ export default function CapitalHomePage(): JSX.Element {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#1A2F4B] via-[#2A4F6B] to-[#1A2F4B] pt-28">
+      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#1A2F4B] via-[#2A4F6B] to-[#1A2F4B] pt-32">
         <div className="container mx-auto px-4 relative z-10 text-center pt-20">
           <div className="max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">

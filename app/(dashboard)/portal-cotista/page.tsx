@@ -8,7 +8,22 @@ import { Label } from "@/components/ui/label";
 
 export default function PortalCotistaPage(): JSX.Element {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* Navbar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-lg">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center h-20">
+            <img 
+              src="/logo-vivant-care.png" 
+              alt="Vivant Care" 
+              className="h-16 w-auto"
+            />
+          </div>
+        </div>
+      </nav>
+
+      {/* Content com padding-top para compensar navbar fixa */}
+      <div className="pt-20 flex items-center justify-center py-12 px-4 min-h-screen">
       <div className="w-full max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center">
         {/* Login Card */}
         <Card className="border-none shadow-2xl bg-white">
@@ -190,6 +205,7 @@ export default function PortalCotistaPage(): JSX.Element {
             </p>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -74,27 +74,29 @@ export function Navbar(): JSX.Element {
           </div>
 
           {/* Logos Vivant Capital e Care - Direita */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-2">
             <a 
               href="https://vivantcapital.com.br"
               target="_blank"
               rel="noopener noreferrer"
+              className="bg-white px-3 py-1.5 rounded-lg border border-slate-200 hover:border-vivant-navy hover:shadow-md transition-all duration-300"
             >
               <img 
                 src="/logo-vivant-capital.png" 
                 alt="Vivant Capital" 
-                className="h-40 w-auto cursor-pointer hover:opacity-80 transition-opacity"
+                className="h-10 w-auto"
               />
             </a>
             <a 
               href="https://vivantcare.com.br"
               target="_blank"
               rel="noopener noreferrer"
+              className="bg-white px-3 py-1.5 rounded-lg border border-slate-200 hover:border-vivant-navy hover:shadow-md transition-all duration-300"
             >
               <img 
                 src="/logo-vivant-care.png" 
                 alt="Vivant Care" 
-                className="h-40 w-auto cursor-pointer hover:opacity-80 transition-opacity"
+                className="h-10 w-auto"
               />
             </a>
           </div>
@@ -150,24 +152,24 @@ export function Navbar(): JSX.Element {
               href="https://vivantcapital.com.br"
               target="_blank"
               rel="noopener noreferrer"
-              className="block py-4"
+              className="block py-2 px-3 bg-white border border-slate-200 rounded-lg hover:border-vivant-navy transition-all mx-auto w-fit"
             >
               <img 
                 src="/logo-vivant-capital.png" 
                 alt="Vivant Capital" 
-                className="h-32 w-auto mx-auto cursor-pointer"
+                className="h-12 w-auto"
               />
             </a>
             <a 
               href="https://vivantcare.com.br"
               target="_blank"
               rel="noopener noreferrer"
-              className="block py-4"
+              className="block py-2 px-3 bg-white border border-slate-200 rounded-lg hover:border-vivant-navy transition-all mx-auto w-fit"
             >
               <img 
                 src="/logo-vivant-care.png" 
                 alt="Vivant Care" 
-                className="h-32 w-auto mx-auto cursor-pointer"
+                className="h-12 w-auto"
               />
             </a>
           </div>
