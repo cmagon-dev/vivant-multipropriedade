@@ -35,7 +35,7 @@ export function Navbar(): JSX.Element {
             <img 
               src="/logo-vivant.png" 
               alt="Vivant" 
-              className="h-64 w-auto"
+              className="h-16 w-auto"
             />
           </Link>
 

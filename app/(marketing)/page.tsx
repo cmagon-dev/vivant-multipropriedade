@@ -1515,9 +1515,9 @@ export default function HomePage(): JSX.Element {
             <div>
               <div className="mb-4">
                 <img
-                  src="/logo-vivant.png"
+                  src="/logo-vivant-footer.png"
                   alt="Vivant"
-                  className="h-24 w-auto brightness-0 invert"
+                  className="h-24 w-auto"
                 />
               </div>
               <p className="text-base text-white/90 italic mb-2 font-light">
