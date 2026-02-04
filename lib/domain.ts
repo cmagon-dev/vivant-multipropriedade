@@ -19,9 +19,9 @@ const BRAND_CONFIGS: Record<VivantBrand, BrandConfig> = {
   },
   residences: {
     name: "Vivant Residences",
-    title: "Vivant Residences | Multipropriedade de Alto Padrão",
+    title: "Vivant | \"A arte de viver bem\"",
     description:
-      "Invista em multipropriedade de casas de alto padrão com a Vivant. Modelo fracionado inteligente para investidores sofisticados.",
+      "Realize o sonho da casa de férias sem compromisso total. Adquira sua cota em residências de alto padrão e desfrute de momentos inesquecíveis com sua família em destinos exclusivos.",
     domain: "vivantresidences.com.br",
   },
   care: {
