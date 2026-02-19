@@ -5,6 +5,9 @@ export default function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>): JSX.Element {
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/3f614ec6-ea6c-4578-ae73-c4919008ee09',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/(dashboard)/layout.tsx:8',message:'DashboardLayout: início',data:{},timestamp:Date.now(),hypothesisId:'B,C'})}).catch(()=>{});
+  // #endregion
   const brandConfig = getBrandConfig();
   
   return (

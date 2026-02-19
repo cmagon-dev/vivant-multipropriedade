@@ -1,5 +1,9 @@
 import { headers } from "next/headers";
 
+// #region agent log
+console.log('[DOMAIN DEBUG] Module loading');
+// #endregion
+
 export type VivantBrand = "capital" | "residences" | "care";
 
 export interface BrandConfig {
@@ -38,7 +42,13 @@ const BRAND_CONFIGS: Record<VivantBrand, BrandConfig> = {
  * @returns A marca detectada (capital, residences ou care)
  */
 export function detectBrand(): VivantBrand {
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/3f614ec6-ea6c-4578-ae73-c4919008ee09',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/domain.ts:42',message:'detectBrand: chamada iniciada',data:{},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
   const headersList = headers();
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/3f614ec6-ea6c-4578-ae73-c4919008ee09',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/domain.ts:46',message:'detectBrand: headers() executado',data:{hasHeaders:!!headersList},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
   const hostname = headersList.get("host") || "";
   const domain = hostname.split(":")[0];
 

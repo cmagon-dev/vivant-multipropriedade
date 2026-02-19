@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_PRISMA_URL")
+}
+
+// ===== AUTENTICAÇÃO =====
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  password      String
+  image         String?
+  role          UserRole  @default(EDITOR)
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  properties    Property[]
+  destinations  Destination[]
+  auditLogs     AuditLog[]
+  
+  @@index([email])
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+// ===== CONTEÚDO =====
+
+model Property {
+  id              String          @id @default(cuid())
+  name            String
+  slug            String          @unique
+  description     String          @default("") @db.Text
+  location        String
+  cidade          String
+  destinoId       String
+  destino         Destination     @relation(fields: [destinoId], references: [id], onDelete: Restrict)
+  condominio      String
+  type            String
+  priceValue      Int
+  bedrooms        Int
+  bathrooms       Int
+  area            Int
+  fraction        String
+  price           String
+  monthlyFee      String
+  weeks           String
+  images          Json
+  features        Json
+  appreciation    String
+  status          PropertyStatus  @default(DISPONIVEL)
+  highlight       Boolean         @default(false)
+  published       Boolean         @default(false)
+  publishedAt     DateTime?
+  
+  createdById     String
+  createdBy       User            @relation(fields: [createdById], references: [id])
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@index([destinoId])
+  @@index([published])
+  @@index([slug])
+  @@map("properties")
+}
+
+enum PropertyStatus {
+  DISPONIVEL
+  ULTIMAS_COTAS
+  PRE_LANCAMENTO
+  VENDIDO
+}
+
+model Destination {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  state           String
+  emoji           String
+  color           String
+  subtitle        String
+  location        String
+  description     String   @db.Text
+  climate         String   @db.Text
+  lifestyle       String   @db.Text
+  features        Json
+  appreciation    String
+  published       Boolean  @default(false)
+  publishedAt     DateTime?
+  order           Int      @default(0)
+  
+  properties      Property[]
+  
+  createdById     String
+  createdBy       User     @relation(fields: [createdById], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([published])
+  @@index([slug])
+  @@index([order])
+  @@map("destinations")
+}
+
+// ===== AUDITORIA =====
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  action      String
+  entity      String
+  entityId    String
+  changes     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

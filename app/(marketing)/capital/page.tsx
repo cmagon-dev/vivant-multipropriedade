@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Footer } from "@/components/marketing/footer";
+import { Navbar } from "@/components/marketing/navbar";
 import {
   Card,
   CardContent,
@@ -27,117 +29,96 @@ import {
   ArrowDownRight,
   ChevronDown,
 } from "lucide-react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Vivant Capital - Investimentos em Multipropriedade",
+  description: "Oportunidades exclusivas de investimento em imóveis fracionados com alta rentabilidade, segurança jurídica e estrutura CRI-ready.",
+  openGraph: {
+    title: "Vivant Capital - Investimentos de Alto Padrão",
+    description: "Invista em multipropriedade com rentabilidade de IPCA + 12% a.a. e segurança total.",
+    type: "website",
+  },
+};
 
 export default function CapitalHomePage(): JSX.Element {
   return (
     <div className="min-h-screen bg-[#F8F9FA]">
-      {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-50 via-white to-slate-50 border-b-2 border-vivant-navy/10 shadow-xl" style={{ boxShadow: '0 4px 16px rgba(26, 47, 75, 0.08)' }}>
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-28">
-            {/* Logo Vivant Capital */}
-            <Link href="/" className="flex items-center py-2">
-              <img 
-                src="/logo-vivant-capital.png" 
-                alt="Vivant Capital" 
-                className="h-16 w-auto"
-              />
-            </Link>
-
-            {/* Menu Links */}
-            <div className="hidden md:flex items-center space-x-8">
-              <a
-                href="#sobre"
-                className="text-[#1A2F4B] hover:text-[#1A2F4B]/70 transition-colors font-medium text-lg"
-              >
-                Sobre
-              </a>
-              <a
-                href="#como-funciona"
-                className="text-[#1A2F4B] hover:text-[#1A2F4B]/70 transition-colors font-medium text-lg"
-              >
-                Como Funciona
-              </a>
-              <a
-                href="#estrutura"
-                className="text-[#1A2F4B] hover:text-[#1A2F4B]/70 transition-colors font-medium text-lg"
-              >
-                Estrutura Financeira
-              </a>
-              <a
-                href="#diferenciais"
-                className="text-[#1A2F4B] hover:text-[#1A2F4B]/70 transition-colors font-medium text-lg"
-              >
-                Diferenciais
-              </a>
-              <Link
-                href="/dashboard/simulador-investimentos"
-                className="text-[#1A2F4B] hover:text-[#1A2F4B]/70 transition-colors font-medium text-lg"
-              >
-                Simulador
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero Section */}
-      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#1A2F4B] via-[#2A4F6B] to-[#1A2F4B] pt-28">
-        {/* Geometric Pattern Overlay */}
-        <div className="absolute inset-0 opacity-10">
-          <div 
-            className="w-full h-full" 
-            style={{
-              backgroundImage: `
-                linear-gradient(30deg, rgba(255,255,255,0.1) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,0.1) 87.5%, rgba(255,255,255,0.1)),
-                linear-gradient(150deg, rgba(255,255,255,0.1) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,0.1) 87.5%, rgba(255,255,255,0.1)),
-                linear-gradient(30deg, rgba(255,255,255,0.1) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,0.1) 87.5%, rgba(255,255,255,0.1)),
-                linear-gradient(150deg, rgba(255,255,255,0.1) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,0.1) 87.5%, rgba(255,255,255,0.1)),
-                linear-gradient(60deg, rgba(255,255,255,0.05) 25%, transparent 25.5%, transparent 75%, rgba(255,255,255,0.05) 75%, rgba(255,255,255,0.05)),
-                linear-gradient(60deg, rgba(255,255,255,0.05) 25%, transparent 25.5%, transparent 75%, rgba(255,255,255,0.05) 75%, rgba(255,255,255,0.05))
-              `,
-              backgroundSize: '80px 140px',
-              backgroundPosition: '0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px'
-            }}
-          />
+      <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-32 sm:pt-36 lg:pt-40">
+        {/* Background Image com Overlay */}
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=2073&auto=format&fit=crop')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/80 via-[#1A2F4B]/70 to-[#F8F9FA]" />
         </div>
-        
-        <div className="container mx-auto px-4 relative z-10 text-center pt-20">
+
+        {/* Hero Content */}
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8">
           <div className="max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
-              <Building2 className="w-5 h-5 text-white" />
-              <span className="text-white text-xl font-light">
+            <div className="inline-flex items-center gap-2 bg-[#1A2F4B]/20 backdrop-blur-sm border border-[#1A2F4B]/40 rounded-full px-4 sm:px-6 py-2 sm:py-3 mb-6 sm:mb-8">
+              <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              <span className="text-white text-base sm:text-xl font-semibold">
                 Vivant Capital
               </span>
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-serif font-bold text-white mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
               Invista em Multipropriedade de Alto Padrão
             </h1>
 
-            <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-3xl mx-auto font-light">
-              Oportunidades exclusivas de investimento em imóveis fracionados
-              com alta rentabilidade e segurança jurídica
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-8 sm:mb-12 max-w-3xl mx-auto font-light px-2">
+              Oportunidades exclusivas de investimento em imóveis fracionados com alta rentabilidade e segurança jurídica
             </p>
+
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+              <Button
+                asChild
+                size="lg"
+                className="bg-white text-[#1A2F4B] hover:bg-white/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
+              >
+                <a href="#como-funciona">
+                  Como Funciona
+                  <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+                </a>
+              </Button>
+
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-[#1A2F4B] text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
+              >
+                <Link href="/simulador-investimentos">Ver Simulador</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Sobre Vivant Capital */}
-      <section id="sobre" className="py-20 bg-white scroll-mt-28">
-        <div className="container mx-auto px-4">
+      <section id="sobre" className="py-12 sm:py-16 lg:py-20 bg-white scroll-mt-28">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#1A2F4B] mb-4">
+            <div className="text-center mb-10 sm:mb-16">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-3 sm:mb-4 px-2">
                 Vivant Capital
               </h2>
-              <p className="text-xl text-[#1A2F4B]/70">
+              <p className="text-lg sm:text-xl text-[#1A2F4B]/70 max-w-3xl mx-auto px-4">
                 Boutique de Estruturação de Ativos Imobiliários
               </p>
             </div>
 
-            <div className="prose prose-lg max-w-none text-[#1A2F4B]/80 mb-12">
-              <p className="text-lg leading-relaxed mb-6">
+            <div className="space-y-4 text-[#1A2F4B]/80 mb-8 sm:mb-12">
+              <p className="text-base sm:text-lg leading-relaxed">
                 A <strong>Vivant Capital</strong> é nossa boutique especializada em 
                 <strong> estruturação de funding</strong> e <strong>originação de ativos</strong> no 
                 mercado de multipropriedade. Enquanto a Vivant Residences atende o segmento de uso 
@@ -145,7 +126,7 @@ export default function CapitalHomePage(): JSX.Element {
                 foco em investidores institucionais e qualificados.
               </p>
 
-              <p className="text-lg leading-relaxed mb-6">
+              <p className="text-base sm:text-lg leading-relaxed">
                 Nosso modelo de negócio combina <strong>aquisição estratégica de VGV</strong>, 
                 fracionamento jurídico com <strong>Patrimônio de Afetação</strong> e gestão de 
                 <strong> Conta Escrow</strong> com split automático de pagamentos. Operamos com 
@@ -153,7 +134,7 @@ export default function CapitalHomePage(): JSX.Element {
                 oferecendo aos investidores rentabilidade de <strong>IPCA + 12% a.a.</strong> (~16-18% a.a.).
               </p>
 
-              <p className="text-lg leading-relaxed">
+              <p className="text-base sm:text-lg leading-relaxed">
                 Nossa estrutura é <strong>CRI-ready</strong>, preparada para securitização via 
                 Certificados de Recebíveis Imobiliários, com governança e compliance de padrão FII 
                 (Fundo de Investimento Imobiliário).
@@ -164,74 +145,74 @@ export default function CapitalHomePage(): JSX.Element {
       </section>
 
       {/* Modelo de Investimento */}
-      <section id="como-funciona" className="py-20 bg-[#F8F9FA] scroll-mt-28">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#1A2F4B] mb-4">
+      <section id="como-funciona" className="py-12 sm:py-16 lg:py-20 bg-[#F8F9FA] scroll-mt-28">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-3 sm:mb-4 px-2">
               Como Funciona o Investimento
             </h2>
-            <p className="text-xl text-[#1A2F4B]/70 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-[#1A2F4B]/70 max-w-3xl mx-auto px-4">
               Processo transparente do início ao retorno
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-12">
+          <div className="grid md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
             <div className="relative">
               <Card className="border-2 border-[#1A2F4B]/20 shadow-lg h-full">
                 <CardHeader>
-                  <div className="w-16 h-16 bg-[#1A2F4B] rounded-full flex items-center justify-center mb-4 mx-auto">
-                    <Building2 className="w-8 h-8 text-white" />
+                  <div className="w-12 h-12 bg-[#1A2F4B] rounded-full flex items-center justify-center mb-4 mx-auto">
+                    <Building2 className="w-6 h-6 text-white" />
                   </div>
-                  <CardTitle className="text-center text-2xl font-serif text-[#1A2F4B]">
+                  <CardTitle className="text-center text-xl font-serif text-[#1A2F4B]">
                     1. Aquisição
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-center">
-                  <p className="text-[#1A2F4B]/70">
+                  <p className="text-sm text-[#1A2F4B]/70">
                     Identificamos e adquirimos propriedades de alto padrão em
                     localizações premium com alto potencial de valorização.
                   </p>
                 </CardContent>
               </Card>
               <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
-                <ArrowRight className="w-8 h-8 text-[#1A2F4B]/30" />
+                <ArrowRight className="w-6 h-6 text-[#1A2F4B]/30" />
               </div>
             </div>
 
             <div className="relative">
               <Card className="border-2 border-[#1A2F4B]/20 shadow-lg h-full">
                 <CardHeader>
-                  <div className="w-16 h-16 bg-[#1A2F4B] rounded-full flex items-center justify-center mb-4 mx-auto">
-                    <Target className="w-8 h-8 text-white" />
+                  <div className="w-12 h-12 bg-[#1A2F4B] rounded-full flex items-center justify-center mb-4 mx-auto">
+                    <Target className="w-6 h-6 text-white" />
                   </div>
-                  <CardTitle className="text-center text-2xl font-serif text-[#1A2F4B]">
+                  <CardTitle className="text-center text-xl font-serif text-[#1A2F4B]">
                     2. Fracionamento
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-center">
-                  <p className="text-[#1A2F4B]/70">
+                  <p className="text-sm text-[#1A2F4B]/70">
                     Fracionamos a propriedade em até 6 cotas com escritura
                     pública, democratizando o acesso a imóveis de luxo.
                   </p>
                 </CardContent>
               </Card>
               <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
-                <ArrowRight className="w-8 h-8 text-[#1A2F4B]/30" />
+                <ArrowRight className="w-6 h-6 text-[#1A2F4B]/30" />
               </div>
             </div>
 
             <div>
               <Card className="border-2 border-[#1A2F4B]/20 shadow-lg h-full">
                 <CardHeader>
-                  <div className="w-16 h-16 bg-[#1A2F4B] rounded-full flex items-center justify-center mb-4 mx-auto">
-                    <TrendingUp className="w-8 h-8 text-white" />
+                  <div className="w-12 h-12 bg-[#1A2F4B] rounded-full flex items-center justify-center mb-4 mx-auto">
+                    <TrendingUp className="w-6 h-6 text-white" />
                   </div>
-                  <CardTitle className="text-center text-2xl font-serif text-[#1A2F4B]">
+                  <CardTitle className="text-center text-xl font-serif text-[#1A2F4B]">
                     3. Rentabilidade
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-center">
-                  <p className="text-[#1A2F4B]/70">
+                  <p className="text-sm text-[#1A2F4B]/70">
                     Gestão profissional com renda de locação, valorização
                     imobiliária e transparência total nos resultados.
                   </p>
@@ -244,84 +225,84 @@ export default function CapitalHomePage(): JSX.Element {
       </section>
 
       {/* Fluxo do Dinheiro - Estrutura Financeira */}
-      <section id="estrutura" className="py-20 bg-white scroll-mt-28">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#1A2F4B] mb-4">
+      <section id="estrutura" className="py-12 sm:py-16 lg:py-20 bg-white scroll-mt-28">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-3 sm:mb-4 px-2">
               Estrutura Financeira
             </h2>
-            <p className="text-xl text-[#1A2F4B]/70 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-[#1A2F4B]/70 max-w-3xl mx-auto px-4">
               Fluxo transparente e auditado dos recursos
             </p>
           </div>
 
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             {/* Fluxo Visual */}
             <div className="relative">
               {/* Cliente Paga */}
-              <div className="flex justify-center mb-8">
-                <Card className="border-2 border-[#1A2F4B] bg-gradient-to-br from-[#1A2F4B] to-[#2A4F6B] shadow-xl w-80">
-                  <CardContent className="p-8 text-center">
-                    <Wallet className="w-16 h-16 text-white mx-auto mb-4" />
-                    <h3 className="text-2xl font-bold text-white mb-2">Cliente Investe</h3>
-                    <p className="text-white/90">Pagamento da cota</p>
+              <div className="flex justify-center mb-6">
+                <Card className="border-2 border-[#1A2F4B] bg-gradient-to-br from-[#1A2F4B] to-[#2A4F6B] shadow-lg w-72">
+                  <CardContent className="p-6 text-center">
+                    <Wallet className="w-12 h-12 text-white mx-auto mb-3" />
+                    <h3 className="text-xl font-bold text-white mb-1">Cliente Investe</h3>
+                    <p className="text-sm text-white/90">Pagamento da cota</p>
                   </CardContent>
                 </Card>
               </div>
 
               {/* Seta para baixo */}
-              <div className="flex justify-center mb-8">
-                <ArrowDownRight className="w-12 h-12 text-[#1A2F4B]/30 rotate-90" />
+              <div className="flex justify-center mb-6">
+                <ArrowDownRight className="w-8 h-8 text-[#1A2F4B]/30 rotate-90" />
               </div>
 
               {/* Conta Escrow */}
-              <div className="flex justify-center mb-8">
-                <Card className="border-2 border-vivant-gold-muted bg-white shadow-2xl w-96">
-                  <CardContent className="p-8 text-center relative">
-                    <div className="absolute -top-4 right-4">
-                      <span className="inline-flex items-center bg-vivant-green text-white text-sm font-semibold px-4 py-2 rounded-full shadow-lg">
-                        <CheckCircle2 className="w-4 h-4 mr-2" />
+              <div className="flex justify-center mb-6">
+                <Card className="border-2 border-vivant-gold-muted bg-white shadow-lg w-80">
+                  <CardContent className="p-6 text-center relative">
+                    <div className="absolute -top-3 right-4">
+                      <span className="inline-flex items-center bg-vivant-green text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg">
+                        <CheckCircle2 className="w-3 h-3 mr-1" />
                         Auditoria Externa
                       </span>
                     </div>
-                    <Lock className="w-20 h-20 text-vivant-gold-muted mx-auto mb-4" />
-                    <h3 className="text-2xl font-bold text-[#1A2F4B] mb-2">Conta Escrow</h3>
-                    <p className="text-[#1A2F4B]/70 mb-1">Conta segregada e auditada</p>
-                    <p className="text-sm font-semibold text-vivant-gold-muted">Split Automático</p>
+                    <Lock className="w-14 h-14 text-vivant-gold-muted mx-auto mb-3" />
+                    <h3 className="text-xl font-bold text-[#1A2F4B] mb-1">Conta Escrow</h3>
+                    <p className="text-sm text-[#1A2F4B]/70 mb-1">Conta segregada e auditada</p>
+                    <p className="text-xs font-semibold text-vivant-gold-muted">Split Automático</p>
                   </CardContent>
                 </Card>
               </div>
 
               {/* Setas de divisão */}
-              <div className="flex justify-center gap-32 mb-8">
-                <ArrowDownRight className="w-12 h-12 text-[#1A2F4B]/30 -rotate-45" />
-                <ArrowDownRight className="w-12 h-12 text-[#1A2F4B]/30 rotate-45" />
+              <div className="flex justify-center gap-24 mb-6">
+                <ArrowDownRight className="w-8 h-8 text-[#1A2F4B]/30 -rotate-45" />
+                <ArrowDownRight className="w-8 h-8 text-[#1A2F4B]/30 rotate-45" />
               </div>
 
               {/* Split 50/50 */}
-              <div className="grid md:grid-cols-2 gap-8">
+              <div className="grid md:grid-cols-2 gap-6">
                 {/* 50% Bolsão Garantia */}
-                <Card className="border-2 border-vivant-green bg-gradient-to-br from-vivant-green/10 to-white shadow-xl">
-                  <CardContent className="p-8 text-center">
-                    <Shield className="w-16 h-16 text-vivant-green mx-auto mb-4" />
-                    <div className="inline-block bg-vivant-green text-white text-lg font-bold px-6 py-2 rounded-full mb-4">
+                <Card className="border-2 border-vivant-green bg-gradient-to-br from-vivant-green/10 to-white shadow-lg">
+                  <CardContent className="p-6 text-center">
+                    <Shield className="w-12 h-12 text-vivant-green mx-auto mb-3" />
+                    <div className="inline-block bg-vivant-green text-white text-base font-bold px-4 py-1.5 rounded-full mb-3">
                       50%
                     </div>
-                    <h3 className="text-2xl font-bold text-[#1A2F4B] mb-2">Bolsão de Garantia</h3>
-                    <p className="text-[#1A2F4B]/70 mb-4">
+                    <h3 className="text-xl font-bold text-[#1A2F4B] mb-2">Bolsão de Garantia</h3>
+                    <p className="text-sm text-[#1A2F4B]/70 mb-3">
                       Recursos segregados para proteção do investidor
                     </p>
-                    <div className="text-sm space-y-2 text-left bg-white/80 p-4 rounded-lg">
+                    <div className="text-xs space-y-2 text-left bg-white/80 p-3 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-vivant-green" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-vivant-green flex-shrink-0" />
                         <span>Patrimônio de Afetação</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-vivant-green" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-vivant-green flex-shrink-0" />
                         <span>Alienação Fiduciária</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-vivant-green" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-vivant-green flex-shrink-0" />
                         <span>Cláusula Resolutiva</span>
                       </div>
                     </div>
@@ -329,27 +310,27 @@ export default function CapitalHomePage(): JSX.Element {
                 </Card>
 
                 {/* 50% Operação Vivant */}
-                <Card className="border-2 border-[#1A2F4B] bg-gradient-to-br from-[#1A2F4B]/10 to-white shadow-xl">
-                  <CardContent className="p-8 text-center">
-                    <Settings className="w-16 h-16 text-[#1A2F4B] mx-auto mb-4" />
-                    <div className="inline-block bg-[#1A2F4B] text-white text-lg font-bold px-6 py-2 rounded-full mb-4">
+                <Card className="border-2 border-[#1A2F4B] bg-gradient-to-br from-[#1A2F4B]/10 to-white shadow-lg">
+                  <CardContent className="p-6 text-center">
+                    <Settings className="w-12 h-12 text-[#1A2F4B] mx-auto mb-3" />
+                    <div className="inline-block bg-[#1A2F4B] text-white text-base font-bold px-4 py-1.5 rounded-full mb-3">
                       50%
                     </div>
-                    <h3 className="text-2xl font-bold text-[#1A2F4B] mb-2">Operação Vivant</h3>
-                    <p className="text-[#1A2F4B]/70 mb-4">
+                    <h3 className="text-xl font-bold text-[#1A2F4B] mb-2">Operação Vivant</h3>
+                    <p className="text-sm text-[#1A2F4B]/70 mb-3">
                       Custos operacionais e margem da estruturadora
                     </p>
-                    <div className="text-sm space-y-2 text-left bg-white/80 p-4 rounded-lg">
+                    <div className="text-xs space-y-2 text-left bg-white/80 p-3 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-[#1A2F4B]" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#1A2F4B] flex-shrink-0" />
                         <span>Gestão e Compliance</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-[#1A2F4B]" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#1A2F4B] flex-shrink-0" />
                         <span>Custos de Aquisição</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-[#1A2F4B]" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#1A2F4B] flex-shrink-0" />
                         <span>Margem Operacional (35-45%)</span>
                       </div>
                     </div>
@@ -362,21 +343,21 @@ export default function CapitalHomePage(): JSX.Element {
       </section>
 
       {/* Gráfico Comparativo de Rentabilidade */}
-      <section className="py-20 bg-[#F8F9FA]">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#1A2F4B] mb-4">
+      <section className="py-12 sm:py-16 lg:py-20 bg-[#F8F9FA]">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-3 sm:mb-4 px-2">
               Rentabilidade Comparativa
             </h2>
-            <p className="text-xl text-[#1A2F4B]/70 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-[#1A2F4B]/70 max-w-3xl mx-auto px-4">
               Veja como a Vivant Capital se compara a outras opções de investimento
             </p>
           </div>
 
-          <div className="max-w-4xl mx-auto">
-            <Card className="border-none shadow-2xl bg-white">
-              <CardContent className="p-12">
-                <div className="space-y-8">
+          <div className="max-w-5xl mx-auto">
+            <Card className="border-none shadow-lg bg-white">
+              <CardContent className="p-6 sm:p-8">
+                <div className="space-y-6">
                   {/* Poupança */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
@@ -439,21 +420,21 @@ export default function CapitalHomePage(): JSX.Element {
       </section>
 
       {/* Diferenciais */}
-      <section id="diferenciais" className="py-20 bg-white scroll-mt-28">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#1A2F4B] mb-4">
+      <section id="diferenciais" className="py-12 sm:py-16 lg:py-20 bg-white scroll-mt-28">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-3 sm:mb-4 px-2">
               Por que Investir com a Vivant Capital?
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
             <Card className="border-none shadow-lg hover:shadow-xl transition-shadow">
               <CardHeader>
                 <div className="w-12 h-12 bg-[#1A2F4B]/10 rounded-lg flex items-center justify-center mb-4">
                   <Shield className="w-6 h-6 text-[#1A2F4B]" />
                 </div>
-                <CardTitle className="text-2xl font-serif text-[#1A2F4B]">
+                <CardTitle className="text-xl font-serif text-[#1A2F4B]">
                   Segurança Jurídica
                 </CardTitle>
               </CardHeader>
@@ -484,7 +465,7 @@ export default function CapitalHomePage(): JSX.Element {
                 <div className="w-12 h-12 bg-[#1A2F4B]/10 rounded-lg flex items-center justify-center mb-4">
                   <TrendingUp className="w-6 h-6 text-[#1A2F4B]" />
                 </div>
-                <CardTitle className="text-2xl font-serif text-[#1A2F4B]">
+                <CardTitle className="text-xl font-serif text-[#1A2F4B]">
                   Alta Rentabilidade
                 </CardTitle>
               </CardHeader>
@@ -512,7 +493,7 @@ export default function CapitalHomePage(): JSX.Element {
                 <div className="w-12 h-12 bg-[#1A2F4B]/10 rounded-lg flex items-center justify-center mb-4">
                   <BarChart3 className="w-6 h-6 text-[#1A2F4B]" />
                 </div>
-                <CardTitle className="text-2xl font-serif text-[#1A2F4B]">
+                <CardTitle className="text-xl font-serif text-[#1A2F4B]">
                   Transparência Total
                 </CardTitle>
               </CardHeader>
@@ -542,13 +523,13 @@ export default function CapitalHomePage(): JSX.Element {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20 bg-[#F8F9FA]">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#1A2F4B] mb-4">
+      <section className="py-12 sm:py-16 lg:py-20 bg-[#F8F9FA]">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-3 sm:mb-4 px-2">
               Perguntas Frequentes
             </h2>
-            <p className="text-xl text-[#1A2F4B]/70 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-[#1A2F4B]/70 max-w-3xl mx-auto px-4">
               Entenda os aspectos técnicos e jurídicos do investimento
             </p>
           </div>
@@ -669,89 +650,40 @@ export default function CapitalHomePage(): JSX.Element {
       </section>
 
       {/* CTA Simulador */}
-      <section className="py-20 bg-gradient-to-br from-[#1A2F4B] to-[#2A4F6B]">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-6">
+      <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-[#1A2F4B] to-[#2A4F6B]">
+        <div className="container mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-4 sm:mb-6 px-2">
             Simule sua Oportunidade de Investimento
           </h2>
-          <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
-            Use nosso simulador de viabilidade e descubra o potencial de retorno
-            do seu investimento em minutos
+          <p className="text-base sm:text-lg lg:text-xl text-white/90 mb-8 sm:mb-10 max-w-2xl mx-auto px-4">
+            Use nosso simulador de viabilidade e descubra o potencial de retorno do seu investimento em minutos
           </p>
 
-          <Button
-            asChild
-            size="lg"
-            className="bg-white text-[#1A2F4B] hover:bg-white/90 text-lg h-16 px-10"
-          >
-            <Link href="/dashboard/simulador-investimentos">
-              Acessar Simulador de Investimentos
-              <Calculator className="ml-2 w-5 h-5" />
-            </Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+            <Button
+              asChild
+              size="lg"
+              className="bg-white text-[#1A2F4B] hover:bg-white/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
+            >
+              <Link href="/simulador-investimentos">
+                Acessar Simulador
+                <Calculator className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+              </Link>
+            </Button>
+
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="bg-transparent border-2 border-white text-white hover:bg-white/10 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
+            >
+              <Link href="/contato">Fale Conosco</Link>
+            </Button>
+          </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-[#1A2F4B] text-white py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8">
-            <div>
-              <div className="mb-4">
-                <img
-                  src="/logo-vivant-capital.png"
-                  alt="Vivant Capital"
-                  className="h-20 w-auto brightness-0 invert opacity-70"
-                />
-              </div>
-              <h3 className="text-2xl font-serif font-bold mb-2">
-                Vivant Capital
-              </h3>
-              <p className="text-sm text-white/90 italic mb-2">
-                Investimentos em Multipropriedade
-              </p>
-              <p className="text-white/70">
-                Oportunidades exclusivas com alta rentabilidade e segurança
-                jurídica.
-              </p>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Links Rápidos</h4>
-              <ul className="space-y-2 text-white/70">
-                <li>
-                  <Link
-                    href="/dashboard/simulador-investimentos"
-                    className="hover:text-white transition"
-                  >
-                    Simulador de Investimentos
-                  </Link>
-                </li>
-                <li>
-                  <a
-                    href="https://vivantresidences.com.br"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-white transition"
-                  >
-                    Vivant Residences
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Contato Investidores</h4>
-              <p className="text-white/70">capital@vivant.com.br</p>
-              <p className="text-white/70 mt-2">+55 (11) 9999-9999</p>
-            </div>
-          </div>
-
-          <div className="border-t border-white/10 mt-8 pt-8 text-center text-white/50 text-sm">
-            © 2026 Vivant Capital. Todos os direitos reservados.
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

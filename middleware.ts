@@ -1,20 +1,61 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export function middleware(request: NextRequest): NextResponse {
+export async function middleware(request: NextRequest) {
   const hostname = request.headers.get("host") || "";
   const pathname = request.nextUrl.pathname;
   
   // Normaliza o hostname (remove www. e porta se houver)
   const domain = hostname.replace("www.", "").split(":")[0].toLowerCase();
   
-  // Não interceptar assets estáticos, fontes e APIs
+  // Não interceptar assets estáticos, fontes e APIs (exceto proteção admin)
   if (
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
     pathname.startsWith("/static") ||
-    pathname.includes(".") // Qualquer arquivo com extensão (css, js, woff2, etc)
+    (pathname.includes(".") && !pathname.startsWith("/api")) // Qualquer arquivo com extensão (css, js, woff2, etc)
   ) {
+    return NextResponse.next();
+  }
+  
+  // Proteção de rotas admin
+  if (pathname.startsWith("/admin")) {
+    const token = await getToken({ 
+      req: request, 
+      secret: process.env.NEXTAUTH_SECRET 
+    });
+    
+    if (!token) {
+      const url = new URL("/login", request.url);
+      url.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(url);
+    }
+    
+    // Redirecionar /admin para /admin/dashboard
+    if (pathname === "/admin") {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    }
+    
+    // Verificar permissões específicas
+    if (pathname.startsWith("/admin/usuarios") && token.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    }
+  }
+  
+  // Redirecionar /login para /admin/dashboard se já autenticado
+  if (pathname === "/login") {
+    const token = await getToken({ 
+      req: request, 
+      secret: process.env.NEXTAUTH_SECRET 
+    });
+    
+    if (token) {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    }
+  }
+  
+  // Não interceptar APIs que não sejam admin
+  if (pathname.startsWith("/api") && !pathname.startsWith("/api/admin")) {
     return NextResponse.next();
   }
   
