@@ -37,6 +37,8 @@ export default function LoginPage() {
         setIsLoading(false);
       } else if (result?.ok) {
         toast.success("Login realizado com sucesso!");
+        // Aguardar um pouco para o cookie ser propagado
+        await new Promise(resolve => setTimeout(resolve, 500));
         // Redirecionar baseado no portal selecionado
         const redirectUrl = callbackUrl || (selectedPortal === "site" ? "/admin/dashboard" : "/admin-portal");
         window.location.href = redirectUrl;
