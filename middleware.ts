@@ -23,10 +23,7 @@ export async function middleware(request: NextRequest) {
     return await getToken({ 
       req: request, 
       secret: process.env.NEXTAUTH_SECRET,
-      secureCookie: process.env.NODE_ENV === 'production',
-      cookieName: process.env.NODE_ENV === 'production' 
-        ? '__Secure-vivant.admin.session-token'
-        : 'vivant.admin.session-token'
+      cookieName: 'vivant.admin.session-token'
     });
   }
   
@@ -35,10 +32,7 @@ export async function middleware(request: NextRequest) {
     return await getToken({ 
       req: request, 
       secret: process.env.NEXTAUTH_SECRET,
-      secureCookie: process.env.NODE_ENV === 'production',
-      cookieName: process.env.NODE_ENV === 'production'
-        ? '__Secure-vivant.cotista.session-token'
-        : 'vivant.cotista.session-token'
+      cookieName: 'vivant.cotista.session-token'
     });
   }
   
