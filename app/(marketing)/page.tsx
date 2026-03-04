@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,6 +11,7 @@ import {
 import { Navbar } from "@/components/marketing/navbar";
 import { Footer } from "@/components/marketing/footer";
 import { WhatsAppButton } from "@/components/marketing/whatsapp-button";
+import { DestinationCard } from "@/components/marketing/destination-card";
 import {
   Home,
   Users,
@@ -28,6 +30,7 @@ import {
   Target,
 } from "lucide-react";
 import type { Metadata } from "next";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Vivant Residences - Sua Casa de Férias em Multipropriedade",
@@ -41,7 +44,39 @@ export const metadata: Metadata = {
   },
 };
 
-export default function HomePage() {
+export const revalidate = 60;
+
+const getStatusBadge = (status: string) => {
+  const statusConfig = {
+    DISPONIVEL: { label: 'DISPONÍVEL', color: 'bg-green-500' },
+    ULTIMAS_COTAS: { label: 'ÚLTIMAS COTAS', color: 'bg-orange-500' },
+    PRE_LANCAMENTO: { label: 'PRÉ-LANÇAMENTO', color: 'bg-blue-500' },
+    VENDIDO: { label: 'VENDIDO', color: 'bg-gray-500' },
+  };
+  return statusConfig[status as keyof typeof statusConfig] || statusConfig.DISPONIVEL;
+};
+
+export default async function HomePage() {
+  const [highlightedProperties, destinations] = await Promise.all([
+    prisma.property.findMany({
+      where: {
+        published: true,
+        highlight: true,
+      },
+      include: {
+        destino: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 4,
+    }),
+    prisma.destination.findMany({
+      where: {
+        published: true,
+      },
+      orderBy: { order: "asc" },
+      take: 4,
+    }),
+  ]);
   return (
     <div className="min-h-screen bg-[#F8F9FA]">
       <Navbar />
@@ -50,15 +85,15 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-32 sm:pt-36 lg:pt-40">
         {/* Background Image with Overlay */}
-        <div
-          className="absolute inset-0 z-0"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071&auto=format&fit=crop')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        >
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/hero-home.png"
+            alt="Família aproveitando momento de lazer"
+            fill
+            priority
+            quality={100}
+            className="object-cover"
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/70 via-[#1A2F4B]/50 to-[#F8F9FA]" />
         </div>
 
@@ -72,11 +107,11 @@ export default function HomePage() {
               </span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
-              Sua casa de férias dos sonhos, sem complicações
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-6 sm:mb-8 leading-tight px-2">
+              Onde sua família cria as melhores memórias.
             </h1>
 
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-8 sm:mb-12 max-w-3xl mx-auto font-light px-2">
+            <p className="text-sm sm:text-base md:text-lg text-white/80 mb-8 sm:mb-12 max-w-2xl mx-auto font-light px-2">
               Desfrute de casas de alto padrão em destinos exclusivos.
               Multipropriedade com gestão profissional e segurança jurídica.
             </p>
@@ -87,8 +122,8 @@ export default function HomePage() {
                 size="lg"
                 className="bg-white text-[#1A2F4B] hover:bg-white/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
               >
-                <Link href="/modelo">
-                  Como Funciona
+                <Link href="/contato">
+                  Comece sua jornada aqui
                   <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
                 </Link>
               </Button>
@@ -221,127 +256,21 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-            {/* Porto Rico Card */}
-            <Card className="border-2 border-[#1A2F4B]/20 hover:shadow-2xl transition-all overflow-hidden group">
-              <div className="aspect-square bg-gradient-to-br from-blue-500 to-cyan-400 relative overflow-hidden">
-                <div
-                  className="absolute inset-0 opacity-50 bg-cover bg-center group-hover:scale-110 transition-transform duration-500"
-                  style={{
-                    backgroundImage:
-                      "url('https://images.unsplash.com/photo-1559827260-dc66d52bef19?q=80&w=2070&auto=format&fit=crop')",
-                  }}
+          {destinations.length > 0 ? (
+            <div className="flex flex-wrap justify-center gap-6 max-w-7xl mx-auto">
+              {destinations.map((destination) => (
+                <DestinationCard 
+                  key={destination.id} 
+                  destination={{
+                    ...destination,
+                    images: Array.isArray(destination.images) ? destination.images as string[] : []
+                  }} 
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-2xl font-serif font-bold text-white mb-1">
-                    🚤 Porto Rico
-                  </h3>
-                  <p className="text-white/90 text-sm">
-                    Paraná
-                  </p>
-                </div>
-              </div>
-              <CardContent className="p-4">
-                <p className="text-xs text-[#1A2F4B]/70 mb-3">
-                  Praias de água doce e esportes náuticos
-                </p>
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link href="/destinos">Ver Mais</Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Chavantes Card */}
-            <Card className="border-2 border-[#1A2F4B]/20 hover:shadow-2xl transition-all overflow-hidden group">
-              <div className="aspect-square bg-gradient-to-br from-green-500 to-emerald-400 relative overflow-hidden">
-                <div
-                  className="absolute inset-0 opacity-50 bg-cover bg-center group-hover:scale-110 transition-transform duration-500"
-                  style={{
-                    backgroundImage:
-                      "url('https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop')",
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-2xl font-serif font-bold text-white mb-1">
-                    🏞️ Chavantes
-                  </h3>
-                  <p className="text-white/90 text-sm">
-                    Paraná
-                  </p>
-                </div>
-              </div>
-              <CardContent className="p-4">
-                <p className="text-xs text-[#1A2F4B]/70 mb-3">
-                  Lago, natureza e tranquilidade
-                </p>
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link href="/destinos">Ver Mais</Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Serra Gaúcha Card */}
-            <Card className="border-2 border-[#1A2F4B]/20 hover:shadow-2xl transition-all overflow-hidden group">
-              <div className="aspect-square bg-gradient-to-br from-purple-500 to-pink-400 relative overflow-hidden">
-                <div
-                  className="absolute inset-0 opacity-50 bg-cover bg-center group-hover:scale-110 transition-transform duration-500"
-                  style={{
-                    backgroundImage:
-                      "url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format&fit=crop')",
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-2xl font-serif font-bold text-white mb-1">
-                    🏔️ Serra Gaúcha
-                  </h3>
-                  <p className="text-white/90 text-sm">
-                    Rio Grande do Sul
-                  </p>
-                </div>
-              </div>
-              <CardContent className="p-4">
-                <p className="text-xs text-[#1A2F4B]/70 mb-3">
-                  Clima de montanha e gastronomia
-                </p>
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link href="/destinos">Ver Mais</Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Litoral Catarinense Card */}
-            <Card className="border-2 border-[#1A2F4B]/20 hover:shadow-2xl transition-all overflow-hidden group">
-              <div className="aspect-square bg-gradient-to-br from-cyan-500 to-blue-400 relative overflow-hidden">
-                <div
-                  className="absolute inset-0 opacity-50 bg-cover bg-center group-hover:scale-110 transition-transform duration-500"
-                  style={{
-                    backgroundImage:
-                      "url('https://images.unsplash.com/photo-1559827260-dc66d52bef19?q=80&w=2070&auto=format&fit=crop')",
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-2xl font-serif font-bold text-white mb-1">
-                    🏖️ Litoral SC
-                  </h3>
-                  <p className="text-white/90 text-sm">
-                    Santa Catarina
-                  </p>
-                </div>
-              </div>
-              <CardContent className="p-4">
-                <p className="text-xs text-[#1A2F4B]/70 mb-3">
-                  Praias paradisíacas e vida litorânea
-                </p>
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link href="/destinos">Ver Mais</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-[#1A2F4B]/60">Nenhum destino disponível no momento.</p>
+          )}
 
           <div className="text-center mt-8">
             <Button asChild size="lg" variant="outline" className="min-h-[48px]">
@@ -366,195 +295,64 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-            {/* Casa 1 - Porto Rico Marina Premium */}
-            <Card className="border-2 border-vivant-gold hover:shadow-2xl transition-all overflow-hidden group">
-              <div className="aspect-[4/3] relative overflow-hidden">
-                <div
-                  className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-500"
-                  style={{
-                    backgroundImage:
-                      "url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop')",
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute top-4 right-4">
-                  <span className="bg-vivant-gold text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg">
-                    🔥 DESTAQUE
-                  </span>
-                </div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-xl font-serif font-bold text-white mb-1">
-                    Casa Porto Rico - Marina Premium
-                  </h3>
-                  <div className="flex items-center gap-2 text-white/90">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-sm">Porto Rico, PR</span>
-                  </div>
-                </div>
-              </div>
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4 text-sm text-[#1A2F4B]/70 mb-3">
-                  <div className="flex items-center gap-1">
-                    <Bed className="w-4 h-4" />
-                    <span>4 suítes</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Home className="w-4 h-4" />
-                    <span>280m²</span>
-                  </div>
-                </div>
-                <div className="mb-3">
-                  <p className="text-2xl font-bold text-[#1A2F4B]">R$ 375.000</p>
-                  <p className="text-xs text-[#1A2F4B]/60">Fração 1/8 • +42% valorização</p>
-                </div>
-                <Button asChild className="w-full">
-                  <Link href="/casas">Ver Detalhes</Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Casa 2 - Chavantes Sunset */}
-            <Card className="border-2 border-[#1A2F4B]/20 hover:shadow-2xl transition-all overflow-hidden group">
-              <div className="aspect-[4/3] relative overflow-hidden">
-                <div
-                  className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-500"
-                  style={{
-                    backgroundImage:
-                      "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format&fit=crop')",
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute top-4 right-4">
-                  <span className="bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg">
-                    DISPONÍVEL
-                  </span>
-                </div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-xl font-serif font-bold text-white mb-1">
-                    Casa Chavantes - Condomínio Sunset
-                  </h3>
-                  <div className="flex items-center gap-2 text-white/90">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-sm">1º de Maio, PR</span>
-                  </div>
-                </div>
-              </div>
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4 text-sm text-[#1A2F4B]/70 mb-3">
-                  <div className="flex items-center gap-1">
-                    <Bed className="w-4 h-4" />
-                    <span>3 suítes</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Home className="w-4 h-4" />
-                    <span>220m²</span>
-                  </div>
-                </div>
-                <div className="mb-3">
-                  <p className="text-2xl font-bold text-[#1A2F4B]">R$ 285.000</p>
-                  <p className="text-xs text-[#1A2F4B]/60">Fração 1/8 • +28% valorização</p>
-                </div>
-                <Button asChild className="w-full">
-                  <Link href="/casas">Ver Detalhes</Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Casa 3 - Lakeside Residence */}
-            <Card className="border-2 border-[#1A2F4B]/20 hover:shadow-2xl transition-all overflow-hidden group">
-              <div className="aspect-[4/3] relative overflow-hidden">
-                <div
-                  className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-500"
-                  style={{
-                    backgroundImage:
-                      "url('https://images.unsplash.com/photo-1600566753151-384129cf4e3e?q=80&w=2070&auto=format&fit=crop')",
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute top-4 right-4">
-                  <span className="bg-blue-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg">
-                    PRÉ-LANÇAMENTO
-                  </span>
-                </div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-xl font-serif font-bold text-white mb-1">
-                    Casa Alvorada - Lakeside
-                  </h3>
-                  <div className="flex items-center gap-2 text-white/90">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-sm">Alvorada do Sul, PR</span>
-                  </div>
-                </div>
-              </div>
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4 text-sm text-[#1A2F4B]/70 mb-3">
-                  <div className="flex items-center gap-1">
-                    <Bed className="w-4 h-4" />
-                    <span>4 suítes</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Home className="w-4 h-4" />
-                    <span>250m²</span>
-                  </div>
-                </div>
-                <div className="mb-3">
-                  <p className="text-2xl font-bold text-[#1A2F4B]">R$ 320.000</p>
-                  <p className="text-xs text-[#1A2F4B]/60">Fração 1/8 • +35% valorização</p>
-                </div>
-                <Button asChild className="w-full">
-                  <Link href="/casas">Ver Detalhes</Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Casa 4 - Porto Rico Sunset */}
-            <Card className="border-2 border-[#1A2F4B]/20 hover:shadow-2xl transition-all overflow-hidden group">
-              <div className="aspect-[4/3] relative overflow-hidden">
-                <div
-                  className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-500"
-                  style={{
-                    backgroundImage:
-                      "url('https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071&auto=format&fit=crop')",
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute top-4 right-4">
-                  <span className="bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg">
-                    DISPONÍVEL
-                  </span>
-                </div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-xl font-serif font-bold text-white mb-1">
-                    Casa Porto Rico - Sunset View
-                  </h3>
-                  <div className="flex items-center gap-2 text-white/90">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-sm">Porto Rico, PR</span>
-                  </div>
-                </div>
-              </div>
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4 text-sm text-[#1A2F4B]/70 mb-3">
-                  <div className="flex items-center gap-1">
-                    <Bed className="w-4 h-4" />
-                    <span>3 suítes</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Home className="w-4 h-4" />
-                    <span>240m²</span>
-                  </div>
-                </div>
-                <div className="mb-3">
-                  <p className="text-2xl font-bold text-[#1A2F4B]">R$ 350.000</p>
-                  <p className="text-xs text-[#1A2F4B]/60">Fração 1/8 • +38% valorização</p>
-                </div>
-                <Button asChild className="w-full">
-                  <Link href="/casas">Ver Detalhes</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+          {highlightedProperties.length > 0 ? (
+            <div className="flex flex-wrap justify-center gap-6 max-w-7xl mx-auto">
+              {highlightedProperties.map((property) => {
+                const images = Array.isArray(property.images) ? property.images : [];
+                const firstImage = images[0] || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop';
+                const status = getStatusBadge(property.status);
+                
+                return (
+                  <Card key={property.id} className="border-2 border-vivant-gold hover:shadow-2xl transition-all overflow-hidden group w-full md:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]">
+                    <div className="aspect-[4/3] relative overflow-hidden">
+                      <div
+                        className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-500"
+                        style={{
+                          backgroundImage: `url('${firstImage}')`,
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute top-4 right-4">
+                        <span className={`${status.color} text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg`}>
+                          {property.highlight ? '🔥 DESTAQUE' : status.label}
+                        </span>
+                      </div>
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <h3 className="text-xl font-serif font-bold text-white mb-1">
+                          {property.name}
+                        </h3>
+                        <div className="flex items-center gap-2 text-white/90">
+                          <MapPin className="w-4 h-4" />
+                          <span className="text-sm">{property.location}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <CardContent className="p-5">
+                      <div className="flex items-center gap-4 text-sm text-[#1A2F4B]/70 mb-3">
+                        <div className="flex items-center gap-1">
+                          <Bed className="w-4 h-4" />
+                          <span>{property.bedrooms} suítes</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Home className="w-4 h-4" />
+                          <span>{property.area}m²</span>
+                        </div>
+                      </div>
+                      <div className="mb-3">
+                        <p className="text-2xl font-bold text-[#1A2F4B]">{property.price}</p>
+                        <p className="text-xs text-[#1A2F4B]/60">Fração {property.fraction} • {property.appreciation}</p>
+                      </div>
+                      <Button asChild className="w-full">
+                        <Link href={`/casas/${property.slug}`}>Ver Detalhes</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-center text-[#1A2F4B]/60">Nenhuma casa em destaque no momento.</p>
+          )}
 
           <div className="text-center mt-8">
             <Button asChild size="lg" className="min-h-[48px]">

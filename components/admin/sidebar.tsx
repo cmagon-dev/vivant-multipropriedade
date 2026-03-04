@@ -16,7 +16,7 @@ interface AdminSidebarProps {
   user: {
     name: string;
     email: string;
-    role: string;
+    role?: string;
     image?: string;
   };
 }
@@ -27,12 +27,12 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
       {/* Logo */}
-      <div className="h-16 flex items-center px-6 border-b border-gray-200">
+      <div className="h-16 flex items-center px-6 border-b border-gray-200 flex-shrink-0">
         <img src="/logo-vivant.png" alt="Vivant" className="h-10" />
       </div>
       
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-1">
+      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
         {navigation.map((item) => {
           if (item.adminOnly && user.role !== "ADMIN") return null;
           
@@ -57,7 +57,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
       </nav>
       
       {/* User Info */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-vivant-navy text-white flex items-center justify-center font-bold">
             {user.name.charAt(0).toUpperCase()}

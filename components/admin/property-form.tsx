@@ -19,9 +19,16 @@ import { toast } from "sonner";
 interface PropertyFormProps {
   property?: any;
   destinations: Array<{ id: string; name: string }>;
+  apiPath?: string;
+  redirectPath?: string;
 }
 
-export function PropertyForm({ property, destinations }: PropertyFormProps) {
+export function PropertyForm({ 
+  property, 
+  destinations,
+  apiPath = "/api/properties",
+  redirectPath = "/admin/casas"
+}: PropertyFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditing = !!property;
@@ -41,6 +48,8 @@ export function PropertyForm({ property, destinations }: PropertyFormProps) {
       bedrooms: 3,
       bathrooms: 3,
       area: 200,
+      maxGuests: undefined,
+      totalCotas: undefined,
       fraction: "1/8",
       price: "",
       monthlyFee: "",
@@ -68,8 +77,8 @@ export function PropertyForm({ property, destinations }: PropertyFormProps) {
     setIsSubmitting(true);
     try {
       const url = isEditing 
-        ? `/api/properties/${property.id}` 
-        : "/api/properties";
+        ? `${apiPath}/${property.id}` 
+        : apiPath;
       const method = isEditing ? "PUT" : "POST";
       
       const res = await fetch(url, {
@@ -80,7 +89,7 @@ export function PropertyForm({ property, destinations }: PropertyFormProps) {
       
       if (res.ok) {
         toast.success(isEditing ? "Casa atualizada!" : "Casa criada!");
-        router.push("/admin/casas");
+        router.push(redirectPath);
         router.refresh();
       } else {
         const error = await res.json();
@@ -257,6 +266,34 @@ export function PropertyForm({ property, destinations }: PropertyFormProps) {
           </div>
         </div>
         
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="maxGuests">Capacidade Máxima de Hóspedes</Label>
+            <Input
+              id="maxGuests"
+              type="number"
+              {...register("maxGuests", { valueAsNumber: true })}
+              placeholder="10"
+            />
+            {errors.maxGuests && (
+              <p className="text-sm text-red-600 mt-1">{errors.maxGuests.message}</p>
+            )}
+          </div>
+          
+          <div>
+            <Label htmlFor="totalCotas">Total de Cotas da Propriedade</Label>
+            <Input
+              id="totalCotas"
+              type="number"
+              {...register("totalCotas", { valueAsNumber: true })}
+              placeholder="8"
+            />
+            {errors.totalCotas && (
+              <p className="text-sm text-red-600 mt-1">{errors.totalCotas.message}</p>
+            )}
+          </div>
+        </div>
+        
         <div>
           <Label>Características da Casa</Label>
           <FeaturesInput
@@ -399,7 +436,12 @@ export function PropertyForm({ property, destinations }: PropertyFormProps) {
           
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label htmlFor="highlight">Destacar esta casa?</Label>
+              <div>
+                <Label htmlFor="highlight">Exibir na Home como Destaque?</Label>
+                <p className="text-xs text-gray-500 mt-1">
+                  Esta casa aparecerá na seção "Casas em Destaque" da página inicial
+                </p>
+              </div>
               <Switch
                 id="highlight"
                 checked={highlightValue}

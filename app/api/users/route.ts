@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAdminSession } from "@/lib/auth-session";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { userCreateSchema } from "@/lib/validations/user";
@@ -8,9 +8,9 @@ import { createAuditLog } from "@/lib/audit";
 
 // GET /api/users - Listar usuários (ADMIN only)
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   
-  if (!session || session.user.role !== "ADMIN") {
+  if (!session || !session.user.role || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   
@@ -45,9 +45,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/users - Criar usuário (ADMIN only)
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   
-  if (!session || session.user.role !== "ADMIN") {
+  if (!session || !session.user.role || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   

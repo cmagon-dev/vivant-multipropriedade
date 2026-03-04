@@ -169,16 +169,26 @@ export function InvestmentForm({ onSubmit }: InvestmentFormProps): JSX.Element {
         </form>
 
         {/* Informações */}
-        <div className="mt-6 p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-200">
-          <h4 className="font-semibold text-xs sm:text-sm text-slate-700 mb-2">
-            📊 Parâmetros da Análise:
-          </h4>
-          <ul className="text-xs text-slate-600 space-y-1">
-            <li>• Prazo: 60 meses (5 anos)</li>
-            <li>• Taxa: 1% a.m. (~12,68% a.a.)</li>
-            <li>• Split: 50% Mensal + 50% Anual</li>
-            <li>• Correção: IPCA aplicado ao saldo</li>
-          </ul>
+        <div className="mt-6 space-y-3">
+          <div className="p-3 sm:p-4 bg-vivant-gold/10 rounded-lg border border-vivant-gold/30">
+            <p className="text-xs sm:text-sm text-[#1A2F4B] font-medium">
+              🔓 <strong>Acesso à Análise Completa:</strong> Após calcular, você
+              precisará fornecer seus dados de contato para visualizar os
+              resultados detalhados da análise de investimento.
+            </p>
+          </div>
+
+          <div className="p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <h4 className="font-semibold text-xs sm:text-sm text-slate-700 mb-2">
+              📊 Parâmetros da Análise:
+            </h4>
+            <ul className="text-xs text-slate-600 space-y-1">
+              <li>• Prazo: 60 meses (5 anos)</li>
+              <li>• Taxa: 1% a.m. (~12,68% a.a.)</li>
+              <li>• Split: 50% Mensal + 50% Anual</li>
+              <li>• Correção: IPCA aplicado ao saldo</li>
+            </ul>
+          </div>
         </div>
       </CardContent>
     </Card>

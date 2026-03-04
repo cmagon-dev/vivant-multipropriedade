@@ -19,6 +19,7 @@ export const destinationCreateSchema = z.object({
   description: z.string().min(50),
   climate: z.string().min(20),
   lifestyle: z.string().min(20),
+  images: z.array(z.string().url()).default([]),
   features: z.array(featureSchema).min(4).max(4),
   appreciation: z.string(),
   published: z.boolean().default(false),

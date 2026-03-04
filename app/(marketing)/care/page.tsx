@@ -77,10 +77,10 @@ export default function CarePage(): JSX.Element {
                 size="lg"
                 className="bg-white text-vivant-green hover:bg-white/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
               >
-                <a href="#servicos">
-                  Conheça nossos Serviços
+                <Link href="/contato">
+                  Quero conhecer mais
                   <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
-                </a>
+                </Link>
               </Button>
 
               <Button
@@ -89,7 +89,7 @@ export default function CarePage(): JSX.Element {
                 variant="outline"
                 className="bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-vivant-green text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
               >
-                <Link href="/portal-cotista">Área do Cotista</Link>
+                <Link href="/portal-cotista">Acessar Portal do Cotista</Link>
               </Button>
             </div>
           </div>
@@ -291,7 +291,7 @@ export default function CarePage(): JSX.Element {
               size="lg"
               className="bg-white text-[#1A2F4B] hover:bg-white/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
             >
-              <Link href="/casas">Ver Casas Disponíveis</Link>
+              <Link href="/portal-cotista">Acessar Portal do Cotista</Link>
             </Button>
 
             <Button

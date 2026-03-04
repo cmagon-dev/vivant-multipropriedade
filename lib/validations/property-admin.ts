@@ -15,6 +15,8 @@ export const propertyCreateSchema = z.object({
   bedrooms: z.number().int().positive().max(20),
   bathrooms: z.number().int().positive().max(20),
   area: z.number().int().positive(),
+  maxGuests: z.number().int().positive().max(50).optional(),
+  totalCotas: z.number().int().positive().max(20).optional(),
   fraction: z.string().regex(/^\d+\/\d+$/, "Fração inválida (ex: 1/8)"),
   price: z.string().min(3),
   monthlyFee: z.string().min(3),

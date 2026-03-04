@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAdminSession } from "@/lib/auth-session";
 import { prisma } from "@/lib/prisma";
 import { destinationCreateSchema } from "@/lib/validations/destination-admin";
 import { createAuditLog } from "@/lib/audit";
@@ -39,9 +39,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/destinations - Criar novo
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   
-  if (!session || !["ADMIN", "EDITOR"].includes(session.user.role)) {
+  if (!session || !session.user.role || !["ADMIN", "EDITOR"].includes(session.user.role)) {
     return NextResponse.json(
       { error: "Não autorizado" },
       { status: 401 }
@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
       changes: validated,
     });
     
+    revalidatePath("/");
     revalidatePath("/destinos");
     revalidatePath("/admin/destinos");
     

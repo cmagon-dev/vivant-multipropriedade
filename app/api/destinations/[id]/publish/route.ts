@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAdminSession } from "@/lib/auth-session";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog } from "@/lib/audit";
 import { canPublish } from "@/lib/permissions";
@@ -11,9 +11,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   
-  if (!session || !canPublish(session.user.role)) {
+  if (!session || !session.user.role || !canPublish(session.user.role)) {
     return NextResponse.json(
       { error: "Não autorizado" },
       { status: 401 }
@@ -40,6 +40,7 @@ export async function PATCH(
       changes: { published },
     });
     
+    revalidatePath("/");
     revalidatePath("/destinos");
     revalidatePath("/admin/destinos");
     

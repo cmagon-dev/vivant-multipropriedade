@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAdminSession } from "@/lib/auth-session";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { userUpdateSchema } from "@/lib/validations/user";
@@ -11,9 +11,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   
-  if (!session || session.user.role !== "ADMIN") {
+  if (!session || !session.user.role || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   
@@ -58,9 +58,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   
-  if (!session || session.user.role !== "ADMIN") {
+  if (!session || !session.user.role || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   
@@ -121,9 +121,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   
-  if (!session || session.user.role !== "ADMIN") {
+  if (!session || !session.user.role || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   

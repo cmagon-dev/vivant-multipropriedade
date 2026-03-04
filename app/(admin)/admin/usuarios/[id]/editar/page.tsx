@@ -2,14 +2,14 @@ import { prisma } from "@/lib/prisma";
 import { UserForm } from "@/components/admin/user-form";
 import { notFound, redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { authOptionsAdmin } from "@/lib/auth-admin";
 
 export default async function EditarUsuarioPage({
   params,
 }: {
   params: { id: string };
 }) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptionsAdmin);
   
   if (session?.user.role !== "ADMIN") {
     redirect("/admin/dashboard");

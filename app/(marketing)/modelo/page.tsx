@@ -18,6 +18,7 @@ import {
   Shield,
   Sparkles,
   Building2,
+  ArrowRight,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -57,9 +58,30 @@ export default function ModeloPage(): JSX.Element {
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold text-white mb-6 px-2">
             O Modelo Vivant
           </h1>
-          <p className="text-lg sm:text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto px-4">
+          <p className="text-lg sm:text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto mb-12 px-4">
             Invista de forma inteligente e tenha acesso a múltiplas casas de veraneio em destinos exclusivos
           </p>
+
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+            <Button
+              asChild
+              size="lg"
+              className="bg-white text-[#1A2F4B] hover:bg-white/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
+            >
+              <Link href="/contato">
+                Quero investir assim
+                <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+              </Link>
+            </Button>
+
+            <Button
+              asChild
+              size="lg"
+              className="bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-[#1A2F4B] text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
+            >
+              <Link href="/casas">Ver Casas Disponíveis</Link>
+            </Button>
+          </div>
         </div>
       </section>
 

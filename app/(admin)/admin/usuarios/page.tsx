@@ -5,10 +5,10 @@ import { UsersTable } from "@/components/admin/users-table";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { authOptionsAdmin } from "@/lib/auth-admin";
 
 export default async function UsersPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptionsAdmin);
   
   if (session?.user.role !== "ADMIN") {
     redirect("/admin/dashboard");

@@ -9,37 +9,102 @@ import { InvestmentKPIs } from "@/components/investment/investment-kpis";
 import { InvestmentChart } from "@/components/investment/investment-chart";
 import { CashFlowTable } from "@/components/investment/cash-flow-table";
 import { LiquidezSimulator } from "@/components/investment/liquidez-simulator";
+import { LeadCaptureDialog } from "@/components/investment/lead-capture-dialog";
 import { calculateInvestmentAnalysis } from "@/lib/math/investment-calculator";
-import type { InvestmentAnalysis } from "@/lib/math/investment-calculator";
+import type { InvestmentAnalysis, LiquidezResult } from "@/lib/math/investment-calculator";
 import type { InvestmentInputFormData } from "@/lib/validations/investment";
+import { generateInvestmentProposal } from "@/lib/utils/pdf-generator";
 import { Button } from "@/components/ui/button";
 import { Download, Info, ArrowRight } from "lucide-react";
 
 export default function SimuladorInvestimentosPage(): JSX.Element {
   const [analysis, setAnalysis] = useState<InvestmentAnalysis | null>(null);
+  const [isLeadCaptured, setIsLeadCaptured] = useState(false);
+  const [showLeadDialog, setShowLeadDialog] = useState(false);
+  const [pendingInvestmentData, setPendingInvestmentData] =
+    useState<InvestmentInputFormData | null>(null);
+  const [leadData, setLeadData] = useState<{
+    nome: string;
+    email: string;
+    telefone: string;
+  } | null>(null);
+  const [liquidezResult, setLiquidezResult] = useState<LiquidezResult | null>(null);
 
   const handleFormSubmit = (data: InvestmentInputFormData): void => {
-    const result = calculateInvestmentAnalysis(
-      data.valorInvestido,
-      data.ipcaProjetado
-    );
-    setAnalysis(result);
+    // Armazena os dados do investimento e abre o modal de captura de lead
+    setPendingInvestmentData(data);
+    setShowLeadDialog(true);
+  };
 
-    // Scroll suave para os resultados
-    setTimeout(() => {
-      const kpisElement = document.getElementById("investment-results");
-      if (kpisElement) {
-        kpisElement.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }, 100);
+  const handleLeadCaptured = (capturedLeadData: {
+    nome: string;
+    email: string;
+    telefone: string;
+  }): void => {
+    // Marca que o lead foi capturado e armazena os dados
+    setIsLeadCaptured(true);
+    setLeadData(capturedLeadData);
+
+    // Aqui você pode salvar o lead no banco de dados ou enviar para um serviço
+    console.log("Lead capturado:", capturedLeadData);
+
+    // Calcula a análise de investimento com os dados armazenados
+    if (pendingInvestmentData) {
+      const result = calculateInvestmentAnalysis(
+        pendingInvestmentData.valorInvestido,
+        pendingInvestmentData.ipcaProjetado
+      );
+      setAnalysis(result);
+
+      // Scroll suave para os resultados
+      setTimeout(() => {
+        const kpisElement = document.getElementById("investment-results");
+        if (kpisElement) {
+          kpisElement.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 300);
+    }
+  };
+
+  const handleDownloadPDF = (): void => {
+    if (!analysis) return;
+    generateInvestmentProposal(
+      analysis,
+      leadData || undefined,
+      liquidezResult || undefined
+    );
+  };
+
+  const handleLiquidezCalculated = (result: LiquidezResult): void => {
+    setLiquidezResult(result);
   };
 
   return (
     <div className="min-h-screen bg-[#F8F9FA]">
       <Navbar />
 
+      {/* Modal de Captura de Lead */}
+      <LeadCaptureDialog
+        open={showLeadDialog}
+        onOpenChange={setShowLeadDialog}
+        onLeadCaptured={handleLeadCaptured}
+      />
+
       {/* Hero Section */}
-      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden pt-32 sm:pt-36 lg:pt-40 bg-gradient-to-br from-[#1A2F4B] via-[#2A4F6B] to-[#1A2F4B]">
+      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden pt-32 sm:pt-36 lg:pt-40">
+        {/* Background Image with Overlay */}
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=2071&auto=format&fit=crop')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/85 via-[#1A2F4B]/75 to-[#F8F9FA]" />
+        </div>
+
         <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white mb-4 sm:mb-6 leading-tight">
@@ -78,7 +143,10 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
             <CashFlowTable analysis={analysis} />
 
             {/* Simulador de Liquidez */}
-            <LiquidezSimulator analysis={analysis} />
+            <LiquidezSimulator 
+              analysis={analysis} 
+              onLiquidezCalculated={handleLiquidezCalculated}
+            />
 
             {/* Ações e Download */}
             <div className="bg-white border-2 border-[#1A2F4B]/20 rounded-xl shadow-lg p-6 sm:p-8">
@@ -96,10 +164,11 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
                   <Button
                     size="lg"
                     variant="outline"
+                    onClick={handleDownloadPDF}
                     className="border-2 border-[#1A2F4B] text-[#1A2F4B] hover:bg-[#1A2F4B] hover:text-white transition-all min-h-[48px]"
                   >
                     <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                    Baixar Proposta
+                    Baixar Proposta em PDF
                   </Button>
 
                   <Button

@@ -50,6 +50,14 @@ export function CashFlowTable({ analysis }: CashFlowTableProps): JSX.Element {
     0
   );
 
+  // Calcular acumulado progressivo
+  const fluxoComAcumulado = analysis.fluxoAnualAgregado.map((row, index) => {
+    const acumulado = analysis.fluxoAnualAgregado
+      .slice(0, index + 1)
+      .reduce((sum, item) => sum + item.totalAno, 0);
+    return { ...row, acumulado };
+  });
+
   return (
     <Card className="border-2 border-vivant-navy/10">
       <CardHeader className="bg-gradient-to-r from-slate-50 to-purple-50">
@@ -88,7 +96,7 @@ export function CashFlowTable({ analysis }: CashFlowTableProps): JSX.Element {
                     </span>
                   </div>
                 </th>
-                <th className="py-4 px-4 text-right font-semibold rounded-tr-lg">
+                <th className="py-4 px-4 text-right font-semibold">
                   <div className="flex flex-col items-end">
                     <span>Total no Ano</span>
                     <span className="text-xs text-white/70 font-normal">
@@ -96,10 +104,18 @@ export function CashFlowTable({ analysis }: CashFlowTableProps): JSX.Element {
                     </span>
                   </div>
                 </th>
+                <th className="py-4 px-4 text-right font-semibold rounded-tr-lg">
+                  <div className="flex flex-col items-end">
+                    <span>Acumulado</span>
+                    <span className="text-xs text-white/70 font-normal">
+                      (Até o ano)
+                    </span>
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {analysis.fluxoAnualAgregado.map((row, index) => (
+              {fluxoComAcumulado.map((row, index) => (
                 <tr
                   key={row.ano}
                   className={`
@@ -140,6 +156,16 @@ export function CashFlowTable({ analysis }: CashFlowTableProps): JSX.Element {
                       </span>
                     </div>
                   </td>
+                  <td className="py-4 px-4 text-right">
+                    <div className="flex flex-col items-end">
+                      <span className="font-bold text-vivant-gold-muted text-lg">
+                        {formatCurrency(row.acumulado)}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        até ano {row.ano}
+                      </span>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -159,13 +185,23 @@ export function CashFlowTable({ analysis }: CashFlowTableProps): JSX.Element {
                 <td className="py-5 px-4 text-right text-purple-700 text-lg">
                   {formatCurrency(totalBaloes)}
                 </td>
-                <td className="py-5 px-4 text-right rounded-br-lg">
+                <td className="py-5 px-4 text-right">
                   <div className="flex flex-col items-end">
                     <span className="text-vivant-green text-2xl">
                       {formatCurrency(totalGeral)}
                     </span>
                     <span className="text-xs text-slate-600 font-normal">
                       Total a receber
+                    </span>
+                  </div>
+                </td>
+                <td className="py-5 px-4 text-right rounded-br-lg">
+                  <div className="flex flex-col items-end">
+                    <span className="text-vivant-gold-muted text-2xl">
+                      {formatCurrency(totalGeral)}
+                    </span>
+                    <span className="text-xs text-slate-600 font-normal">
+                      Acumulado total
                     </span>
                   </div>
                 </td>

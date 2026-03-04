@@ -8,13 +8,13 @@ import Link from "next/link";
 interface AdminHeaderProps {
   user: {
     name: string;
-    role: string;
+    role?: string;
   };
 }
 
 export function AdminHeader({ user }: AdminHeaderProps) {
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
+    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0">
       <div>
         <h1 className="text-xl font-bold text-vivant-navy">
           Painel Administrativo

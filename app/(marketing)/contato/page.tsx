@@ -29,17 +29,30 @@ export default function ContatoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#F8F9FA]">
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative pt-20 lg:pt-24 pb-16 lg:pb-20 bg-gradient-to-br from-[#1A2F4B] to-[#2A4F6B]">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold text-white mb-6">
+      <section className="relative min-h-[70vh] flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-40">
+        {/* Background Image with Overlay */}
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1423666639041-f56000c27a9a?q=80&w=2074&auto=format&fit=crop')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/80 via-[#1A2F4B]/70 to-white" />
+        </div>
+
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8 sm:pt-12">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold text-white mb-6 px-2">
               Entre em Contato
             </h1>
-            <p className="text-lg sm:text-xl text-white/90 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-white/90 max-w-2xl mx-auto px-4 mb-12">
               Nossa equipe está pronta para esclarecer suas dúvidas e ajudá-lo a realizar o sonho da casa de férias.
             </p>
           </div>
@@ -47,7 +60,7 @@ export default function ContatoPage() {
       </section>
 
       {/* Formulário de Contato */}
-      <section className="py-16 lg:py-20 bg-white">
+      <section className="py-16 lg:py-20 bg-[#F8F9FA]">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-12">
@@ -141,15 +154,11 @@ export default function ContatoPage() {
                       className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-vivant-gold focus:ring-2 focus:ring-vivant-gold/20 outline-none transition-all bg-white"
                     >
                       <option value="">Selecione uma opção</option>
-                      <option value="Investir em Multipropriedade">Investir em Multipropriedade</option>
-                      <option value="Cadastrar Meu Imóvel (Vivant Partners)">Cadastrar Meu Imóvel (Vivant Partners)</option>
-                      <option value="Conhecer Vivant Capital">Conhecer Vivant Capital</option>
-                      <option value="Informações sobre Vivant Care">Informações sobre Vivant Care</option>
-                      <option value="Agendar Visita às Propriedades">Agendar Visita às Propriedades</option>
-                      <option value="Trabalhe Conosco">Trabalhe Conosco</option>
-                      <option value="Parcerias Comerciais">Parcerias Comerciais</option>
-                      <option value="Dúvidas Gerais">Dúvidas Gerais</option>
-                      <option value="Outro">Outro</option>
+                      <option value="Quero ser um Cliente Cotista">Quero ser um Cliente Cotista</option>
+                      <option value="Quero vender/fracionar meu imóvel">Quero vender/fracionar meu imóvel</option>
+                      <option value="Quero ser um Investidor Vivant">Quero ser um Investidor Vivant</option>
+                      <option value="Quero conhecer o modelo melhor">Quero conhecer o modelo melhor</option>
+                      <option value="Quero trabalhar com a Vivant">Quero trabalhar com a Vivant</option>
                     </select>
                   </div>
 
@@ -208,7 +217,7 @@ export default function ContatoPage() {
       </section>
 
       {/* Informações de Contato */}
-      <section className="py-16 lg:py-20 bg-gray-50">
+      <section className="py-16 lg:py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-8">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-6">

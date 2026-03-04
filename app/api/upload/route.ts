@@ -1,12 +1,12 @@
 import { put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAdminSession } from "@/lib/auth-session";
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   
-  if (!session || !["ADMIN", "EDITOR"].includes(session.user.role)) {
+  if (!session || !session.user.role || !["ADMIN", "EDITOR"].includes(session.user.role)) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   

@@ -38,6 +38,7 @@ import {
   CheckCircle2,
   X,
   SlidersHorizontal,
+  ArrowRight,
 } from "lucide-react";
 
 interface Property {
@@ -192,7 +193,7 @@ export function CasasClient({ properties }: CasasClientProps) {
           className="absolute inset-0 z-0"
           style={{
             backgroundImage:
-              "url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop')",
+              "url('https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?q=80&w=2070&auto=format&fit=crop')",
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
@@ -205,10 +206,23 @@ export function CasasClient({ properties }: CasasClientProps) {
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold text-white mb-6">
             Nossas Casas
           </h1>
-          <p className="text-xl text-white/90 max-w-2xl mx-auto">
+          <p className="text-xl text-white/90 max-w-2xl mx-auto mb-8">
             Descubra propriedades exclusivas em destinos paradisíacos.
             Multipropriedade inteligente com valorização garantida.
           </p>
+
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+            <Button
+              asChild
+              size="lg"
+              className="bg-white text-[#1A2F4B] hover:bg-white/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
+            >
+              <Link href="/contato">
+                Tenho interesse
+                <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 

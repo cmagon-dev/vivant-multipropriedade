@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAdminSession } from "@/lib/auth-session";
 import { prisma } from "@/lib/prisma";
 import { propertyUpdateSchema } from "@/lib/validations/property-admin";
 import { createAuditLog } from "@/lib/audit";
@@ -45,9 +45,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   
-  if (!session || !["ADMIN", "EDITOR"].includes(session.user.role)) {
+  if (!session || !session.user.role || !["ADMIN", "EDITOR"].includes(session.user.role)) {
     return NextResponse.json(
       { error: "Não autorizado" },
       { status: 401 }
@@ -71,6 +71,7 @@ export async function PUT(
       changes: validated,
     });
     
+    revalidatePath("/");
     revalidatePath("/casas");
     revalidatePath("/admin/casas");
     
@@ -95,9 +96,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   
-  if (!session || !canDelete(session.user.role)) {
+  if (!session || !session.user.role || !canDelete(session.user.role)) {
     return NextResponse.json(
       { error: "Não autorizado" },
       { status: 401 }
@@ -116,6 +117,7 @@ export async function DELETE(
       entityId: params.id,
     });
     
+    revalidatePath("/");
     revalidatePath("/casas");
     revalidatePath("/admin/casas");
     
