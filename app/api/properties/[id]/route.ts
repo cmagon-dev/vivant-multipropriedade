@@ -7,6 +7,8 @@ import { createAuditLog } from "@/lib/audit";
 import { canDelete } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/properties/[id] - Buscar uma específica
 export async function GET(
   request: NextRequest,

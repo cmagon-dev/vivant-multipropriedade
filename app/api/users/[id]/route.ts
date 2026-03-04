@@ -6,6 +6,8 @@ import bcrypt from "bcryptjs";
 import { userUpdateSchema } from "@/lib/validations/user";
 import { createAuditLog } from "@/lib/audit";
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/users/[id] - Buscar um específico
 export async function GET(
   request: NextRequest,

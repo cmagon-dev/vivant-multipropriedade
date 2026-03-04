@@ -6,3 +6,4 @@ const handler = NextAuth(authOptionsCotista);
 export { handler as GET, handler as POST };
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';

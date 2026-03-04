@@ -6,6 +6,8 @@ import { propertyCreateSchema } from "@/lib/validations/property-admin";
 import { createAuditLog } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/properties - Listar todas (com filtros)
 export async function GET(request: NextRequest) {
   try {

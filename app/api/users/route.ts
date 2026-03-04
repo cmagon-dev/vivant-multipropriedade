@@ -6,6 +6,8 @@ import bcrypt from "bcryptjs";
 import { userCreateSchema } from "@/lib/validations/user";
 import { createAuditLog } from "@/lib/audit";
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/users - Listar usuários (ADMIN only)
 export async function GET(request: NextRequest) {
   const session = await getAdminSession();

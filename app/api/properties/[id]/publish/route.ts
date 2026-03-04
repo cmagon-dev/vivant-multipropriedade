@@ -6,6 +6,8 @@ import { createAuditLog } from "@/lib/audit";
 import { canPublish } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
 
+export const dynamic = 'force-dynamic';
+
 // PATCH /api/properties/[id]/publish - Toggle published
 export async function PATCH(
   request: NextRequest,

@@ -6,6 +6,8 @@ import { destinationCreateSchema } from "@/lib/validations/destination-admin";
 import { createAuditLog } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/destinations - Listar todos
 export async function GET(request: NextRequest) {
   try {

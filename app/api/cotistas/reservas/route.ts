@@ -3,6 +3,8 @@ import { getCotistaSession } from "@/lib/auth-session";
 import { prisma } from "@/lib/prisma";
 import { getWeekInfo } from "@/lib/calendar-rotation";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getCotistaSession();

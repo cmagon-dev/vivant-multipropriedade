@@ -7,3 +7,4 @@ export { handler as GET, handler as POST };
 
 // Configuração runtime para Vercel
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';

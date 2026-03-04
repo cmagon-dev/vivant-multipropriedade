@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { sendInviteEmail } from "@/lib/email";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getAdminSession();

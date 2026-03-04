@@ -3,6 +3,8 @@ import { getCotistaSession } from "@/lib/auth-session";
 import { prisma } from "@/lib/prisma";
 import { put } from "@vercel/blob";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
