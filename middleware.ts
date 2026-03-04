@@ -124,6 +124,12 @@ export async function middleware(request: NextRequest) {
   
   // Vivant Care → Portal do Cotista
   if (domain === "vivantcare.com.br") {
+    if (pathname.startsWith("/dashboard") || pathname.startsWith("/api")) {
+      const response = NextResponse.next();
+      response.headers.set("x-vivant-domain", "care");
+      return response;
+    }
+    
     const url = new URL("/portal-cotista", request.url);
     const response = NextResponse.rewrite(url);
     response.headers.set("x-vivant-domain", "care");
