@@ -4,12 +4,12 @@
 
 **URL:** `https://vivantresidences.com.br/admin`
 
-## 🔐 Credenciais Iniciais
+## 🔐 Credenciais Iniciais (após seed)
 
-- **Email:** admin@vivant.com.br
-- **Senha:** vivant@2024
+- **Email:** caio@vivant.com.br
+- **Senha:** admin123
 
-> ⚠️ **IMPORTANTE:** Altere a senha após o primeiro login!
+> ⚠️ **IMPORTANTE:** Altere a senha após o primeiro login em produção!
 
 ---
 

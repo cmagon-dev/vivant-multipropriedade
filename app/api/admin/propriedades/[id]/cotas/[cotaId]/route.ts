@@ -1,18 +1,16 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { getAdminSession } from "@/lib/auth-session";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
-
-export const dynamic = 'force-dynamic';
 
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string; cotaId: string } }
 ) {
   try {
-    const session = await getAdminSession();
+    const session = await getServerSession(authOptions);
 
     if (!session || session.user.userType !== "admin") {
       return NextResponse.json(
@@ -100,7 +98,7 @@ export async function DELETE(
   { params }: { params: { id: string; cotaId: string } }
 ) {
   try {
-    const session = await getAdminSession();
+    const session = await getServerSession(authOptions);
 
     if (!session || session.user.userType !== "admin") {
       return NextResponse.json(

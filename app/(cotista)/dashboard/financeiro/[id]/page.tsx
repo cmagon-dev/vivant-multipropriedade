@@ -27,35 +27,44 @@ export default function ChargeDetailPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [comprovante, setComprovante] = useState<File | null>(null);
+  const [cobrancas, setCobrancas] = useState<any[]>([]);
   const [filtro, setFiltro] = useState<string | null>(null);
-  const [todasCobrancas, setTodasCobrancas] = useState<any[]>([]);
 
   useEffect(() => {
-    async function loadData() {
+    async function loadCharge() {
       try {
-        const [chargeRes, cobrancasRes] = await Promise.all([
-          fetch(`/api/cotistas/cobrancas/${params.id}`),
-          fetch(`/api/cotistas/me/cobrancas`)
-        ]);
-        
-        if (chargeRes.ok) {
-          const data = await chargeRes.json();
+        const response = await fetch(`/api/cotistas/cobrancas/${params.id}`);
+        if (response.ok) {
+          const data = await response.json();
           setCharge(data.cobranca);
         }
-        
-        if (cobrancasRes.ok) {
-          const data = await cobrancasRes.json();
-          setTodasCobrancas(data.cobrancas || []);
-        }
       } catch (error) {
-        console.error("Erro ao carregar dados:", error);
+        console.error("Erro ao carregar cobrança:", error);
       } finally {
         setLoading(false);
       }
     }
 
-    loadData();
+    loadCharge();
   }, [params.id]);
+
+  useEffect(() => {
+    async function loadCobrancas() {
+      try {
+        const url = filtro
+          ? `/api/cotistas/me/cobrancas?status=${filtro}&limit=50`
+          : "/api/cotistas/me/cobrancas?limit=50";
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          setCobrancas(data.cobrancas || []);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar cobranças:", error);
+      }
+    }
+    loadCobrancas();
+  }, [filtro]);
 
   const handleUploadComprovante = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -328,25 +337,19 @@ export default function ChargeDetailPage() {
             </Button>
           </div>
 
-          {(() => {
-            const cobrancasFiltradas = filtro 
-              ? todasCobrancas.filter((c) => c.status === filtro)
-              : todasCobrancas;
-            
-            return cobrancasFiltradas.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-[#1A2F4B]/60 text-sm">
-                  Nenhuma cobrança encontrada
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {cobrancasFiltradas.map((c) => (
-                  <ChargeCard key={c.id} charge={c} />
-                ))}
-              </div>
-            );
-          })()}
+          {cobrancas.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-[#1A2F4B]/60 text-sm">
+                Nenhuma cobrança encontrada
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {cobrancas.map((c) => (
+                <ChargeCard key={c.id} charge={c} />
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

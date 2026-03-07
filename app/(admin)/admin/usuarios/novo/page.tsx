@@ -1,15 +1,14 @@
 import { UserForm } from "@/components/admin/user-form";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
-import { authOptionsAdmin } from "@/lib/auth-admin";
+import { authOptions } from "@/lib/auth";
+import { hasPermission } from "@/lib/auth/permissions";
 
 export default async function NovoUsuarioPage() {
-  const session = await getServerSession(authOptionsAdmin);
-  
-  if (session?.user.role !== "ADMIN") {
-    redirect("/admin/dashboard");
-  }
-  
+  const session = await getServerSession(authOptions);
+  if (!session) redirect("/login");
+  if (!hasPermission(session as any, "users.manage")) redirect("/admin/overview");
+
   return (
     <div className="max-w-2xl space-y-6">
       <div>

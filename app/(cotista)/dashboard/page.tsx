@@ -20,6 +20,7 @@ interface DashboardStats {
   pagamentosPendentes: number;
   propriedades: number;
   proximaSemana: string | null;
+  statusFinanceiro?: "EM_DIA" | "PENDENTE";
 }
 
 export default function DashboardPage() {
@@ -91,10 +92,10 @@ export default function DashboardPage() {
         />
         <StatsCard
           title="Status"
-          value="Em dia"
-          subtitle="Todas obrigações ok"
+          value={stats?.statusFinanceiro === "PENDENTE" ? "Pendente" : "Em dia"}
+          subtitle={stats?.statusFinanceiro === "PENDENTE" ? "Cobranças em aberto" : "Todas obrigações ok"}
           icon={CheckCircle2}
-          color="green"
+          color={stats?.statusFinanceiro === "PENDENTE" ? "orange" : "green"}
         />
       </div>
 

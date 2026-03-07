@@ -1,18 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { getAdminSession } from "@/lib/auth-session";
+import { authOptions } from "@/lib/auth";
+import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
-
-export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getAdminSession();
-    
-    if (!session || !session.user.role || session.user.role !== "ADMIN") {
+    const session = await getServerSession(authOptions);
+
+    if (!session || (session.user as { userType?: string }).userType !== "admin") {
       return NextResponse.json(
         { error: "Não autorizado" },
         { status: 401 }
+      );
+    }
+
+    const canAccess =
+      hasPermission(session as any, "vivantCare.cotistas.view") ||
+      hasPermission(session as any, "vivantCare.cotistas.manage") ||
+      (session.user as { role?: string }).role === "ADMIN";
+
+    if (!canAccess) {
+      return NextResponse.json(
+        { error: "Sem permissão para listar cotistas" },
+        { status: 403 }
       );
     }
 

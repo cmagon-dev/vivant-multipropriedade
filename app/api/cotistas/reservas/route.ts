@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCotistaSession } from "@/lib/auth-session";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWeekInfo } from "@/lib/calendar-rotation";
 
-export const dynamic = 'force-dynamic';
-
 export async function POST(request: NextRequest) {
   try {
-    const session = await getCotistaSession();
-
-    if (!session) {
+    const session = await getServerSession(authOptions);
+    
+    if (!session || (session.user as any).userType !== "cotista") {
       return NextResponse.json(
         { error: "Não autorizado" },
         { status: 401 }

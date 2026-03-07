@@ -1,14 +1,13 @@
 import { put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { getAdminSession } from "@/lib/auth-session";
-
-export const dynamic = 'force-dynamic';
+import { authOptions } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
-  const session = await getAdminSession();
+  const session = await getServerSession(authOptions);
   
-  if (!session || !session.user.role || !["ADMIN", "EDITOR"].includes(session.user.role)) {
+  const role = session?.user?.role;
+  if (!session || role == null || !["ADMIN", "EDITOR"].includes(role)) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   

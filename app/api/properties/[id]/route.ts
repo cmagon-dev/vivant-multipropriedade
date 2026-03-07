@@ -1,22 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { getAdminSession } from "@/lib/auth-session";
+import { authOptions } from "@/lib/auth";
+import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 import { propertyUpdateSchema } from "@/lib/validations/property-admin";
 import { createAuditLog } from "@/lib/audit";
-import { canDelete } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
 
-export const dynamic = 'force-dynamic';
-
-// GET /api/properties/[id] - Buscar uma específica
+// GET /api/properties/[id] - Buscar uma específica — exige properties.view
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
+  if (!hasPermission(session as any, "properties.view") && !hasPermission(session as any, "properties.manage")) {
+    return NextResponse.json({ error: "Sem permissão para ver propriedade" }, { status: 403 });
+  }
+  const { id } = await params;
   try {
     const property = await prisma.property.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         destino: true,
         createdBy: {
@@ -42,26 +48,25 @@ export async function GET(
   }
 }
 
-// PUT /api/properties/[id] - Atualizar
+// PUT /api/properties/[id] - Atualizar — exige properties.edit ou properties.manage
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getAdminSession();
-  
-  if (!session || !session.user.role || !["ADMIN", "EDITOR"].includes(session.user.role)) {
-    return NextResponse.json(
-      { error: "Não autorizado" },
-      { status: 401 }
-    );
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  
+  if (!hasPermission(session as any, "properties.edit") && !hasPermission(session as any, "properties.manage")) {
+    return NextResponse.json({ error: "Sem permissão para editar propriedade" }, { status: 403 });
+  }
+  const { id } = await params;
   try {
     const body = await request.json();
     const validated = propertyUpdateSchema.parse(body);
     
     const property = await prisma.property.update({
-      where: { id: params.id },
+      where: { id },
       data: validated
     });
     
@@ -93,30 +98,29 @@ export async function PUT(
   }
 }
 
-// DELETE /api/properties/[id] - Deletar
+// DELETE /api/properties/[id] - Deletar — exige properties.delete ou properties.manage
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getAdminSession();
-  
-  if (!session || !session.user.role || !canDelete(session.user.role)) {
-    return NextResponse.json(
-      { error: "Não autorizado" },
-      { status: 401 }
-    );
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  
+  if (!hasPermission(session as any, "properties.delete") && !hasPermission(session as any, "properties.manage")) {
+    return NextResponse.json({ error: "Sem permissão para excluir propriedade" }, { status: 403 });
+  }
+  const { id } = await params;
   try {
     await prisma.property.delete({
-      where: { id: params.id }
+      where: { id }
     });
     
     await createAuditLog({
       userId: session.user.id,
       action: "DELETE",
       entity: "Property",
-      entityId: params.id,
+      entityId: id,
     });
     
     revalidatePath("/");

@@ -12,6 +12,9 @@ declare module "next-auth" {
       userType: "admin" | "cotista";
       cpf?: string;
       phone?: string;
+      defaultRoute?: string | null;
+      roleKey?: string | null;
+      permissions?: string[];
     };
   }
 
@@ -20,6 +23,7 @@ declare module "next-auth" {
     userType?: "admin" | "cotista";
     cpf?: string;
     phone?: string;
+    defaultRoute?: string | null;
   }
 }
 
@@ -30,5 +34,8 @@ declare module "next-auth/jwt" {
     userType: "admin" | "cotista";
     cpf?: string;
     phone?: string;
+    defaultRoute?: string | null;
+    roleKey?: string | null;
+    permissions?: string[];
   }
 }

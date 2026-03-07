@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCotistaSession } from "@/lib/auth-session";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export const dynamic = 'force-dynamic';
-
 export async function GET(request: NextRequest) {
   try {
-    const session = await getCotistaSession();
+    const session = await getServerSession(authOptions);
     
-    if (!session) {
+    if (!session || (session.user as any).userType !== "cotista") {
       return NextResponse.json(
         { error: "Não autorizado" },
         { status: 401 }
@@ -67,11 +66,14 @@ export async function GET(request: NextRequest) {
       ? `Semana ${proximaReserva.numeroSemana} em ${proximaReserva.cota.property.name} - ${format(new Date(proximaReserva.dataInicio), "dd 'de' MMMM", { locale: ptBR })}`
       : null;
 
+    const statusFinanceiro = pagamentosPendentes > 0 ? "PENDENTE" : "EM_DIA";
+
     return NextResponse.json({
       proximasReservas: reservasProximas,
       pagamentosPendentes,
       propriedades: cotas,
-      proximaSemana
+      proximaSemana,
+      statusFinanceiro,
     });
 
   } catch (error) {

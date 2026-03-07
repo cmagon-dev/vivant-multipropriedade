@@ -40,7 +40,7 @@ export async function generateStaticParams() {
 }
 
 export default async function CasaPage({ params }: CasaPageProps) {
-  const property = await prisma.property.findUnique({
+  const property = await prisma.property.findFirst({
     where: { slug: params.slug, published: true },
     include: {
       destino: {

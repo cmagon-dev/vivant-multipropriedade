@@ -2,13 +2,13 @@
 
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { LogOut, ExternalLink } from "lucide-react";
-import Link from "next/link";
+import { LogOut } from "lucide-react";
 
 interface AdminHeaderProps {
   user: {
     name: string;
     role?: string;
+    roleKey?: string | null;
   };
 }
 
@@ -25,17 +25,6 @@ export function AdminHeader({ user }: AdminHeaderProps) {
       </div>
       
       <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          asChild
-        >
-          <Link href="/" target="_blank">
-            <ExternalLink className="w-4 h-4 mr-2" />
-            Ver Site
-          </Link>
-        </Button>
-        
         <Button
           variant="outline"
           size="sm"

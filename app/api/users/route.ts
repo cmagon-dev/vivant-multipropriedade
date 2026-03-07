@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { getAdminSession } from "@/lib/auth-session";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { userCreateSchema } from "@/lib/validations/user";
 import { createAuditLog } from "@/lib/audit";
+import { hasPermission } from "@/lib/auth/permissions";
+import { trackEvent } from "@/lib/telemetry/trackEvent";
 
-export const dynamic = 'force-dynamic';
-
-// GET /api/users - Listar usuários (ADMIN only)
+// GET /api/users - Listar usuários (users.manage)
 export async function GET(request: NextRequest) {
-  const session = await getAdminSession();
-  
-  if (!session || !session.user.role || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  if (!hasPermission(session as any, "users.manage")) {
+    return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
   }
   
   try {
@@ -25,6 +25,11 @@ export async function GET(request: NextRequest) {
         role: true,
         active: true,
         createdAt: true,
+        userRoleAssignments: {
+          take: 1,
+          orderBy: { id: "asc" },
+          select: { role: { select: { key: true, name: true } } },
+        },
         _count: {
           select: {
             properties: true,
@@ -34,8 +39,13 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { createdAt: "desc" }
     });
-    
-    return NextResponse.json(users);
+    const mapped = users.map((u) => ({
+      ...u,
+      roleKey: u.userRoleAssignments?.[0]?.role?.key ?? null,
+      roleName: u.userRoleAssignments?.[0]?.role?.name ?? null,
+      userRoleAssignments: undefined,
+    }));
+    return NextResponse.json(mapped);
   } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json(
@@ -45,38 +55,38 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/users - Criar usuário (ADMIN only)
+// POST /api/users - Criar usuário (users.manage). RBAC: roleKey obrigatório + extraPermissionKeys opcional.
 export async function POST(request: NextRequest) {
-  const session = await getAdminSession();
-  
-  if (!session || !session.user.role || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  if (!hasPermission(session as any, "users.manage")) {
+    return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
   }
-  
+
   try {
     const body = await request.json();
     const validated = userCreateSchema.parse(body);
-    
-    // Verificar se email já existe
+
     const existingUser = await prisma.user.findUnique({
-      where: { email: validated.email }
+      where: { email: validated.email },
     });
-    
     if (existingUser) {
-      return NextResponse.json(
-        { error: "Email já cadastrado" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email já cadastrado" }, { status: 400 });
     }
-    
+
     const hashedPassword = await bcrypt.hash(validated.password, 12);
-    
+    const roleKey = validated.roleKey ?? null;
+    if (!roleKey) {
+      return NextResponse.json({ error: "Role (RBAC) é obrigatório" }, { status: 400 });
+    }
+    const extraKeys = validated.extraPermissionKeys ?? [];
+
     const user = await prisma.user.create({
       data: {
         name: validated.name,
         email: validated.email,
         password: hashedPassword,
-        role: validated.role,
+        role: "EDITOR",
       },
       select: {
         id: true,
@@ -84,17 +94,54 @@ export async function POST(request: NextRequest) {
         email: true,
         role: true,
         createdAt: true,
-      }
+      },
     });
-    
+
+    const role = await prisma.role.findUnique({ where: { key: roleKey } });
+    if (!role) {
+      await prisma.user.delete({ where: { id: user.id } }).catch(() => {});
+      return NextResponse.json({ error: "Role inválido" }, { status: 400 });
+    }
+    const defaultCompany = await prisma.company.findFirst({ where: { slug: "default" } });
+    await prisma.userRoleAssignment.create({
+      data: {
+        userId: user.id,
+        roleId: role.id,
+        companyId: defaultCompany?.id ?? null,
+      },
+    });
+    for (const key of extraKeys) {
+      const perm = await prisma.permission.findUnique({ where: { key } });
+      if (perm) {
+        await prisma.userPermission.create({
+          data: {
+            userId: user.id,
+            permissionId: perm.id,
+            companyId: null,
+            granted: true,
+          },
+        });
+      }
+    }
+
     await createAuditLog({
       userId: session.user.id,
       action: "CREATE",
       entity: "User",
       entityId: user.id,
-      changes: { name: user.name, email: user.email, role: user.role },
+      changes: { name: user.name, email: user.email, roleKey },
     });
-    
+    trackEvent({
+      actorUserId: session.user.id,
+      actorRole: (session.user as { roleKey?: string }).roleKey ?? undefined,
+      type: "admin.user.created",
+      entityType: "User",
+      entityId: user.id,
+      status: "OK",
+      message: `Usuário criado: ${user.email}`,
+      meta: { roleKey, extraPermissionsCount: extraKeys.length },
+    }).catch(() => {});
+
     return NextResponse.json(user, { status: 201 });
   } catch (error: any) {
     console.error("Error creating user:", error);

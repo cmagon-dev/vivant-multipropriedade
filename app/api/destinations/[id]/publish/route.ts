@@ -1,33 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { getAdminSession } from "@/lib/auth-session";
+import { authOptions } from "@/lib/auth";
+import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog } from "@/lib/audit";
-import { canPublish } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
 
-export const dynamic = 'force-dynamic';
-
-// PATCH /api/destinations/[id]/publish - Toggle published
+// PATCH /api/destinations/[id]/publish - Toggle published — exige destinations.edit ou destinations.manage
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getAdminSession();
-  
-  if (!session || !session.user.role || !canPublish(session.user.role)) {
-    return NextResponse.json(
-      { error: "Não autorizado" },
-      { status: 401 }
-    );
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
+  if (!hasPermission(session as any, "destinations.edit") && !hasPermission(session as any, "destinations.manage")) {
+    return NextResponse.json({ error: "Sem permissão para publicar destino" }, { status: 403 });
+  }
+  const { id } = await params;
   
   try {
     const body = await request.json();
     const { published } = body;
     
     const destination = await prisma.destination.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         published,
         publishedAt: published ? new Date() : null

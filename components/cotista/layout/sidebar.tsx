@@ -127,7 +127,7 @@ export function Sidebar() {
           className={`w-full justify-start gap-3 text-red-600 hover:text-red-700 hover:bg-red-50 ${
             collapsed ? "px-3" : ""
           }`}
-          onClick={() => signOut({ callbackUrl: "/portal-cotista" })}
+          onClick={() => signOut({ callbackUrl: "/login" })}
         >
           <LogOut className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span className="font-medium text-sm">Sair</span>}

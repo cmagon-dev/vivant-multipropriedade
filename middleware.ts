@@ -1,162 +1,213 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { getPostLoginRedirectFromToken } from "@/lib/auth/middlewareRedirect";
+import { hasPermissionKey } from "@/lib/auth/permissions";
 
 export async function middleware(request: NextRequest) {
-  const hostname = request.headers.get("host") || "";
   const pathname = request.nextUrl.pathname;
-  
-  // Normaliza o hostname (remove www. e porta se houver)
-  const domain = hostname.replace("www.", "").split(":")[0].toLowerCase();
-  
-  // Não interceptar assets estáticos, fontes e APIs (exceto proteção admin)
+
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/static") ||
-    (pathname.includes(".") && !pathname.startsWith("/api")) // Qualquer arquivo com extensão (css, js, woff2, etc)
+    (pathname.includes(".") && !pathname.startsWith("/api"))
   ) {
     return NextResponse.next();
   }
-  
-  // Função helper para obter token de admin
-  async function getAdminToken() {
-    return await getToken({ 
-      req: request, 
-      secret: process.env.NEXTAUTH_SECRET,
-      cookieName: 'vivant.admin.session-token'
-    });
-  }
-  
-  // Função helper para obter token de cotista
-  async function getCotistaToken() {
-    return await getToken({ 
-      req: request, 
-      secret: process.env.NEXTAUTH_SECRET,
-      cookieName: 'vivant.cotista.session-token'
-    });
-  }
-  
-  // Proteção de rotas admin (Site Vivant)
-  if (pathname.startsWith("/admin") && !pathname.startsWith("/admin-portal")) {
-    const token = await getAdminToken();
-    
-    if (!token || token.userType !== "admin") {
-      const url = new URL("/login", request.url);
-      url.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(url);
-    }
-    
-    if (pathname === "/admin") {
-      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
-    }
-    
-    if (pathname.startsWith("/admin/usuarios") && token.role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
-    }
-  }
-  
-  // Proteção de rotas admin-portal (Portal do Cotista Admin)
-  if (pathname.startsWith("/admin-portal")) {
-    const token = await getAdminToken();
-    
-    if (!token || token.userType !== "admin") {
-      const url = new URL("/login", request.url);
-      url.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(url);
-    }
-  }
-  
-  // Proteção de rotas dashboard (cotistas)
-  if (pathname.startsWith("/dashboard")) {
-    const token = await getCotistaToken();
-    
-    if (!token || token.userType !== "cotista") {
-      const url = new URL("/portal-cotista", request.url);
-      return NextResponse.redirect(url);
-    }
-  }
-  
-  // Redirecionar /login para dashboard apropriado se já autenticado
-  if (pathname === "/login") {
-    const adminToken = await getAdminToken();
-    
-    if (adminToken && adminToken.userType === "admin") {
-      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
-    }
-    
-    // Se não está autenticado como admin, permite acessar /login normalmente
-    return NextResponse.next();
-  }
-  
-  // Redirecionar /portal-cotista para dashboard se já autenticado como cotista
+
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  // Redirecionar /portal-cotista para login único
   if (pathname === "/portal-cotista") {
-    const cotistaToken = await getCotistaToken();
-    
-    if (cotistaToken && cotistaToken.userType === "cotista") {
+    if (token?.userType === "cotista") {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
-    
-    // Se não está autenticado como cotista, permite acessar /portal-cotista normalmente
+    const url = new URL("/login", request.url);
+    url.searchParams.set("callbackUrl", "/dashboard");
+    return NextResponse.redirect(url);
+  }
+
+  // Raiz: não autenticado -> mostra a home (landing); autenticado -> redirect por role/defaultRoute
+  if (pathname === "/") {
+    if (token) {
+      const redirectUrl = getPostLoginRedirectFromToken(token);
+      return NextResponse.redirect(new URL(redirectUrl, request.url));
+    }
     return NextResponse.next();
   }
-  
-  // Não interceptar APIs que não sejam admin
-  if (pathname.startsWith("/api") && !pathname.startsWith("/api/admin")) {
+
+  // Login único: se já autenticado, redirecionar
+  if (pathname === "/login") {
+    if (token) {
+      const redirectUrl = getPostLoginRedirectFromToken(token);
+      return NextResponse.redirect(new URL(redirectUrl, request.url));
+    }
     return NextResponse.next();
   }
-  
-  // Roteamento multi-domínio para produção
-  // Vivant Capital → Página de apresentação + Simulador
-  if (domain === "vivantcapital.com.br") {
-    // Permitir acesso direto às rotas /dashboard/* (simulador, etc)
-    if (pathname.startsWith("/dashboard")) {
-      const response = NextResponse.next();
-      response.headers.set("x-vivant-domain", "capital");
-      return response;
+
+  // Proteção /admin: userType admin; cada rota exige sua permissão (menu único, rotas por permissão)
+  if (pathname.startsWith("/admin") && !pathname.startsWith("/admin-portal")) {
+    if (!token || token.userType !== "admin") {
+      const url = new URL("/login", request.url);
+      url.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(url);
     }
-    
-    // Página principal capital
-    const url = new URL("/capital", request.url);
-    const response = NextResponse.rewrite(url);
-    response.headers.set("x-vivant-domain", "capital");
-    return response;
-  }
-  
-  // Vivant Care → Portal do Cotista
-  if (domain === "vivantcare.com.br") {
-    if (pathname.startsWith("/dashboard") || pathname.startsWith("/api")) {
-      const response = NextResponse.next();
-      response.headers.set("x-vivant-domain", "care");
-      return response;
+    const permissions = (token.permissions as string[] | undefined) ?? [];
+    const isOwner = token.roleKey === "OWNER" || token.roleKey === "SUPER_ADMIN";
+    const hasAdminView = isOwner || hasPermissionKey(permissions, "admin.view") || token.roleKey === "ADMIN";
+    if (pathname === "/admin") {
+      if (hasAdminView) return NextResponse.redirect(new URL("/admin/overview", request.url));
+      if (hasPermissionKey(permissions, "comercial.view")) return NextResponse.redirect(new URL("/dashboard/comercial", request.url));
+      if (hasPermissionKey(permissions, "properties.view")) return NextResponse.redirect(new URL("/admin/casas", request.url));
+      if (hasPermissionKey(permissions, "destinations.view")) return NextResponse.redirect(new URL("/admin/destinos", request.url));
+      return NextResponse.redirect(new URL("/403", request.url));
     }
-    
-    const url = new URL("/portal-cotista", request.url);
-    const response = NextResponse.rewrite(url);
-    response.headers.set("x-vivant-domain", "care");
-    return response;
+    if (pathname === "/admin/overview" && !hasAdminView) {
+      return NextResponse.redirect(new URL("/403", request.url));
+    }
+    if (pathname.startsWith("/admin/roles") && !isOwner && !hasPermissionKey(permissions, "roles.manage")) {
+      return NextResponse.redirect(new URL("/admin/overview", request.url));
+    }
+    if (pathname.startsWith("/admin/permissions") && !isOwner && !hasPermissionKey(permissions, "permissions.manage")) {
+      return NextResponse.redirect(new URL("/admin/overview", request.url));
+    }
+    if (pathname.startsWith("/admin/usuarios") && !isOwner && !hasPermissionKey(permissions, "users.manage")) {
+      return NextResponse.redirect(new URL("/admin/overview", request.url));
+    }
+    if (pathname.startsWith("/admin/help") && !isOwner && !hasPermissionKey(permissions, "help.view") && !hasPermissionKey(permissions, "help.manage")) {
+      return NextResponse.redirect(new URL("/admin/overview", request.url));
+    }
+    if (pathname.startsWith("/admin/events") && !isOwner && !hasPermissionKey(permissions, "events.view")) {
+      return NextResponse.redirect(new URL("/admin/overview", request.url));
+    }
+    if (pathname.startsWith("/admin/tasks") && !isOwner && !hasPermissionKey(permissions, "tasks.view")) {
+      return NextResponse.redirect(new URL("/admin/overview", request.url));
+    }
+    if (pathname.startsWith("/admin/crm") && !isOwner && !hasPermissionKey(permissions, "crm.manage")) {
+      return NextResponse.redirect(new URL("/admin/overview", request.url));
+    }
+    if (pathname.startsWith("/admin/casas")) {
+      if (pathname === "/admin/casas/nova" || pathname.endsWith("/nova")) {
+        if (!isOwner && !hasPermissionKey(permissions, "properties.create") && !hasPermissionKey(permissions, "properties.manage")) {
+          return NextResponse.redirect(new URL("/admin/overview", request.url));
+        }
+      } else if (pathname.includes("/editar")) {
+        if (!isOwner && !hasPermissionKey(permissions, "properties.edit") && !hasPermissionKey(permissions, "properties.manage")) {
+          return NextResponse.redirect(new URL("/admin/overview", request.url));
+        }
+      } else {
+        if (!isOwner && !hasPermissionKey(permissions, "properties.view") && !hasPermissionKey(permissions, "properties.manage")) {
+          return NextResponse.redirect(new URL("/admin/overview", request.url));
+        }
+      }
+    }
+    if (pathname.startsWith("/admin/destinos")) {
+      if (pathname === "/admin/destinos/novo" || pathname.endsWith("/novo")) {
+        if (!isOwner && !hasPermissionKey(permissions, "destinations.create") && !hasPermissionKey(permissions, "destinations.manage")) {
+          return NextResponse.redirect(new URL("/admin/overview", request.url));
+        }
+      } else if (pathname.includes("/editar")) {
+        if (!isOwner && !hasPermissionKey(permissions, "destinations.edit") && !hasPermissionKey(permissions, "destinations.manage")) {
+          return NextResponse.redirect(new URL("/admin/overview", request.url));
+        }
+      } else {
+        if (!isOwner && !hasPermissionKey(permissions, "destinations.view") && !hasPermissionKey(permissions, "destinations.manage")) {
+          return NextResponse.redirect(new URL("/admin/overview", request.url));
+        }
+      }
+    }
+    // Vivant Care: rotas sob /admin/vivant-care exigem permissão correspondente
+    if (pathname.startsWith("/admin/vivant-care")) {
+      const hasVcView = isOwner || hasPermissionKey(permissions, "vivantCare.view");
+      const hasCotistas = hasVcView || hasPermissionKey(permissions, "vivantCare.cotistas.view") || hasPermissionKey(permissions, "vivantCare.cotistas.manage");
+      const hasProp = hasVcView || hasPermissionKey(permissions, "vivantCare.propriedades.view") || hasPermissionKey(permissions, "vivantCare.propriedades.manage");
+      const hasFin = hasVcView || hasPermissionKey(permissions, "vivantCare.financeiro.view") || hasPermissionKey(permissions, "vivantCare.financeiro.manage");
+      const hasAvisos = hasVcView || hasPermissionKey(permissions, "vivantCare.avisos.view") || hasPermissionKey(permissions, "vivantCare.avisos.manage");
+      const hasDocs = hasVcView || hasPermissionKey(permissions, "vivantCare.documentos.view") || hasPermissionKey(permissions, "vivantCare.documentos.manage");
+      const hasConvites = hasVcView || hasPermissionKey(permissions, "vivantCare.convites.view") || hasPermissionKey(permissions, "vivantCare.convites.manage");
+      const hasAssembleias = hasVcView || hasPermissionKey(permissions, "vivantCare.assembleias.view") || hasPermissionKey(permissions, "vivantCare.assembleias.manage");
+      const hasTrocas = hasVcView || hasPermissionKey(permissions, "vivantCare.trocas.view") || hasPermissionKey(permissions, "vivantCare.trocas.manage");
+      const baseOrDashboard = pathname === "/admin/vivant-care" || pathname === "/admin/vivant-care/";
+      if (baseOrDashboard && !hasVcView) return NextResponse.redirect(new URL("/403", request.url));
+      if (pathname.startsWith("/admin/vivant-care/cotistas") && !hasCotistas) return NextResponse.redirect(new URL("/403", request.url));
+      if (pathname.startsWith("/admin/vivant-care/convites") && !hasConvites) return NextResponse.redirect(new URL("/403", request.url));
+      if (pathname.startsWith("/admin/vivant-care/propriedades") && !hasProp) return NextResponse.redirect(new URL("/403", request.url));
+      if (pathname.startsWith("/admin/vivant-care/financeiro") && !hasFin) return NextResponse.redirect(new URL("/403", request.url));
+      if (pathname.startsWith("/admin/vivant-care/avisos") && !hasAvisos) return NextResponse.redirect(new URL("/403", request.url));
+      if (pathname.startsWith("/admin/vivant-care/documentos") && !hasDocs) return NextResponse.redirect(new URL("/403", request.url));
+      if (pathname.startsWith("/admin/vivant-care/assembleias") && !hasAssembleias) return NextResponse.redirect(new URL("/403", request.url));
+      if (pathname.startsWith("/admin/vivant-care/trocas") && !hasTrocas) return NextResponse.redirect(new URL("/403", request.url));
+    }
+    return NextResponse.next();
   }
-  
-  // Vivant Residences (domínio principal) → Home de Marketing
-  if (domain === "vivantresidences.com.br") {
-    const response = NextResponse.next();
-    response.headers.set("x-vivant-domain", "residences");
-    return response;
+
+  // OWNER/SUPER_ADMIN: nunca /dashboard (exceto /dashboard/comercial para Leads), sempre /admin
+  if (pathname.startsWith("/dashboard")) {
+    const roleKey = token?.roleKey as string | undefined;
+    const isComercialLeads = pathname.startsWith("/dashboard/comercial");
+    if ((roleKey === "OWNER" || roleKey === "SUPER_ADMIN") && !isComercialLeads) {
+      return NextResponse.redirect(new URL("/admin/overview", request.url));
+    }
   }
-  
-  // Default: Vercel preview URLs ou outros domínios → Home de Marketing
+
+  // Proteção /dashboard/comercial: comercial.view
+  if (pathname.startsWith("/dashboard/comercial")) {
+    if (!token) {
+      const url = new URL("/login", request.url);
+      url.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(url);
+    }
+    const permissions = (token.permissions as string[] | undefined) ?? [];
+    const isOwner = token.roleKey === "OWNER" || token.roleKey === "SUPER_ADMIN";
+    const hasComercial = isOwner || hasPermissionKey(permissions, "comercial.view");
+    if (!hasComercial) {
+      return NextResponse.redirect(new URL("/403", request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // Proteção /admin-portal
+  if (pathname.startsWith("/admin-portal")) {
+    if (!token || token.userType !== "admin") {
+      const url = new URL("/login", request.url);
+      url.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
+
+  // Proteção /dashboard (portal cotista): cotista ou comercial/dashboard.view (comercial já tratado acima)
+  if (pathname.startsWith("/dashboard")) {
+    if (!token) {
+      const url = new URL("/login", request.url);
+      url.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(url);
+    }
+    if (token.userType === "cotista") return NextResponse.next();
+    const permissions = (token.permissions as string[] | undefined) ?? [];
+    const hasDashboard = (token.roleKey === "OWNER" || token.roleKey === "SUPER_ADMIN") || hasPermissionKey(permissions, "dashboard.view");
+    if (hasDashboard) return NextResponse.next();
+    return NextResponse.redirect(new URL("/403", request.url));
+  }
+
+  // Proteção /cotista: apenas cotista
+  if (pathname.startsWith("/cotista")) {
+    if (!token || token.userType !== "cotista") {
+      const url = new URL("/login", request.url);
+      url.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
+
   const response = NextResponse.next();
   response.headers.set("x-vivant-domain", "residences");
   return response;
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next (Next.js internals)
-     * - static files
-     */
-    "/((?!api|_next|static|favicon.ico).*)",
-  ],
+  matcher: ["/((?!api|_next|static|favicon.ico).*)"],
 };

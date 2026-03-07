@@ -1,0 +1,565 @@
+/* ===================================================================
+   ESTILOS DE IMPRESSÃO PROFISSIONAIS - APRESENTAÇÃO VIVANT
+   Otimizado para PDF DIGITAL (não impressão em papel)
+   Mantém TODAS as cores, gradientes e imagens originais
+   =================================================================== */
+
+@media print {
+  /* ===== CONFIGURAÇÕES GERAIS ===== */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 1.5cm 1cm 2cm 1cm;
+  }
+
+  body {
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+  }
+
+  /* ===== OCULTAR ELEMENTOS NÃO NECESSÁRIOS ===== */
+  header,
+  nav,
+  .fixed,
+  button,
+  [role="button"],
+  .no-print {
+    display: none !important;
+  }
+
+  /* ===== QUEBRAS DE PÁGINA TIPO POWERPOINT ===== */
+  /* Cada section é um "slide" completo */
+  section {
+    page-break-before: always !important;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+    min-height: 90vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 1cm 1.5cm !important;
+    margin: 0 !important;
+  }
+
+  /* Primeira section (capa) */
+  section:first-of-type {
+    page-break-before: avoid !important;
+  }
+
+  /* Última section */
+  section:last-of-type {
+    page-break-after: avoid !important;
+  }
+
+  /* Container dentro de cada slide */
+  section > .container {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Evitar quebras dentro de elementos */
+  .card,
+  table,
+  figure {
+    page-break-inside: avoid !important;
+  }
+
+  /* Títulos sempre no topo do slide */
+  h1, h2 {
+    page-break-after: avoid !important;
+  }
+
+  /* ===== PRESERVAR TODAS AS CORES E GRADIENTES ORIGINAIS ===== */
+  /* Forçar renderização exata de cores */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Preservar imagens de fundo */
+  [style*="background-image"],
+  [class*="bg-gradient"],
+  [class*="bg-["] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Manter gradientes */
+  [class*="from-"],
+  [class*="via-"],
+  [class*="to-"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Preservar fundos com overlay */
+  [class*="absolute"][class*="inset-0"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* ===== AJUSTES DE LAYOUT PARA SLIDES ===== */
+  .container {
+    max-width: 100% !important;
+    padding-left: 0.5cm !important;
+    padding-right: 0.5cm !important;
+  }
+
+  /* Grids compactos para caber em um slide */
+  .grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.3cm !important;
+  }
+
+  /* Grid de 3 colunas vira 2 */
+  .grid-cols-3,
+  .md\:grid-cols-3,
+  .lg\:grid-cols-3,
+  .sm\:grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Grid de 4 colunas vira 2 */
+  .grid-cols-4,
+  .md\:grid-cols-4,
+  .lg\:grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Reduzir espaçamentos para caber no slide */
+  [class*="py-20"],
+  [class*="py-16"],
+  [class*="py-12"] {
+    padding-top: 0.3cm !important;
+    padding-bottom: 0.3cm !important;
+  }
+
+  [class*="mb-16"],
+  [class*="mb-12"],
+  [class*="mb-8"] {
+    margin-bottom: 0.4cm !important;
+  }
+
+  [class*="gap-8"],
+  [class*="gap-6"] {
+    gap: 0.3cm !important;
+  }
+
+  /* Preservar estrutura de backgrounds */
+  section > div[class*="absolute"] {
+    position: absolute !important;
+  }
+
+  section > div[class*="relative"] {
+    position: relative !important;
+  }
+
+  /* ===== TIPOGRAFIA OTIMIZADA PARA SLIDES ===== */
+  h1 {
+    font-size: 28pt !important;
+    margin-bottom: 0.3cm !important;
+    font-weight: bold !important;
+    color: #1A2F4B !important;
+  }
+
+  h2 {
+    font-size: 22pt !important;
+    margin-bottom: 0.4cm !important;
+    margin-top: 0 !important;
+    font-weight: bold !important;
+    color: #1A2F4B !important;
+  }
+
+  h3 {
+    font-size: 14pt !important;
+    margin-bottom: 0.2cm !important;
+    font-weight: 600 !important;
+    color: #1A2F4B !important;
+  }
+
+  h4 {
+    font-size: 12pt !important;
+    margin-bottom: 0.2cm !important;
+    font-weight: 600 !important;
+  }
+
+  p {
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
+    margin-bottom: 0.2cm !important;
+  }
+
+  li {
+    font-size: 10pt !important;
+    line-height: 1.3 !important;
+    margin-bottom: 0.15cm !important;
+  }
+
+  /* Textos dentro de cards */
+  .card p,
+  .card li {
+    font-size: 9pt !important;
+    line-height: 1.3 !important;
+  }
+
+  /* ===== CARDS E BOXES ===== */
+  [class*="rounded"] {
+    border-radius: 6pt !important;
+  }
+
+  /* Cards compactos para slides */
+  .card {
+    padding: 0.3cm !important;
+  }
+
+  [class*="CardHeader"],
+  [class*="card-header"] {
+    padding: 0.3cm !important;
+  }
+
+  [class*="CardContent"],
+  [class*="card-content"] {
+    padding: 0.3cm !important;
+  }
+
+  /* Sombras para profundidade */
+  [class*="shadow-xl"] {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  [class*="shadow-lg"] {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+  }
+
+  [class*="shadow-md"],
+  [class*="shadow"] {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  /* ===== IMAGENS E ÍCONES ===== */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  svg,
+  [class*="lucide"] {
+    width: 18pt !important;
+    height: 18pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Preservar imagens de fundo */
+  div[style*="background-image"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background-size: cover !important;
+    background-position: center !important;
+  }
+
+  /* ===== TABELAS ===== */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: avoid !important;
+  }
+
+  th, td {
+    border: 1px solid #d1d5db !important;
+    padding: 6pt !important;
+    font-size: 9pt !important;
+  }
+
+  th {
+    background-color: #f3f4f6 !important;
+    font-weight: 600 !important;
+  }
+
+  /* ===== DIAGRAMAS DE FLUXO ===== */
+  [class*="ArrowDownRight"] {
+    display: block !important;
+    margin: 0.3cm auto !important;
+  }
+
+  /* ===== CABEÇALHO E RODAPÉ PARA CADA PÁGINA ===== */
+  @page {
+    @top-center {
+      content: "Vivant Residences - Apresentação Institucional";
+      font-size: 9pt;
+      color: #6b7280;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    @bottom-left {
+      content: "Confidencial - Uso Interno";
+      font-size: 8pt;
+      color: #9ca3af;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    @bottom-center {
+      content: "contato@vivantresidences.com.br | (44) 98809-7007";
+      font-size: 8pt;
+      color: #6b7280;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    @bottom-right {
+      content: "Página " counter(page) " de " counter(pages);
+      font-size: 8pt;
+      color: #6b7280;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+  }
+
+  /* ===== SLIDE DE CAPA ===== */
+  section:first-of-type {
+    min-height: 95vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    position: relative !important;
+    padding: 2cm !important;
+  }
+
+  /* Preservar imagem de fundo e overlay da capa */
+  section:first-of-type > div[class*="absolute"] {
+    position: absolute !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  section:first-of-type [style*="background-image"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ajustar conteúdo da capa */
+  section:first-of-type h1 {
+    font-size: 36pt !important;
+  }
+
+  section:first-of-type p {
+    font-size: 16pt !important;
+  }
+
+  /* ===== AJUSTES ESPECÍFICOS PARA ELEMENTOS ===== */
+  
+  /* Stats e métricas */
+  [class*="text-3xl"],
+  [class*="text-4xl"],
+  [class*="text-5xl"] {
+    font-size: 18pt !important;
+    font-weight: bold !important;
+  }
+
+  /* Badges e tags */
+  [class*="badge"],
+  [class*="rounded-full"] {
+    padding: 2pt 6pt !important;
+    font-size: 8pt !important;
+    border: 1px solid currentColor !important;
+  }
+
+  /* ===== LINKS ===== */
+  a {
+    color: #1A2F4B !important;
+    text-decoration: none !important;
+  }
+
+  a[href^="http"]:after {
+    content: " (" attr(href) ")";
+    font-size: 8pt;
+    color: #6b7280;
+  }
+
+  /* Não mostrar URL para âncoras internas */
+  a[href^="#"]:after {
+    content: "" !important;
+  }
+
+  /* ===== ESPAÇAMENTOS GLOBAIS ===== */
+  [class*="py-20"],
+  [class*="py-16"] {
+    padding-top: 0.8cm !important;
+    padding-bottom: 0.8cm !important;
+  }
+
+  [class*="mb-16"],
+  [class*="mb-12"] {
+    margin-bottom: 0.6cm !important;
+  }
+
+  [class*="gap-8"],
+  [class*="gap-6"] {
+    gap: 0.4cm !important;
+  }
+
+  /* ===== OTIMIZAÇÕES ESPECÍFICAS ===== */
+  
+  /* Hero section - primeira página */
+  section:first-of-type h1 {
+    font-size: 32pt !important;
+    margin-bottom: 16pt !important;
+  }
+
+  section:first-of-type p {
+    font-size: 14pt !important;
+  }
+
+  /* Rodapé - última seção */
+  footer {
+    page-break-before: avoid !important;
+    border-top: 2px solid #1A2F4B !important;
+    padding-top: 0.5cm !important;
+    margin-top: 1cm !important;
+  }
+
+  /* ===== PRESERVAR TODAS AS CORES DA MARCA ===== */
+  
+  /* Cores Vivant - preservar exatamente */
+  .text-vivant-gold,
+  [class*="text-vivant-gold"],
+  .bg-vivant-gold,
+  [class*="bg-vivant-gold"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .text-vivant-green,
+  [class*="text-vivant-green"],
+  .bg-vivant-green,
+  [class*="bg-vivant-green"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Cores de texto */
+  .text-white,
+  [class*="text-white"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Fundos coloridos */
+  [class*="bg-emerald"],
+  [class*="bg-red"],
+  [class*="bg-blue"],
+  [class*="bg-amber"],
+  [class*="bg-green"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* ===== AJUSTES PARA SLIDES COMPACTOS ===== */
+  
+  /* Ajustar alturas para caber em um slide */
+  [class*="min-h-screen"] {
+    min-height: 90vh !important;
+  }
+
+  [class*="min-h-\[70vh\]"],
+  [class*="min-h-\[80vh\]"] {
+    min-height: 85vh !important;
+  }
+
+  /* Compactar espaçamentos verticais */
+  [class*="space-y-8"],
+  [class*="space-y-6"] {
+    gap: 0.3cm !important;
+  }
+
+  [class*="space-y-4"] {
+    gap: 0.2cm !important;
+  }
+
+  /* ===== OTIMIZAÇÃO DE PERFORMANCE ===== */
+  /* Remove animações e transições mas mantém visual */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0s !important;
+  }
+
+  /* ===== GRADIENTES E EFEITOS ESPECIAIS ===== */
+  /* Preservar todos os gradientes */
+  [class*="gradient"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Preservar efeitos de backdrop */
+  [class*="backdrop-blur"],
+  [class*="backdrop-"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Preservar bordas coloridas */
+  [class*="border-vivant"],
+  [class*="border-emerald"],
+  [class*="border-red"],
+  [class*="border-blue"],
+  [class*="border-amber"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* ===== AJUSTES PARA HERO SECTIONS ===== */
+  section[class*="relative"] {
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  section [class*="absolute"][class*="inset-0"] {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Preservar z-index para layers corretos */
+  [class*="z-0"],
+  [class*="z-10"],
+  [class*="z-20"] {
+    position: relative !important;
+  }
+}
+
+/* ===== FORÇAR RENDERIZAÇÃO COMPLETA DE CORES ===== */
+@media print and (color) {
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+}
+
+/* ===== OTIMIZAÇÃO PARA CHROME/EDGE ===== */
+@media print {
+  @supports (-webkit-print-color-adjust: exact) {
+    * {
+      -webkit-print-color-adjust: exact !important;
+    }
+  }
+}

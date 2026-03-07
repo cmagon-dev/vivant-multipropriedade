@@ -1,10 +1,9 @@
 import NextAuth from "next-auth";
-import { authOptionsAdmin } from "@/lib/auth-admin";
+import { authOptions } from "@/lib/auth";
 
-const handler = NextAuth(authOptionsAdmin);
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
 
 // Configuração runtime para Vercel
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';

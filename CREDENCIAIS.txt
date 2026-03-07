@@ -1,0 +1,55 @@
+═══════════════════════════════════════════════════════════════
+  CREDENCIAIS DE ACESSO - PORTAL DO COTISTA VIVANT CARE
+═══════════════════════════════════════════════════════════════
+
+📝 IMPORTANTE: Copie e cole exatamente como está abaixo!
+
+───────────────────────────────────────────────────────────────
+👨‍💼 ADMIN (Painel Administrativo)
+───────────────────────────────────────────────────────────────
+
+URL:   http://localhost:3000/login
+Email: admin@vivant.com.br
+Senha: admin123
+
+───────────────────────────────────────────────────────────────
+👤 COTISTA 1
+───────────────────────────────────────────────────────────────
+
+URL:   http://localhost:3000/portal-cotista
+Email: joao@email.com
+Senha: cotista123
+
+Nome:  João da Silva
+CPF:   12345678900
+
+───────────────────────────────────────────────────────────────
+👤 COTISTA 2
+───────────────────────────────────────────────────────────────
+
+URL:   http://localhost:3000/portal-cotista
+Email: maria@email.com
+Senha: cotista123
+
+Nome:  Maria Oliveira
+CPF:   98765432100
+
+═══════════════════════════════════════════════════════════════
+
+🚀 COMO USAR:
+
+1. Execute: npm run dev
+2. Aguarde: ✓ Ready in XXXms
+3. Acesse a URL correspondente
+4. Cole o email e senha
+5. Clique em "Entrar"
+
+═══════════════════════════════════════════════════════════════
+
+⚠️  ATENÇÃO:
+
+- ADMIN usa /login
+- COTISTA usa /portal-cotista
+- São páginas DIFERENTES!
+
+═══════════════════════════════════════════════════════════════

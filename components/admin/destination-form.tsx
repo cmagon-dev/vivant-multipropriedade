@@ -11,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { SlugInput } from "@/components/admin/slug-input";
-import { ImageUpload } from "@/components/admin/image-upload";
 import { DestinationFeaturesInput } from "@/components/admin/destination-features-input";
 import { toast } from "sonner";
 
@@ -37,7 +36,6 @@ export function DestinationForm({ destination }: DestinationFormProps) {
       description: "",
       climate: "",
       lifestyle: "",
-      images: [],
       features: [],
       appreciation: "",
       published: false,
@@ -49,7 +47,6 @@ export function DestinationForm({ destination }: DestinationFormProps) {
   
   const nameValue = watch("name");
   const slugValue = watch("slug");
-  const imagesValue = watch("images");
   const featuresValue = watch("features");
   const publishedValue = watch("published");
   
@@ -193,28 +190,6 @@ export function DestinationForm({ destination }: DestinationFormProps) {
           />
           {errors.location && (
             <p className="text-sm text-red-600 mt-1">{errors.location.message}</p>
-          )}
-        </div>
-      </div>
-      
-      {/* Imagens */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
-          Imagens do Destino
-        </h2>
-        
-        <div>
-          <Label>Fotos do Destino</Label>
-          <p className="text-xs text-gray-500 mb-3">
-            Adicione fotos que representam o destino. A primeira imagem será a principal.
-          </p>
-          <ImageUpload
-            value={imagesValue || []}
-            onChange={(urls) => setValue("images", urls)}
-            maxImages={8}
-          />
-          {errors.images && (
-            <p className="text-sm text-red-600 mt-2">{errors.images.message as string}</p>
           )}
         </div>
       </div>

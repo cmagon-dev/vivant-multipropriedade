@@ -5,33 +5,79 @@ import { UsersTable } from "@/components/admin/users-table";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
-import { authOptionsAdmin } from "@/lib/auth-admin";
+import { authOptions } from "@/lib/auth";
+import { hasPermission } from "@/lib/auth/permissions";
 
 export default async function UsersPage() {
-  const session = await getServerSession(authOptionsAdmin);
-  
-  if (session?.user.role !== "ADMIN") {
-    redirect("/admin/dashboard");
-  }
-  
-  const users = await prisma.user.findMany({
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      active: true,
-      createdAt: true,
-      _count: {
-        select: {
-          properties: true,
-          destinations: true,
+  const session = await getServerSession(authOptions);
+  if (!session) redirect("/login");
+  if (!hasPermission(session as any, "users.manage")) redirect("/admin/overview");
+
+  const [usersRaw, cotistasRaw] = await Promise.all([
+    prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        active: true,
+        defaultRoute: true,
+        createdAt: true,
+        userRoleAssignments: {
+          take: 1,
+          orderBy: { id: "asc" as const },
+          select: { role: { select: { key: true, name: true } } },
+        },
+        _count: {
+          select: {
+            properties: true,
+            destinations: true,
+          }
         }
-      }
-    },
-    orderBy: { createdAt: "desc" }
-  });
-  
+      },
+      orderBy: { createdAt: "desc" }
+    }),
+    prisma.cotista.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        cpf: true,
+        active: true,
+        createdAt: true,
+        _count: { select: { cotas: true } },
+      },
+      orderBy: { createdAt: "desc" }
+    }),
+  ]);
+
+  const users = usersRaw.map((u) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    active: u.active,
+    defaultRoute: u.defaultRoute,
+    createdAt: u.createdAt,
+    roleKey: u.userRoleAssignments?.[0]?.role?.key ?? null,
+    roleName: u.userRoleAssignments?.[0]?.role?.name ?? null,
+    _count: u._count,
+    tipo: "admin" as const,
+  }));
+
+  const cotistas = cotistasRaw.map((c) => ({
+    id: c.id,
+    name: c.name,
+    email: c.email,
+    active: c.active,
+    createdAt: c.createdAt,
+    cpf: c.cpf,
+    _count: c._count,
+    tipo: "cotista" as const,
+  }));
+
+  const todasContas = [...users, ...cotistas].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -48,7 +94,7 @@ export default async function UsersPage() {
         </Button>
       </div>
       
-      <UsersTable users={users} />
+      <UsersTable accounts={todasContas} />
     </div>
   );
 }

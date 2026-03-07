@@ -1,20 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getAdminSession } from "@/lib/auth-session";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { hasPermission } from "@/lib/auth/permissions";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { sendInviteEmail } from "@/lib/email";
 
-export const dynamic = 'force-dynamic';
-
 export async function POST(request: NextRequest) {
   try {
-    const session = await getAdminSession();
-    
-    if (!session || !session.user.role || session.user.role !== "ADMIN") {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as { userType?: string }).userType !== "admin") {
       return NextResponse.json(
         { error: "Não autorizado" },
         { status: 401 }
+      );
+    }
+    const canManage =
+      hasPermission(session as any, "vivantCare.convites.manage") ||
+      (session.user as { role?: string }).role === "ADMIN";
+    if (!canManage) {
+      return NextResponse.json(
+        { error: "Sem permissão para criar convites" },
+        { status: 403 }
       );
     }
 
@@ -105,12 +113,21 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getAdminSession();
-    
-    if (!session || !session.user.role || session.user.role !== "ADMIN") {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as { userType?: string }).userType !== "admin") {
       return NextResponse.json(
         { error: "Não autorizado" },
         { status: 401 }
+      );
+    }
+    const canView =
+      hasPermission(session as any, "vivantCare.convites.view") ||
+      hasPermission(session as any, "vivantCare.convites.manage") ||
+      (session.user as { role?: string }).role === "ADMIN";
+    if (!canView) {
+      return NextResponse.json(
+        { error: "Sem permissão para listar convites" },
+        { status: 403 }
       );
     }
 

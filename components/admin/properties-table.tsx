@@ -21,30 +21,15 @@ export function PropertiesTable({ properties }: PropertiesTableProps) {
     
     setIsDeleting(id);
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/3f614ec6-ea6c-4578-ae73-c4919008ee09',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b9f748'},body:JSON.stringify({sessionId:'b9f748',location:'properties-table.tsx:24',message:'DELETE request initiated',data:{id,name,url:`/api/admin/propriedades/${id}`},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
-      // #endregion
-      const res = await fetch(`/api/admin/propriedades/${id}`, { method: "DELETE" });
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/3f614ec6-ea6c-4578-ae73-c4919008ee09',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b9f748'},body:JSON.stringify({sessionId:'b9f748',location:'properties-table.tsx:25',message:'DELETE response received',data:{status:res.status,statusText:res.statusText,ok:res.ok},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-      // #endregion
+      const res = await fetch(`/api/properties/${id}`, { method: "DELETE" });
       if (res.ok) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/3f614ec6-ea6c-4578-ae73-c4919008ee09',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b9f748'},body:JSON.stringify({sessionId:'b9f748',location:'properties-table.tsx:26',message:'DELETE success path',data:{id},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
-        // #endregion
         toast.success("Casa deletada com sucesso");
         router.refresh();
       } else {
         const error = await res.json();
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/3f614ec6-ea6c-4578-ae73-c4919008ee09',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b9f748'},body:JSON.stringify({sessionId:'b9f748',location:'properties-table.tsx:30',message:'DELETE error response',data:{status:res.status,error},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-        // #endregion
         toast.error(error.error || "Erro ao deletar casa");
       }
     } catch (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/3f614ec6-ea6c-4578-ae73-c4919008ee09',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b9f748'},body:JSON.stringify({sessionId:'b9f748',location:'properties-table.tsx:33',message:'DELETE exception caught',data:{errorType:error?.constructor?.name,errorMessage:String(error)},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
-      // #endregion
       toast.error("Erro ao deletar casa");
     } finally {
       setIsDeleting(null);
@@ -53,7 +38,7 @@ export function PropertiesTable({ properties }: PropertiesTableProps) {
   
   const togglePublished = async (id: string, currentStatus: boolean) => {
     try {
-      const res = await fetch(`/api/admin/propriedades/${id}`, {
+      const res = await fetch(`/api/properties/${id}/publish`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ published: !currentStatus }),

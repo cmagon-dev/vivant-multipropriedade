@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, MapPin, Users } from "lucide-react";
+import { DashboardHelp } from "@/components/admin/dashboard-help";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export default async function DashboardPage() {
   const [propertiesCount, destinationsCount, usersCount, publishedProperties] = 
@@ -34,9 +36,12 @@ export default async function DashboardPage() {
   
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-vivant-navy mb-2">Dashboard</h1>
-        <p className="text-gray-600">Visão geral do sistema</p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-vivant-navy mb-2">Dashboard</h1>
+          <p className="text-gray-600">Visão geral do sistema</p>
+        </div>
+        <DashboardHelp />
       </div>
       
       <div className="grid md:grid-cols-3 gap-6">
@@ -61,8 +66,9 @@ export default async function DashboardPage() {
       </div>
       
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center gap-2">
           <CardTitle>Bem-vindo ao Painel Administrativo</CardTitle>
+          <HelpTip helpKey="dashboard.welcome" fallbackTitle="Ajuda" fallbackText="Use o menu lateral para acessar casas, destinos, usuários e configurações de acesso (roles/permissões)." />
         </CardHeader>
         <CardContent>
           <p className="text-gray-600">

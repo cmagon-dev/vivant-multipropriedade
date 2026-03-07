@@ -138,8 +138,8 @@ Isso cria:
 
 ### 4.2 Credenciais Criadas
 
-**Admin:**
-- Email: `admin@vivant.com.br`
+**OWNER (Dono):**
+- Email: `caio@vivant.com.br`
 - Senha: `admin123`
 - URL: http://localhost:3000/login
 
@@ -179,9 +179,9 @@ Acesse: http://localhost:3000
 
 ### 5.2 Testar Fluxo Admin
 
-1. **Login Admin:**
+1. **Login OWNER (Dono):**
    - Vá para: http://localhost:3000/login
-   - Use: `admin@vivant.com.br` / `admin123`
+   - Use: `caio@vivant.com.br` / `admin123`
 
 2. **Enviar Convite:**
    - Vá para: Admin > Cotistas > Novo Convite

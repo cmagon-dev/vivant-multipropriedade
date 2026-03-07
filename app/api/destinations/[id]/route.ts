@@ -1,22 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { getAdminSession } from "@/lib/auth-session";
+import { authOptions } from "@/lib/auth";
+import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 import { destinationUpdateSchema } from "@/lib/validations/destination-admin";
 import { createAuditLog } from "@/lib/audit";
-import { canDelete } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
 
-export const dynamic = 'force-dynamic';
-
-// GET /api/destinations/[id] - Buscar um específico
+// GET /api/destinations/[id] - Buscar um específico — exige destinations.view
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
+  if (!hasPermission(session as any, "destinations.view") && !hasPermission(session as any, "destinations.manage")) {
+    return NextResponse.json({ error: "Sem permissão para ver destino" }, { status: 403 });
+  }
+  const { id } = await params;
   try {
     const destination = await prisma.destination.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         createdBy: {
           select: { id: true, name: true, email: true }
@@ -44,26 +50,25 @@ export async function GET(
   }
 }
 
-// PUT /api/destinations/[id] - Atualizar
+// PUT /api/destinations/[id] - Atualizar — exige destinations.edit ou destinations.manage
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getAdminSession();
-  
-  if (!session || !session.user.role || !["ADMIN", "EDITOR"].includes(session.user.role)) {
-    return NextResponse.json(
-      { error: "Não autorizado" },
-      { status: 401 }
-    );
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  
+  if (!hasPermission(session as any, "destinations.edit") && !hasPermission(session as any, "destinations.manage")) {
+    return NextResponse.json({ error: "Sem permissão para editar destino" }, { status: 403 });
+  }
+  const { id } = await params;
   try {
     const body = await request.json();
     const validated = destinationUpdateSchema.parse(body);
     
     const destination = await prisma.destination.update({
-      where: { id: params.id },
+      where: { id },
       data: validated
     });
     
@@ -95,24 +100,22 @@ export async function PUT(
   }
 }
 
-// DELETE /api/destinations/[id] - Deletar
+// DELETE /api/destinations/[id] - Deletar — exige destinations.delete ou destinations.manage
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getAdminSession();
-  
-  if (!session || !session.user.role || !canDelete(session.user.role)) {
-    return NextResponse.json(
-      { error: "Não autorizado" },
-      { status: 401 }
-    );
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  
+  if (!hasPermission(session as any, "destinations.delete") && !hasPermission(session as any, "destinations.manage")) {
+    return NextResponse.json({ error: "Sem permissão para excluir destino" }, { status: 403 });
+  }
+  const { id } = await params;
   try {
-    // Verificar se há propriedades vinculadas
     const propertiesCount = await prisma.property.count({
-      where: { destinoId: params.id }
+      where: { destinoId: id }
     });
     
     if (propertiesCount > 0) {
@@ -123,14 +126,14 @@ export async function DELETE(
     }
     
     await prisma.destination.delete({
-      where: { id: params.id }
+      where: { id }
     });
     
     await createAuditLog({
       userId: session.user.id,
       action: "DELETE",
       entity: "Destination",
-      entityId: params.id,
+      entityId: id,
     });
     
     revalidatePath("/");

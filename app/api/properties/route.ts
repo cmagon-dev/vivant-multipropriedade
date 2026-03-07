@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { getAdminSession } from "@/lib/auth-session";
+import { authOptions } from "@/lib/auth";
+import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 import { propertyCreateSchema } from "@/lib/validations/property-admin";
 import { createAuditLog } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
+import { trackEvent } from "@/lib/telemetry/trackEvent";
 
-export const dynamic = 'force-dynamic';
-
-// GET /api/properties - Listar todas (com filtros)
+// GET /api/properties - Listar todas (com filtros) — exige properties.view
 export async function GET(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
+  if (!hasPermission(session as any, "properties.view") && !hasPermission(session as any, "properties.manage")) {
+    return NextResponse.json({ error: "Sem permissão para listar propriedades" }, { status: 403 });
+  }
   try {
     const { searchParams } = request.nextUrl;
     const published = searchParams.get("published");
@@ -39,15 +46,14 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/properties - Criar nova
+// POST /api/properties - Criar nova — exige properties.create ou properties.manage
 export async function POST(request: NextRequest) {
-  const session = await getAdminSession();
-  
-  if (!session || !session.user.role || !["ADMIN", "EDITOR"].includes(session.user.role)) {
-    return NextResponse.json(
-      { error: "Não autorizado" },
-      { status: 401 }
-    );
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
+  if (!hasPermission(session as any, "properties.create") && !hasPermission(session as any, "properties.manage")) {
+    return NextResponse.json({ error: "Sem permissão para criar propriedades" }, { status: 403 });
   }
   
   try {
@@ -68,7 +74,17 @@ export async function POST(request: NextRequest) {
       entityId: property.id,
       changes: validated,
     });
-    
+    trackEvent({
+      actorUserId: session.user.id,
+      actorRole: (session.user as { roleKey?: string }).roleKey ?? undefined,
+      type: "property.created",
+      entityType: "Property",
+      entityId: property.id,
+      status: "OK",
+      message: `Propriedade criada: ${validated.name}`,
+      meta: { name: validated.name, slug: validated.slug },
+    }).catch(() => {});
+
     revalidatePath("/");
     revalidatePath("/casas");
     revalidatePath("/admin/casas");

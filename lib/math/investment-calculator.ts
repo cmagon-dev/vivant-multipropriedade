@@ -65,25 +65,18 @@ export interface InvestmentAnalysis {
  * Interface para resultado de simulação de liquidez
  */
 export interface LiquidezResult {
-  // Análise da venda antecipada
   valorVendaVista: string;
   descontoAplicado: string;
   mesesRestantes: number;
   totalFluxoFuturo: string;
-  
-  // Análise TOTAL após a venda (já recebido + venda antecipada)
+  mesAtual: number;
+  percentualConcluido: number;
+  recebidoAteOMomento: string;
   totalRecebidoComVenda: string;
   lucroTotalComVenda: string;
   roiTotalComVenda: string;
   tirTotalComVenda: string;
   rentabilidadeTotalComVenda: string;
-  
-  // Breakdown para contexto
-  recebidoAteOMomento: string;
-  
-  // Informação adicional
-  mesAtual: number;
-  percentualConcluido: string;
 }
 
 /**
@@ -350,34 +343,6 @@ export function simulateLiquidez(
 ): LiquidezResult {
   const mesesRestantes = 60 - mesAtual;
   
-  // Extrair valor investido original (remover formatação)
-  const valorInvestido = parseFloat(
-    analysis.valorInvestido.replace(/[^\d,-]/g, "").replace(",", ".")
-  );
-  
-  // ==========================================
-  // PARTE 1: ANÁLISE DO QUE JÁ FOI RECEBIDO
-  // ==========================================
-  
-  let recebidoAteOMomento = 0;
-  
-  // Somar parcelas mensais já recebidas (de 1 até mesAtual)
-  for (let mes = 0; mes < mesAtual && mes < analysis.carteirasMensais.length; mes++) {
-    recebidoAteOMomento += analysis.carteirasMensais[mes].parcela;
-  }
-  
-  // Adicionar balões anuais já recebidos
-  const anosCompletos = Math.floor(mesAtual / 12);
-  for (let ano = 1; ano <= anosCompletos; ano++) {
-    recebidoAteOMomento += analysis.carteirasAnuais[ano - 1].totalBalao;
-  }
-  
-  // (Não precisa calcular métricas intermediárias aqui, faremos após ter o valor da venda)
-  
-  // ==========================================
-  // PARTE 2: ANÁLISE DOS RECEBÍVEIS FUTUROS
-  // ==========================================
-  
   // Coletar fluxos futuros
   const fluxosFuturos: number[] = [];
   
@@ -389,7 +354,7 @@ export function simulateLiquidez(
   
   // Adicionar balões anuais futuros
   const anoAtual = Math.ceil(mesAtual / 12);
-  for (let ano = anoAtual + 1; ano <= 5; ano++) {
+  for (let ano = anoAtual; ano <= 5; ano++) {
     const balao = analysis.carteirasAnuais[ano - 1].totalBalao;
     // Adicionar no mês correspondente
     const mesBalao = ano * 12 - mesAtual;
@@ -410,70 +375,30 @@ export function simulateLiquidez(
   }
   
   const descontoAplicado = totalFluxoFuturo - valorPresente;
-  
-  // ==========================================
-  // PARTE 3: ANÁLISE TOTAL APÓS VENDA ANTECIPADA
-  // ==========================================
-  
-  // Total recebido = Já recebido + Valor da venda à vista
-  const totalRecebidoComVenda = recebidoAteOMomento + valorPresente;
-  
-  // Lucro total com a venda
-  const lucroTotalComVenda = totalRecebidoComVenda - valorInvestido;
-  
-  // ROI total com a venda
-  const roiTotalComVenda = (lucroTotalComVenda / valorInvestido) * 100;
-  
-  // Rentabilidade total
-  const rentabilidadeTotalComVenda = (totalRecebidoComVenda / valorInvestido) * 100;
-  
-  // Calcular TIR total considerando a venda antecipada
-  const cashFlowsComVenda: number[] = [-valorInvestido];
-  
-  // Adicionar fluxos até o momento atual
-  for (let mes = 0; mes < mesAtual && mes < analysis.carteirasMensais.length; mes++) {
-    let fluxoMes = analysis.carteirasMensais[mes].parcela;
-    
-    // Adicionar balão se for fim de ano
-    if ((mes + 1) % 12 === 0) {
-      const ano = (mes + 1) / 12;
-      if (ano <= anosCompletos) {
-        fluxoMes += analysis.carteirasAnuais[ano - 1].totalBalao;
-      }
-    }
-    
-    cashFlowsComVenda.push(fluxoMes);
+
+  // Recebido até o mês atual (parcelas já pagas)
+  let recebidoAteOMomento = 0;
+  for (let i = 0; i < mesAtual && i < analysis.carteirasMensais.length; i++) {
+    recebidoAteOMomento += analysis.carteirasMensais[i].parcela;
   }
-  
-  // Adicionar valor da venda à vista no mês atual
-  cashFlowsComVenda.push(valorPresente);
-  
-  const tirMensalComVenda = calculateIRR(cashFlowsComVenda);
-  const tirAnualComVenda = Math.pow(1 + tirMensalComVenda, 12) - 1;
-  
-  // Percentual concluído
-  const percentualConcluido = (mesAtual / 60) * 100;
-  
+  const totalRecebidoNum = recebidoAteOMomento + valorPresente;
+  const valorInvestidoNum = parseCurrencyPtBr(analysis.valorInvestido);
+  const lucroTotal = valorInvestidoNum > 0 ? totalRecebidoNum - valorInvestidoNum : 0;
+  const roiTotal = valorInvestidoNum > 0 ? (lucroTotal / valorInvestidoNum) * 100 : 0;
+  const percentualConcluido = Math.round((mesAtual / 60) * 100);
   return {
-    // Venda antecipada
     valorVendaVista: formatCurrency(valorPresente),
     descontoAplicado: formatCurrency(descontoAplicado),
     mesesRestantes,
     totalFluxoFuturo: formatCurrency(totalFluxoFuturo),
-    
-    // Análise TOTAL após a venda
-    totalRecebidoComVenda: formatCurrency(totalRecebidoComVenda),
-    lucroTotalComVenda: formatCurrency(lucroTotalComVenda),
-    roiTotalComVenda: roiTotalComVenda.toFixed(2) + "%",
-    tirTotalComVenda: (tirAnualComVenda * 100).toFixed(2) + "% a.a.",
-    rentabilidadeTotalComVenda: rentabilidadeTotalComVenda.toFixed(2) + "%",
-    
-    // Breakdown
-    recebidoAteOMomento: formatCurrency(recebidoAteOMomento),
-    
-    // Info adicional
     mesAtual,
-    percentualConcluido: percentualConcluido.toFixed(1) + "%",
+    percentualConcluido,
+    recebidoAteOMomento: formatCurrency(recebidoAteOMomento),
+    totalRecebidoComVenda: formatCurrency(totalRecebidoNum),
+    lucroTotalComVenda: formatCurrency(lucroTotal),
+    roiTotalComVenda: `${roiTotal.toFixed(1)}%`,
+    tirTotalComVenda: analysis.tir ?? "—",
+    rentabilidadeTotalComVenda: `${roiTotal.toFixed(1)}%`,
   };
 }
 
@@ -487,6 +412,15 @@ function formatCurrency(value: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
+}
+
+/**
+ * Parseia string em formato pt-BR (R$ 1.234,56) para número
+ */
+function parseCurrencyPtBr(str: string): number {
+  const cleaned = str.replace(/\s/g, "").replace("R$", "").replace(/\./g, "").replace(",", ".");
+  const n = parseFloat(cleaned);
+  return Number.isNaN(n) ? 0 : n;
 }
 
 /**

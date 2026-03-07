@@ -2,15 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Building2, MapPin, Users } from "lucide-react";
+import { Building2, MapPin, Users, Shield, Key, HelpCircle, LayoutDashboard, Activity, CheckSquare, GitBranch } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const navigation = [
-  { name: "Dashboard", href: "/admin/dashboard", icon: Home },
-  { name: "Casas", href: "/admin/casas", icon: Building2 },
-  { name: "Destinos", href: "/admin/destinos", icon: MapPin },
-  { name: "Usuários", href: "/admin/usuarios", icon: Users, adminOnly: true },
-];
 
 interface AdminSidebarProps {
   user: {
@@ -18,8 +11,29 @@ interface AdminSidebarProps {
     email: string;
     role?: string;
     image?: string;
+    permissions?: string[];
+    roleKey?: string | null;
   };
 }
+
+function canAccess(user: AdminSidebarProps["user"], permission?: string) {
+  if (user.roleKey === "OWNER" || user.roleKey === "SUPER_ADMIN") return true;
+  if (!permission) return true;
+  return (user.permissions ?? []).includes(permission);
+}
+
+const navigation = [
+  { name: "Visão do Dono", href: "/admin/overview", icon: LayoutDashboard },
+  { name: "Eventos", href: "/admin/events", icon: Activity, permission: "events.view" as const },
+  { name: "Tarefas", href: "/admin/tasks", icon: CheckSquare, permission: "tasks.view" as const },
+  { name: "Funis / CRM", href: "/admin/crm", icon: GitBranch, permission: "crm.manage" as const },
+  { name: "Casas", href: "/admin/casas", icon: Building2 },
+  { name: "Destinos", href: "/admin/destinos", icon: MapPin },
+  { name: "Usuários", href: "/admin/usuarios", icon: Users, permission: "users.manage" as const },
+  { name: "Roles", href: "/admin/roles", icon: Shield, permission: "roles.manage" as const },
+  { name: "Permissões", href: "/admin/permissions", icon: Key, permission: "permissions.manage" as const },
+  { name: "Ajuda", href: "/admin/help", icon: HelpCircle, permission: "help.manage" as const },
+];
 
 export function AdminSidebar({ user }: AdminSidebarProps) {
   const pathname = usePathname();
@@ -34,10 +48,10 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
         {navigation.map((item) => {
-          if (item.adminOnly && user.role !== "ADMIN") return null;
+          const itemPermission = "permission" in item ? item.permission : undefined;
+          if (itemPermission && !canAccess(user, itemPermission)) return null;
           
           const isActive = pathname.startsWith(item.href);
-          
           return (
             <Link
               key={item.href}
@@ -67,7 +81,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
               {user.name}
             </p>
             <p className="text-xs text-gray-500 truncate">
-              {user.role}
+              {user.role ?? user.roleKey ?? "—"}
             </p>
           </div>
         </div>

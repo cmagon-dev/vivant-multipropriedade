@@ -1,6 +1,6 @@
 "use client";
 
-import { CotistaProvider } from "@/app/providers-cotista";
+import { SessionProvider } from "next-auth/react";
 import { Sidebar } from "@/components/cotista/layout/sidebar";
 import { Header } from "@/components/cotista/layout/header";
 import { MobileNav } from "@/components/cotista/layout/mobile-nav";
@@ -11,7 +11,7 @@ export default function CotistaLayout({
   children: React.ReactNode;
 }>): JSX.Element {
   return (
-    <CotistaProvider>
+    <SessionProvider>
       <div className="min-h-screen bg-[#F8F9FA] flex">
         <Sidebar />
         
@@ -25,6 +25,6 @@ export default function CotistaLayout({
         
         <MobileNav />
       </div>
-    </CotistaProvider>
+    </SessionProvider>
   );
 }

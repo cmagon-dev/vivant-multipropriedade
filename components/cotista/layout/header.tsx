@@ -115,9 +115,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="text-red-600 cursor-pointer"
-                onClick={() => {
-                  signOut({ callbackUrl: "/portal-cotista" });
-                }}
+                onClick={() => signOut({ callbackUrl: "/login" })}
               >
                 Sair
               </DropdownMenuItem>

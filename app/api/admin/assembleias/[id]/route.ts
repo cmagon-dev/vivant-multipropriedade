@@ -1,0 +1,77 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { hasPermission } from "@/lib/auth/permissions";
+import { prisma } from "@/lib/prisma";
+
+function canAccess(session: any) {
+  if (!session || (session.user as { userType?: string }).userType !== "admin") return false;
+  return hasPermission(session, "vivantCare.assembleias.view") || hasPermission(session, "vivantCare.assembleias.manage");
+}
+
+function canManage(session: any) {
+  return canAccess(session) && hasPermission(session, "vivantCare.assembleias.manage");
+}
+
+export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!canAccess(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const { id } = await ctx.params;
+    const a = await prisma.assembleia.findUnique({
+      where: { id },
+      include: {
+        property: { select: { id: true, name: true } },
+        pautas: { orderBy: { ordem: "asc" }, include: { _count: { select: { votos: true } } } },
+      },
+    });
+    if (!a) return NextResponse.json({ error: "Assembleia não encontrada" }, { status: 404 });
+    return NextResponse.json(a);
+  } catch (e) {
+    console.error("Erro ao buscar assembleia:", e);
+    return NextResponse.json({ error: "Erro ao buscar assembleia" }, { status: 500 });
+  }
+}
+
+export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!canManage(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+    const { id } = await ctx.params;
+    const body = await req.json();
+    const { titulo, descricao, tipo, dataRealizacao, dataInicio, dataFim, status, quorumMinimo, quorumAlcancado, ataUrl } = body;
+    const a = await prisma.assembleia.update({
+      where: { id },
+      data: {
+        ...(titulo != null && { titulo }),
+        ...(descricao != null && { descricao }),
+        ...(tipo != null && { tipo }),
+        ...(dataRealizacao != null && { dataRealizacao: new Date(dataRealizacao) }),
+        ...(dataInicio != null && { dataInicio: new Date(dataInicio) }),
+        ...(dataFim != null && { dataFim: new Date(dataFim) }),
+        ...(status != null && { status }),
+        ...(quorumMinimo != null && { quorumMinimo: Number(quorumMinimo) }),
+        ...(quorumAlcancado != null && { quorumAlcancado: Number(quorumAlcancado) }),
+        ...(ataUrl !== undefined && { ataUrl: ataUrl || null }),
+      },
+      include: { property: { select: { id: true, name: true } }, pautas: { orderBy: { ordem: "asc" } } },
+    });
+    return NextResponse.json(a);
+  } catch (e) {
+    console.error("Erro ao atualizar assembleia:", e);
+    return NextResponse.json({ error: "Erro ao atualizar assembleia" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!canManage(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+    const { id } = await ctx.params;
+    await prisma.assembleia.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    console.error("Erro ao excluir assembleia:", e);
+    return NextResponse.json({ error: "Erro ao excluir assembleia" }, { status: 500 });
+  }
+}

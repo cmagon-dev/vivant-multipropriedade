@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { getAdminSession } from "@/lib/auth-session";
+import { authOptions } from "@/lib/auth";
+import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 import { destinationCreateSchema } from "@/lib/validations/destination-admin";
 import { createAuditLog } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 
-export const dynamic = 'force-dynamic';
-
-// GET /api/destinations - Listar todos
+// GET /api/destinations - Listar todos — exige destinations.view
 export async function GET(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
+  if (!hasPermission(session as any, "destinations.view") && !hasPermission(session as any, "destinations.manage")) {
+    return NextResponse.json({ error: "Sem permissão para listar destinos" }, { status: 403 });
+  }
   try {
     const { searchParams } = request.nextUrl;
     const published = searchParams.get("published");
@@ -39,15 +45,14 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/destinations - Criar novo
+// POST /api/destinations - Criar novo — exige destinations.create ou destinations.manage
 export async function POST(request: NextRequest) {
-  const session = await getAdminSession();
-  
-  if (!session || !session.user.role || !["ADMIN", "EDITOR"].includes(session.user.role)) {
-    return NextResponse.json(
-      { error: "Não autorizado" },
-      { status: 401 }
-    );
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
+  if (!hasPermission(session as any, "destinations.create") && !hasPermission(session as any, "destinations.manage")) {
+    return NextResponse.json({ error: "Sem permissão para criar destinos" }, { status: 403 });
   }
   
   try {

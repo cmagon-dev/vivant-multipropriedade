@@ -16,8 +16,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
+import { Button } from "@/components/ui/button";
 import { 
   Users, 
   FileText, 
@@ -115,7 +115,7 @@ export function MobileNav() {
                 <Button
                   variant="ghost"
                   className="w-full justify-start gap-3 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => signOut({ callbackUrl: "/portal-cotista" })}
+                  onClick={() => signOut({ callbackUrl: "/login" })}
                 >
                   <LogOut className="w-5 h-5" />
                   <span className="font-medium">Sair</span>

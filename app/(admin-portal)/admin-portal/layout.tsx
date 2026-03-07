@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
-import { authOptionsAdmin } from "@/lib/auth-admin";
+import { authOptions } from "@/lib/auth";
 import { AdminPortalSidebar } from "@/components/admin-portal/sidebar";
 import { AdminPortalHeader } from "@/components/admin-portal/header";
 
@@ -9,7 +9,7 @@ export default async function AdminPortalLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptionsAdmin);
+  const session = await getServerSession(authOptions);
   
   if (!session || session.user.userType !== "admin") {
     redirect("/login");

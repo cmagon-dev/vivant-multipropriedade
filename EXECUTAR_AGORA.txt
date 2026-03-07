@@ -1,0 +1,47 @@
+═══════════════════════════════════════════════
+   🔧 EXECUTE ESTES COMANDOS EM SEQUÊNCIA
+═══════════════════════════════════════════════
+
+IMPORTANTE: O servidor dev DEVE ESTAR PARADO!
+Pressione Ctrl + C no terminal primeiro!
+
+═══════════════════════════════════════════════
+
+Copie e cole cada comando abaixo (um de cada vez):
+
+1. Criar tabelas:
+   npx prisma db push --accept-data-loss
+
+2. Gerar client:
+   npx prisma generate
+
+3. Popular banco:
+   npm run db:seed
+
+4. Iniciar servidor:
+   npm run dev
+
+═══════════════════════════════════════════════
+
+OU execute tudo de uma vez:
+
+npx prisma db push --accept-data-loss; npx prisma generate; npm run db:seed; npm run dev
+
+═══════════════════════════════════════════════
+
+VOCÊ SABERÁ QUE FUNCIONOU quando ver:
+✅ Admin criado: admin@vivant.com.br
+✅ Destino criado: Gramado
+✅ Propriedade criada: Casa Gramado Centro
+✅ Ready in 2s
+
+═══════════════════════════════════════════════
+
+DEPOIS DE EXECUTAR:
+1. Acesse: http://localhost:3000/login
+2. Selecione "Admin Portal" (verde)
+3. Login: admin@vivant.com / admin123
+4. Clique em "Propriedades"
+5. Veja as 2 propriedades listadas!
+
+═══════════════════════════════════════════════

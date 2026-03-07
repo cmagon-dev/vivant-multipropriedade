@@ -40,5 +40,3 @@ next-env.d.ts
 # backups
 backups/*.sql
 backups/*.zip
-
-.vercel

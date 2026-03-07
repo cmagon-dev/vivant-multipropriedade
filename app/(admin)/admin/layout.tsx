@@ -1,33 +1,47 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
-import { authOptionsAdmin } from "@/lib/auth-admin";
-import { AdminSidebar } from "@/components/admin/sidebar";
-import { AdminHeader } from "@/components/admin/header";
+import { authOptions } from "@/lib/auth";
+import { AppShell } from "@/components/shell/AppShell";
+import {
+  UNIFIED_MENU_CONFIG,
+  filterMenuByPermission,
+  toShellMenuItems,
+} from "@/lib/navigation/menu";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptionsAdmin);
-  
+  const session = await getServerSession(authOptions);
+
   if (!session) {
     redirect("/login");
   }
-  
+
+  const user = session.user as {
+    name?: string;
+    email?: string;
+    role?: string;
+    roleKey?: string | null;
+    permissions?: string[];
+  };
+
+  const permissions = user.permissions ?? [];
+  const roleKey = user.roleKey ?? null;
+  const filtered = filterMenuByPermission(UNIFIED_MENU_CONFIG, permissions, roleKey);
+  const menuItems = toShellMenuItems(filtered);
+
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <AdminSidebar user={session.user} />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <AdminHeader user={session.user} />
-        
-        <main className="flex-1 overflow-y-auto">
-          <div className="p-6 min-h-0">
-            {children}
-          </div>
-        </main>
-      </div>
-    </div>
+    <AppShell
+      title="Painel Administrativo"
+      menuItems={menuItems}
+      userDisplay={{
+        name: user.name ?? "Usuário",
+        roleLabel: user.role ?? user.roleKey ?? "—",
+      }}
+    >
+      {children}
+    </AppShell>
   );
 }

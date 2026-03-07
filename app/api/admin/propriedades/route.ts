@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { getAdminSession } from "@/lib/auth-session";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { propertyCreateSchema } from "@/lib/validations/property-admin";
 import { createAuditLog } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 
-export const dynamic = 'force-dynamic';
-
 // GET /api/admin/propriedades - Listar todas (Admin Portal)
 export async function GET(request: NextRequest) {
   try {
-    const session = await getAdminSession();
+    const session = await getServerSession(authOptions);
 
     if (!session || session.user.userType !== "admin") {
       return NextResponse.json(
@@ -94,7 +92,7 @@ export async function GET(request: NextRequest) {
 
 // POST /api/admin/propriedades - Criar nova propriedade
 export async function POST(request: NextRequest) {
-  const session = await getAdminSession();
+  const session = await getServerSession(authOptions);
   
   if (!session || session.user.userType !== "admin") {
     return NextResponse.json(

@@ -167,9 +167,9 @@ export default async function PropriedadesPage({
                   {/* Imagem e Info Principal */}
                   <div className="flex gap-4 flex-1">
                     <div className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-                      {propriedade.images && Array.isArray(propriedade.images) && propriedade.images[0] ? (
+                      {Array.isArray(propriedade.images) && propriedade.images[0] ? (
                         <img
-                          src={propriedade.images[0] as string}
+                          src={String(propriedade.images[0])}
                           alt={propriedade.name}
                           className="w-full h-full object-cover"
                         />

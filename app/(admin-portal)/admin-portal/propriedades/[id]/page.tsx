@@ -147,33 +147,17 @@ export default function PropriedadeDetalhesPage({ params }: { params: { id: stri
     if (!confirm("Tem certeza que deseja remover esta cota?")) return;
 
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/3f614ec6-ea6c-4578-ae73-c4919008ee09',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b9f748'},body:JSON.stringify({sessionId:'b9f748',location:'propriedades-id-page.tsx:150',message:'DELETE cota request initiated',data:{cotaId,url:`/api/admin/cotas/${cotaId}`},timestamp:Date.now(),hypothesisId:'H13'})}).catch(()=>{});
-      // #endregion
       const response = await fetch(`/api/admin/cotas/${cotaId}`, {
         method: "DELETE",
       });
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/3f614ec6-ea6c-4578-ae73-c4919008ee09',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b9f748'},body:JSON.stringify({sessionId:'b9f748',location:'propriedades-id-page.tsx:154',message:'DELETE cota response received',data:{status:response.status,statusText:response.statusText,ok:response.ok},timestamp:Date.now(),hypothesisId:'H13'})}).catch(()=>{});
-      // #endregion
 
       if (response.ok) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/3f614ec6-ea6c-4578-ae73-c4919008ee09',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b9f748'},body:JSON.stringify({sessionId:'b9f748',location:'propriedades-id-page.tsx:158',message:'DELETE cota success',data:{cotaId},timestamp:Date.now(),hypothesisId:'H13'})}).catch(()=>{});
-        // #endregion
         toast.success("Cota removida com sucesso!");
         carregarPropriedade();
       } else {
-        const errorData = await response.json();
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/3f614ec6-ea6c-4578-ae73-c4919008ee09',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b9f748'},body:JSON.stringify({sessionId:'b9f748',location:'propriedades-id-page.tsx:163',message:'DELETE cota error response',data:{status:response.status,errorData},timestamp:Date.now(),hypothesisId:'H13'})}).catch(()=>{});
-        // #endregion
-        toast.error(errorData.error || "Erro ao remover cota");
+        toast.error("Erro ao remover cota");
       }
     } catch (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/3f614ec6-ea6c-4578-ae73-c4919008ee09',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b9f748'},body:JSON.stringify({sessionId:'b9f748',location:'propriedades-id-page.tsx:169',message:'DELETE cota exception',data:{errorType:error?.constructor?.name,errorMessage:String(error)},timestamp:Date.now(),hypothesisId:'H14'})}).catch(()=>{});
-      // #endregion
       toast.error("Erro ao remover cota");
     }
   };

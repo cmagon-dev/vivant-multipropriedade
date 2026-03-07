@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { getAdminSession } from "@/lib/auth-session";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-export const dynamic = 'force-dynamic';
 
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getAdminSession();
+    const session = await getServerSession(authOptions);
 
     if (!session || session.user.userType !== "admin") {
       return NextResponse.json(
@@ -70,12 +68,12 @@ export async function POST(
     }
 
     // Validar soma de percentuais
-    const percentualAtual = percentualCota || 0;
-    const somaPercentuais = propriedade.cotas.reduce((sum, c) => {
-      const percentual = c.percentualCota ? Number(c.percentualCota) : 0;
-      return sum + percentual;
-    }, 0);
-    
+    const percentualAtual = percentualCota ?? 0;
+    const somaPercentuais = propriedade.cotas.reduce(
+      (sum, c) => sum + Number(c.percentualCota ?? 0),
+      0
+    );
+
     if (somaPercentuais + percentualAtual > 100) {
       return NextResponse.json(
         { error: `Soma dos percentuais das cotas excede 100%. Percentual disponível: ${100 - somaPercentuais}%` },

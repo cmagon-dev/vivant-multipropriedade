@@ -32,8 +32,6 @@ export default function PortalCotistaPage(): JSX.Element {
         setIsLoading(false);
       } else if (result?.ok) {
         toast.success("Login realizado com sucesso!");
-        // Aguardar um pouco para o cookie ser propagado
-        await new Promise(resolve => setTimeout(resolve, 500));
         router.push("/dashboard");
       } else {
         toast.error("Erro inesperado ao fazer login");

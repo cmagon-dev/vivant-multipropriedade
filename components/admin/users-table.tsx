@@ -4,21 +4,45 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Users as UsersIcon, Plus } from "lucide-react";
+import { Edit, Trash2, Users as UsersIcon, Plus, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
+type AccountItem =
+  | {
+      id: string;
+      name: string;
+      email: string;
+      active: boolean;
+      createdAt: Date;
+      tipo: "admin";
+      roleKey: string | null;
+      roleName: string | null;
+      _count: { properties: number; destinations: number };
+    }
+  | {
+      id: string;
+      name: string;
+      email: string;
+      active: boolean;
+      createdAt: Date;
+      tipo: "cotista";
+      cpf?: string;
+      _count: { cotas: number };
+    };
+
 interface UsersTableProps {
-  users: any[];
+  /** Lista unificada de usuários admin e cotistas */
+  accounts: AccountItem[];
 }
 
-export function UsersTable({ users }: UsersTableProps) {
+export function UsersTable({ accounts }: UsersTableProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  
+
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Tem certeza que deseja deletar o usuário "${name}"?`)) return;
-    
+
     setIsDeleting(id);
     try {
       const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
@@ -35,16 +59,16 @@ export function UsersTable({ users }: UsersTableProps) {
       setIsDeleting(null);
     }
   };
-  
-  if (users.length === 0) {
+
+  if (accounts.length === 0) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
         <UsersIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Nenhum usuário cadastrado
+          Nenhuma conta cadastrada
         </h3>
         <p className="text-gray-600 mb-4">
-          Comece criando o primeiro usuário
+          Adicione usuários do sistema ou cotistas (via Portal)
         </p>
         <Button asChild className="bg-vivant-navy">
           <Link href="/admin/usuarios/novo">
@@ -62,10 +86,13 @@ export function UsersTable({ users }: UsersTableProps) {
         <thead className="bg-gray-50">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Usuário
+              Conta
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Função
+              Tipo
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Role / Perfil
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Status
@@ -79,58 +106,77 @@ export function UsersTable({ users }: UsersTableProps) {
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {users.map((user) => (
-            <tr key={user.id} className="hover:bg-gray-50">
+          {accounts.map((account) => (
+            <tr key={`${account.tipo}-${account.id}`} className="hover:bg-gray-50">
               <td className="px-6 py-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-vivant-navy text-white flex items-center justify-center font-bold">
-                    {user.name.charAt(0).toUpperCase()}
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${account.tipo === "admin" ? "bg-vivant-navy text-white" : "bg-vivant-green/20 text-vivant-green"}`}>
+                    {account.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
                     <div className="font-medium text-gray-900">
-                      {user.name}
+                      {account.name}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {user.email}
+                      {account.email}
                     </div>
                   </div>
                 </div>
               </td>
               <td className="px-6 py-4">
-                <Badge variant={
-                  user.role === "ADMIN" ? "default" : 
-                  user.role === "EDITOR" ? "secondary" : 
-                  "outline"
-                }>
-                  {user.role}
+                <Badge variant={account.tipo === "admin" ? "default" : "secondary"}>
+                  {account.tipo === "admin" ? "Admin" : "Cotista"}
                 </Badge>
               </td>
               <td className="px-6 py-4">
-                <Badge variant={user.active ? "default" : "destructive"}>
-                  {user.active ? "Ativo" : "Inativo"}
+                {account.tipo === "admin" ? (
+                  <Badge variant={account.roleKey === "OWNER" || account.roleKey === "SUPER_ADMIN" ? "default" : "secondary"}>
+                    {account.roleKey ?? account.roleName ?? "—"}
+                  </Badge>
+                ) : (
+                  <span className="text-sm text-gray-600">Cotista</span>
+                )}
+              </td>
+              <td className="px-6 py-4">
+                <Badge variant={account.active ? "default" : "destructive"}>
+                  {account.active ? "Ativo" : "Inativo"}
                 </Badge>
               </td>
               <td className="px-6 py-4 text-sm text-gray-500">
-                <div className="flex gap-3">
-                  <span>{user._count.properties} casas</span>
-                  <span>{user._count.destinations} destinos</span>
-                </div>
+                {account.tipo === "admin" ? (
+                  <div className="flex gap-3">
+                    <span>{account._count.properties} casas</span>
+                    <span>{account._count.destinations} destinos</span>
+                  </div>
+                ) : (
+                  <span>{account._count.cotas} cota(s)</span>
+                )}
               </td>
               <td className="px-6 py-4 text-right text-sm font-medium">
                 <div className="flex items-center justify-end gap-2">
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href={`/admin/usuarios/${user.id}/editar`}>
-                      <Edit className="w-4 h-4" />
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(user.id, user.name)}
-                    disabled={isDeleting === user.id}
-                  >
-                    <Trash2 className="w-4 h-4 text-red-600" />
-                  </Button>
+                  {account.tipo === "admin" ? (
+                    <>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/admin/usuarios/${account.id}/editar`}>
+                          <Edit className="w-4 h-4" />
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(account.id, account.name)}
+                        disabled={isDeleting === account.id}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </Button>
+                    </>
+                  ) : (
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href="/admin-portal/cotistas" title="Ver cotistas no Portal">
+                        <ExternalLink className="w-4 h-4" />
+                      </Link>
+                    </Button>
+                  )}
                 </div>
               </td>
             </tr>
