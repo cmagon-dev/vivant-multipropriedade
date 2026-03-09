@@ -198,7 +198,7 @@ export function CasasClient({ properties }: CasasClientProps) {
             backgroundPosition: "center",
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/70 via-[#1A2F4B]/60 to-[#F8F9FA]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/60 via-[#1A2F4B]/40 via-[#1A2F4B]/20 to-[#F8F9FA]/60" />
         </div>
 
         {/* Hero Content */}

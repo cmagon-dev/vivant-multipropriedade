@@ -51,7 +51,7 @@ export default function ModeloPage(): JSX.Element {
             backgroundPosition: "center",
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/75 via-[#1A2F4B]/60 to-[#F8F9FA]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/65 via-[#1A2F4B]/45 via-[#1A2F4B]/20 to-[#F8F9FA]/60" />
         </div>
 
         <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8 sm:pt-12">
