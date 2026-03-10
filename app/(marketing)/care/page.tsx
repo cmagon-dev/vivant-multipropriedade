@@ -50,7 +50,7 @@ export default function CarePage(): JSX.Element {
             backgroundPosition: "center",
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-vivant-green/80 via-teal-600/70 to-[#F8F9FA]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-vivant-green/70 via-teal-600/50 via-teal-600/25 to-[#F8F9FA]/60" />
         </div>
 
         {/* Hero Content */}

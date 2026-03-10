@@ -77,6 +77,9 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith("/admin/usuarios") && !isOwner && !hasPermissionKey(permissions, "users.manage")) {
       return NextResponse.redirect(new URL("/admin/overview", request.url));
     }
+    if (pathname.startsWith("/admin/help-contextual") && !isOwner && !hasPermissionKey(permissions, "help.manage")) {
+      return NextResponse.redirect(new URL("/admin/overview", request.url));
+    }
     if (pathname.startsWith("/admin/help") && !isOwner && !hasPermissionKey(permissions, "help.view") && !hasPermissionKey(permissions, "help.manage")) {
       return NextResponse.redirect(new URL("/admin/overview", request.url));
     }
@@ -141,6 +144,25 @@ export async function middleware(request: NextRequest) {
       if (pathname.startsWith("/admin/vivant-care/assembleias") && !hasAssembleias) return NextResponse.redirect(new URL("/403", request.url));
       if (pathname.startsWith("/admin/vivant-care/trocas") && !hasTrocas) return NextResponse.redirect(new URL("/403", request.url));
     }
+    // Vivant Capital: rotas sob /admin/capital exigem capital.view ou capital.manage
+    if (pathname.startsWith("/admin/capital")) {
+      const hasCapital = isOwner || hasPermissionKey(permissions, "capital.view") || hasPermissionKey(permissions, "capital.manage");
+      if (!hasCapital) return NextResponse.redirect(new URL("/403", request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // Portal do investidor /capital: apenas role INVESTOR (userType admin com role INVESTOR)
+  if (pathname.startsWith("/capital")) {
+    if (!token) {
+      const url = new URL("/login", request.url);
+      url.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(url);
+    }
+    const roleKey = token.roleKey as string | undefined;
+    const permissions = (token.permissions as string[] | undefined) ?? [];
+    const isInvestor = roleKey === "INVESTOR" || hasPermissionKey(permissions, "capital.portal");
+    if (!isInvestor) return NextResponse.redirect(new URL("/403", request.url));
     return NextResponse.next();
   }
 

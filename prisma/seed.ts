@@ -51,6 +51,7 @@ async function main() {
     { key: 'ADMIN', name: 'Administrador', description: 'Admin da empresa/portal', isSystem: true },
     { key: 'STAFF', name: 'Equipe', description: 'Colaborador com permissões limitadas', isSystem: true },
     { key: 'COTISTA', name: 'Cotista', description: 'Investidor / Portal cotista', isSystem: true },
+    { key: 'INVESTOR', name: 'Investidor Capital', description: 'Portal Vivant Capital (investimentos)', isSystem: true },
   ];
   for (const r of roles) {
     await prisma.role.upsert({
@@ -128,6 +129,10 @@ async function main() {
     { key: 'vivantCare.assembleias.manage', name: 'Gerenciar assembleias', description: 'Criar e editar assembleias e pautas', group: 'vivantCare' },
     { key: 'vivantCare.trocas.view', name: 'Ver trocas de semanas', description: 'Listar solicitações de troca', group: 'vivantCare' },
     { key: 'vivantCare.trocas.manage', name: 'Gerenciar trocas', description: 'Aprovar, reprovar e gerenciar trocas', group: 'vivantCare' },
+    // Vivant Capital
+    { key: 'capital.view', name: 'Ver Vivant Capital', description: 'Acesso ao módulo Capital no admin', group: 'capital' },
+    { key: 'capital.manage', name: 'Gerenciar Capital', description: 'Ativos, investidores, distribuições', group: 'capital' },
+    { key: 'capital.portal', name: 'Portal do investidor', description: 'Acesso ao portal /capital', group: 'capital' },
   ];
   for (const p of permissions) {
     await prisma.permission.upsert({
@@ -205,6 +210,16 @@ async function main() {
       where: { roleId_permissionId: { roleId: cotistaRole.id, permissionId: perm.id } },
       update: {},
       create: { roleId: cotistaRole.id, permissionId: perm.id },
+    });
+  }
+
+  const investorRole = await prisma.role.findUniqueOrThrow({ where: { key: 'INVESTOR' } });
+  const capitalPortal = allPermissions.find((p) => p.key === 'capital.portal');
+  if (capitalPortal) {
+    await prisma.rolePermission.upsert({
+      where: { roleId_permissionId: { roleId: investorRole.id, permissionId: capitalPortal.id } },
+      update: {},
+      create: { roleId: investorRole.id, permissionId: capitalPortal.id },
     });
   }
 

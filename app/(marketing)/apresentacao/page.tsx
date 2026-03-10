@@ -77,7 +77,7 @@ export default function ApresentacaoPage() {
             backgroundPosition: "center",
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/85 via-[#1A2F4B]/75 to-[#F8F9FA]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/75 via-[#1A2F4B]/55 via-[#1A2F4B]/30 to-[#F8F9FA]/60" />
         </div>
 
         <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center py-20">

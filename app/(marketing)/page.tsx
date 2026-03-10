@@ -104,7 +104,11 @@ export default async function HomePage() {
             quality={100}
             className="object-cover"
           />
+<<<<<<< HEAD
           <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/35 via-[#1A2F4B]/20 to-[#F8F9FA]/60" />
+=======
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/60 via-[#1A2F4B]/40 via-[#1A2F4B]/20 to-[#F8F9FA]/60" />
+>>>>>>> 3d9f34c0ca66f0dfe2b26819e648c14a4e142ff1
         </div>
         <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8">
           <div className="max-w-4xl mx-auto">

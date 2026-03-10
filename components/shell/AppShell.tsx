@@ -30,6 +30,9 @@ import {
   Mail,
   Vote,
   ArrowRightLeft,
+  TrendingUp,
+  PieChart,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SECTION_TITLES, SECTION_ORDER } from "@/lib/navigation/menu";
@@ -55,6 +58,9 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Mail,
   Vote,
   ArrowRightLeft,
+  TrendingUp,
+  PieChart,
+  BarChart3,
 };
 
 export type AppShellUserDisplay = {

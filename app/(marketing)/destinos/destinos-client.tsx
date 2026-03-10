@@ -126,7 +126,7 @@ export function DestinosClient({ destinations }: DestinosClientProps) {
               }}
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/80 via-[#1A2F4B]/70 to-[#F8F9FA]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/70 via-[#1A2F4B]/50 via-[#1A2F4B]/25 to-[#F8F9FA]/60" />
           
           {/* Badge com nome do destino - canto superior direito */}
           {heroImages.length > 0 && (

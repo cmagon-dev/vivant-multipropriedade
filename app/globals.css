@@ -133,3 +133,63 @@ section[id] {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* ===== Help content — documentação / manual ===== */
+.help-content {
+  max-width: 760px;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--foreground);
+}
+
+.help-content-h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: rgb(26 47 75);
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid rgb(226 232 240);
+}
+
+.help-content-h2:first-child {
+  margin-top: 0;
+}
+
+.help-content-h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgb(51 65 85);
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.help-content-p {
+  margin-bottom: 1rem;
+}
+
+.help-content-p:last-child {
+  margin-bottom: 0;
+}
+
+.help-content-ul,
+.help-content-ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.help-content-li {
+  margin-bottom: 0.35rem;
+}
+
+.help-content strong {
+  font-weight: 600;
+}
+
+.help-content-wrapper {
+  padding: 0.25rem 0;
+}
+
+.help-content-wrapper .help-content {
+  margin-bottom: 0.5rem;
+}

@@ -48,6 +48,7 @@ model User {
   leadTypeAssignmentsAsDefault LeadTypeAssignment[]
   systemTasksAssigned          SystemTask[]
   systemEvents                SystemEvent[]
+  capitalInvestorProfile       CapitalInvestorProfile?
 
   @@index([email])
   @@map("users")
@@ -447,7 +448,9 @@ model Property {
   assembleias     Assembleia[]
   mensagens       Mensagem[]
   documentos      Documento[]
-  
+  // Vivant Capital: camada de investimento sobre o imóvel (sem duplicar dados)
+  capitalAssetConfigs CapitalAssetConfig[]
+
   @@index([destinoId])
   @@index([published])
   @@index([slug])
@@ -944,4 +947,153 @@ model Notificacao {
   @@index([lida])
   @@index([createdAt])
   @@map("notificacoes")
+}
+
+// ===== VIVANT CAPITAL (camada investimento sobre imóveis existentes) =====
+// Não duplica propriedades: Property já existe; Capital só adiciona config e participações.
+
+model CapitalAssetConfig {
+  id                    String    @id @default(cuid())
+  propertyId            String    @unique
+  property              Property  @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  enabled               Boolean   @default(true)
+  totalCotas            Int       @default(100)
+  valorPorCota          Decimal   @db.Decimal(15, 2)
+  taxaAdministracaoPercent Decimal @db.Decimal(5, 2)
+  reservaPercent        Decimal   @db.Decimal(5, 2)
+  ativoStatus           String    @default("ATIVO")  // ATIVO, PAUSADO, ENCERRADO
+  observacoes           String?   @db.Text
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  participations        CapitalParticipation[]
+  distributions         CapitalDistribution[]
+  valuations           CapitalValuation[]
+  liquidityRequests    CapitalLiquidityRequest[]
+
+  @@index([propertyId])
+  @@index([enabled])
+  @@index([ativoStatus])
+  @@map("capital_asset_configs")
+}
+
+model CapitalInvestorProfile {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tipoPessoa  String    @default("PF")  // PF, PJ
+  documento   String?
+  status      String    @default("ATIVO")  // ATIVO, INATIVO, PENDENTE
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  participations      CapitalParticipation[]
+  distributionItems   CapitalDistributionItem[]
+  liquidityRequests   CapitalLiquidityRequest[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("capital_investor_profiles")
+}
+
+model CapitalParticipation {
+  id                String    @id @default(cuid())
+  investorProfileId String
+  investorProfile   CapitalInvestorProfile @relation(fields: [investorProfileId], references: [id], onDelete: Cascade)
+  assetConfigId     String
+  assetConfig       CapitalAssetConfig @relation(fields: [assetConfigId], references: [id], onDelete: Restrict)
+  numeroCotas       Int
+  percentualTotal   Decimal  @db.Decimal(5, 2)
+  valorAportado     Decimal  @db.Decimal(15, 2)
+  dataEntrada       DateTime @default(now())
+  status            String   @default("ATIVO")  // ATIVO, RESGATADO, CANCELADO
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([investorProfileId, assetConfigId])
+  @@index([investorProfileId])
+  @@index([assetConfigId])
+  @@index([status])
+  @@map("capital_participations")
+}
+
+model CapitalDistribution {
+  id                    String    @id @default(cuid())
+  assetConfigId         String
+  assetConfig           CapitalAssetConfig @relation(fields: [assetConfigId], references: [id], onDelete: Restrict)
+  competencia          String    // ex: "2025-01"
+  receitaBruta         Decimal   @db.Decimal(15, 2)
+  custos               Decimal   @db.Decimal(15, 2)
+  taxaAdministracaoValor Decimal @db.Decimal(15, 2)
+  reservaValor         Decimal   @db.Decimal(15, 2)
+  resultadoDistribuivel Decimal  @db.Decimal(15, 2)
+  valorTotalDistribuido Decimal  @db.Decimal(15, 2)
+  status               String    @default("RASCUNHO")  // RASCUNHO, APROVADA, PAGA
+  dataAprovacao        DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  items                CapitalDistributionItem[]
+
+  @@unique([assetConfigId, competencia])
+  @@index([assetConfigId])
+  @@index([status])
+  @@index([competencia])
+  @@map("capital_distributions")
+}
+
+model CapitalDistributionItem {
+  id                String    @id @default(cuid())
+  distributionId    String
+  distribution      CapitalDistribution @relation(fields: [distributionId], references: [id], onDelete: Cascade)
+  investorProfileId String
+  investorProfile   CapitalInvestorProfile @relation(fields: [investorProfileId], references: [id], onDelete: Cascade)
+  percentualAplicado Decimal  @db.Decimal(5, 2)
+  valorDevido       Decimal   @db.Decimal(15, 2)
+  valorPago         Decimal   @db.Decimal(15, 2)
+  status            String    @default("PENDENTE")  // PENDENTE, PAGO
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([distributionId, investorProfileId])
+  @@index([distributionId])
+  @@index([investorProfileId])
+  @@map("capital_distribution_items")
+}
+
+model CapitalValuation {
+  id            String    @id @default(cuid())
+  assetConfigId String
+  assetConfig   CapitalAssetConfig @relation(fields: [assetConfigId], references: [id], onDelete: Cascade)
+  dataReferencia DateTime
+  valorImovel   Decimal   @db.Decimal(15, 2)
+  observacoes   String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([assetConfigId])
+  @@index([dataReferencia])
+  @@map("capital_valuations")
+}
+
+model CapitalLiquidityRequest {
+  id                String    @id @default(cuid())
+  investorProfileId String
+  investorProfile   CapitalInvestorProfile @relation(fields: [investorProfileId], references: [id], onDelete: Cascade)
+  assetConfigId     String
+  assetConfig       CapitalAssetConfig @relation(fields: [assetConfigId], references: [id], onDelete: Restrict)
+  tipoSolicitacao   String    // ANTECIPACAO, RESGATE
+  valorSolicitado   Decimal   @db.Decimal(15, 2)
+  motivo            String?   @db.Text
+  status            String    @default("PENDENTE")  // PENDENTE, APROVADA, RECUSADA, PAGA
+  observacaoAdmin   String?   @db.Text
+  dataSolicitacao   DateTime  @default(now())
+  dataDecisao       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([investorProfileId])
+  @@index([assetConfigId])
+  @@index([status])
+  @@map("capital_liquidity_requests")
 }

@@ -30,6 +30,10 @@ export function getPostLoginRedirectRoute(session: SessionLike | null): string {
     return "/cotista";
   }
 
+  if (roleKey === "INVESTOR") {
+    return "/capital";
+  }
+
   const role = roleKey ?? "STAFF";
   switch (role) {
     case "OWNER":

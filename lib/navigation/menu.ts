@@ -13,10 +13,10 @@ export type MenuItemConfig = {
   /** Ver hasPermissionKey: usuário precisa de pelo menos uma destas permissões para ver o item. */
   requiredPermissions: string[];
   /** Seção da sidebar para agrupamento visual. */
-  section?: "dashboard" | "comercial" | "propriedades" | "vivantcare" | "administracao" | "suporte";
+  section?: "dashboard" | "comercial" | "propriedades" | "vivantcare" | "capital" | "administracao" | "suporte";
 };
 
-const SECTIONS_ORDER: MenuItemConfig["section"][] = ["dashboard", "comercial", "propriedades", "vivantcare", "administracao", "suporte"];
+const SECTIONS_ORDER: MenuItemConfig["section"][] = ["dashboard", "comercial", "propriedades", "vivantcare", "capital", "administracao", "suporte"];
 
 /** Ordem padrão: todos os itens possíveis do sistema, agrupados por seção. */
 export const UNIFIED_MENU_CONFIG: MenuItemConfig[] = [
@@ -140,6 +140,56 @@ export const UNIFIED_MENU_CONFIG: MenuItemConfig[] = [
     requiredPermissions: ["vivantCare.trocas.view", "vivantCare.trocas.manage"],
     section: "vivantcare",
   },
+  // Vivant Capital (investimentos sobre imóveis existentes)
+  {
+    label: "Capital",
+    href: "/admin/capital",
+    iconKey: "TrendingUp",
+    requiredPermissions: ["capital.view", "capital.manage"],
+    section: "capital",
+  },
+  {
+    label: "Ativos",
+    href: "/admin/capital/ativos",
+    iconKey: "Building2",
+    requiredPermissions: ["capital.view", "capital.manage"],
+    section: "capital",
+  },
+  {
+    label: "Investidores",
+    href: "/admin/capital/investidores",
+    iconKey: "Users",
+    requiredPermissions: ["capital.view", "capital.manage"],
+    section: "capital",
+  },
+  {
+    label: "Participações",
+    href: "/admin/capital/participacoes",
+    iconKey: "PieChart",
+    requiredPermissions: ["capital.view", "capital.manage"],
+    section: "capital",
+  },
+  {
+    label: "Distribuições",
+    href: "/admin/capital/distribuicoes",
+    iconKey: "DollarSign",
+    requiredPermissions: ["capital.view", "capital.manage"],
+    section: "capital",
+  },
+  {
+    label: "Solicitações",
+    href: "/admin/capital/solicitacoes",
+    iconKey: "FileText",
+    requiredPermissions: ["capital.view", "capital.manage"],
+    section: "capital",
+  },
+  {
+    label: "Relatórios",
+    href: "/admin/capital/relatorios",
+    iconKey: "BarChart3",
+    requiredPermissions: ["capital.view", "capital.manage"],
+    section: "capital",
+  },
   {
     label: "Usuários",
     href: "/admin/usuarios",
@@ -159,6 +209,13 @@ export const UNIFIED_MENU_CONFIG: MenuItemConfig[] = [
     href: "/admin/help",
     iconKey: "HelpCircle",
     requiredPermissions: ["help.view", "help.manage"],
+    section: "suporte",
+  },
+  {
+    label: "Ajuda Contextual",
+    href: "/admin/help-contextual",
+    iconKey: "FileText",
+    requiredPermissions: ["help.manage"],
     section: "suporte",
   },
 ];
@@ -189,6 +246,7 @@ export const SECTION_TITLES: Record<NonNullable<MenuItemConfig["section"]>, stri
   comercial: "COMERCIAL",
   propriedades: "PROPRIEDADES",
   vivantcare: "VIVANT CARE",
+  capital: "VIVANT CAPITAL",
   administracao: "ADMINISTRAÇÃO",
   suporte: "SUPORTE",
 };

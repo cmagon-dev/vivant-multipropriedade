@@ -74,6 +74,10 @@ const catalog: PermissionEntry[] = [
   { key: "vivantCare.assembleias.manage", label: "Gerenciar assembleias", description: "Criar e editar assembleias e pautas", module: "vivantCare", action: "assembleias.manage", riskLevel: "medium" },
   { key: "vivantCare.trocas.view", label: "Ver trocas de semanas", description: "Listar solicitações de troca", module: "vivantCare", action: "trocas.view", riskLevel: "low" },
   { key: "vivantCare.trocas.manage", label: "Gerenciar trocas", description: "Aprovar, reprovar e gerenciar trocas", module: "vivantCare", action: "trocas.manage", riskLevel: "medium" },
+  // Vivant Capital (gestão investimentos sobre imóveis existentes)
+  { key: "capital.view", label: "Ver Vivant Capital", description: "Acesso ao módulo Capital no admin", module: "capital", action: "view", riskLevel: "medium" },
+  { key: "capital.manage", label: "Gerenciar Capital", description: "Ativos, investidores, distribuições e solicitações", module: "capital", action: "manage", riskLevel: "high" },
+  { key: "capital.portal", label: "Portal do investidor", description: "Acesso ao portal /capital (próprios dados)", module: "capital", action: "portal", riskLevel: "low" },
   // Legado (mantidos para compatibilidade)
   { key: "admin.view", label: "Ver painel admin (legado)", description: "Alias para dashboard.admin.view", module: "dashboard", action: "view", riskLevel: "high" },
   { key: "comercial.view", label: "Ver painel comercial (legado)", description: "Alias para crm.view", module: "crm", action: "view", riskLevel: "low" },

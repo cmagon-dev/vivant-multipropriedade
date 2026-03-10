@@ -146,7 +146,7 @@ export function Navbar(): JSX.Element {
 
                 {/* Logo Vivant Capital */}
                 <Link 
-                  href="/capital"
+                  href="/sobre-capital"
                   className="bg-white px-1.5 py-1 rounded border border-vivant-navy/20 hover:border-vivant-navy hover:shadow-sm transition-all duration-300"
                 >
                   <img 
@@ -254,7 +254,7 @@ export function Navbar(): JSX.Element {
 
                 {/* Logo Capital */}
                 <Link 
-                  href="/capital"
+                  href="/sobre-capital"
                   className="flex items-center gap-3 py-3 px-4 bg-white border-2 border-vivant-navy/40 rounded-lg hover:border-vivant-navy hover:shadow-md transition-all"
                   onClick={handleLinkClick}
                 >

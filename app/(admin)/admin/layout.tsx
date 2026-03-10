@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { AppShell } from "@/components/shell/AppShell";
+import { ContextualHelpAuto } from "@/components/help/ContextualHelpAuto";
 import {
   UNIFIED_MENU_CONFIG,
   filterMenuByPermission,
@@ -41,7 +42,10 @@ export default async function AdminLayout({
         roleLabel: user.role ?? user.roleKey ?? "—",
       }}
     >
-      {children}
+      <>
+        <ContextualHelpAuto />
+        {children}
+      </>
     </AppShell>
   );
 }
