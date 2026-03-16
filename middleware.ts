@@ -54,12 +54,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Raiz: não autenticado -> mostra a home (landing); autenticado -> redirect por role/defaultRoute
+  // Raiz sempre pública, independente de autenticação
   if (pathname === "/") {
-    if (token) {
-      const redirectUrl = getPostLoginRedirectFromToken(token);
-      return NextResponse.redirect(new URL(redirectUrl, request.url));
-    }
     return NextResponse.next();
   }
 
