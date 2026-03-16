@@ -31,7 +31,7 @@ export function getPostLoginRedirectRoute(session: SessionLike | null): string {
   }
 
   if (roleKey === "INVESTOR") {
-    return "/capital";
+    return "/capital/dashboard";
   }
 
   const role = roleKey ?? "STAFF";

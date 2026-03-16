@@ -7,7 +7,7 @@ import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
 const menuItems = [
-  { href: "/capital", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/capital/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/capital/portfolio", label: "Portfólio", icon: PieChart },
   { href: "/capital/rendimentos", label: "Rendimentos", icon: DollarSign },
   { href: "/capital/documentos", label: "Documentos", icon: FileText },
@@ -26,7 +26,7 @@ export function CapitalSidebar() {
       </div>
       <nav className="flex-1 p-4 space-y-1">
         {menuItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/capital" && pathname.startsWith(item.href));
+          const isActive = pathname === item.href || (item.href !== "/capital/dashboard" && pathname.startsWith(item.href));
           return (
             <Link
               key={item.href}

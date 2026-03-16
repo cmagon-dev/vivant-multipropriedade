@@ -27,7 +27,6 @@ import {
   Lock,
   Settings,
   ArrowDownRight,
-  ChevronDown,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -41,7 +40,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function CapitalHomePage(): JSX.Element {
+export default function VivantCapitalPage(): JSX.Element {
   return (
     <div className="min-h-screen bg-[#F8F9FA]">
       <Navbar />
@@ -228,7 +227,7 @@ export default function CapitalHomePage(): JSX.Element {
       <section id="estrutura" className="py-12 sm:py-16 lg:py-20 bg-white scroll-mt-28">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-10 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-3 sm:mb-4 px-2">
+            <h2 className="text-3xl sm:text-4xl lg:5xl font-serif font-bold text-[#1A2F4B] mb-3 sm:mb-4 px-2">
               Estrutura Financeira
             </h2>
             <p className="text-lg sm:text-xl text-[#1A2F4B]/70 max-w-3xl mx-auto px-4">
@@ -687,3 +686,4 @@ export default function CapitalHomePage(): JSX.Element {
     </div>
   );
 }
+

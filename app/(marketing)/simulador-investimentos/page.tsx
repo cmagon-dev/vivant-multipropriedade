@@ -267,7 +267,7 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
               size="lg"
               className="bg-white text-[#1A2F4B] hover:bg-white/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
             >
-              <Link href="/capital">
+              <Link href="/vivant-capital">
                 Conhecer Vivant Capital
                 <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
               </Link>

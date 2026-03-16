@@ -153,7 +153,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // Portal do investidor /capital: apenas role INVESTOR (userType admin com role INVESTOR)
-  if (pathname.startsWith("/capital")) {
+  // A landing pública é /capital; as rotas protegidas começam em /capital/...
+  if (pathname.startsWith("/capital/")) {
     if (!token) {
       const url = new URL("/login", request.url);
       url.searchParams.set("callbackUrl", pathname);

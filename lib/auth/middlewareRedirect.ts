@@ -13,7 +13,7 @@ export function getPostLoginRedirectFromToken(token: JWT | null): string {
     return defaultRoute;
   }
   if (userType === "cotista") return "/cotista";
-  if (roleKey === "INVESTOR") return "/capital";
+  if (roleKey === "INVESTOR") return "/capital/dashboard";
   if (userType === "admin") {
     if (roleKey === "OWNER" || roleKey === "SUPER_ADMIN") return "/admin/overview";
     if (roleKey === "COMMERCIAL") return "/dashboard/comercial";
