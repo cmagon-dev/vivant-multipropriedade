@@ -1,9 +1,5 @@
 import Link from "next/link";
 import Image from "next/image";
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { getPostLoginRedirectRoute } from "@/lib/auth/postLoginRedirect";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -62,11 +58,6 @@ const getStatusBadge = (status: string) => {
 };
 
 export default async function HomePage() {
-  const session = await getServerSession(authOptions);
-  if (session) {
-    redirect(getPostLoginRedirectRoute(session));
-  }
-
   const [highlightedProperties, destinations] = await Promise.all([
     prisma.property.findMany({
       where: {
