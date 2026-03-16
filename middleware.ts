@@ -4,6 +4,30 @@ import { getToken } from "next-auth/jwt";
 import { getPostLoginRedirectFromToken } from "@/lib/auth/middlewareRedirect";
 import { hasPermissionKey } from "@/lib/auth/permissions";
 
+function isPublicPath(pathname: string): boolean {
+  if (
+    pathname === "/capital" ||
+    pathname === "/casas" ||
+    pathname === "/destinos" ||
+    pathname === "/modelo" ||
+    pathname === "/contato" ||
+    pathname === "/parceiros" ||
+    pathname === "/care" ||
+    pathname === "/simulador-investimentos" ||
+    pathname === "/apresentacao" ||
+    pathname === "/sobre-capital" ||
+    pathname === "/403"
+  ) {
+    return true;
+  }
+
+  if (pathname.startsWith("/casas/")) return true;
+  if (pathname === "/captar" || pathname.startsWith("/captar/")) return true;
+  if (pathname.startsWith("/convite/")) return true;
+
+  return false;
+}
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
@@ -45,6 +69,11 @@ export async function middleware(request: NextRequest) {
       const redirectUrl = getPostLoginRedirectFromToken(token);
       return NextResponse.redirect(new URL(redirectUrl, request.url));
     }
+    return NextResponse.next();
+  }
+
+  // Demais rotas públicas de marketing/institucional
+  if (isPublicPath(pathname)) {
     return NextResponse.next();
   }
 
