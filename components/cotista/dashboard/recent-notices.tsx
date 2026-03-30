@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, AlertTriangle, Info } from "lucide-react";
+import { Bell, AlertTriangle, Info, Pin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -14,7 +14,14 @@ interface Notice {
   conteudo: string;
   tipo: string;
   prioridade: string;
+  fixada?: boolean;
   createdAt: string;
+}
+
+function snippetFromContent(htmlOrText: string) {
+  if (!htmlOrText) return "";
+  const text = htmlOrText.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  return text.length > 160 ? `${text.slice(0, 160)}…` : text;
 }
 
 export function RecentNotices() {
@@ -24,7 +31,10 @@ export function RecentNotices() {
   useEffect(() => {
     async function loadNotices() {
       try {
-        const response = await fetch("/api/cotistas/me/avisos?limit=3");
+        const response = await fetch("/api/cotistas/me/avisos?limit=3", {
+          credentials: "same-origin",
+          cache: "no-store",
+        });
         if (response.ok) {
           const data = await response.json();
           setNotices(data.avisos || []);
@@ -95,11 +105,14 @@ export function RecentNotices() {
                     <PriorityIcon className={`w-4 h-4 ${priorityConfig.iconColor}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[#1A2F4B] text-sm mb-1">
-                      {notice.titulo}
+                    <p className="font-semibold text-[#1A2F4B] text-sm mb-1 flex items-center gap-2 flex-wrap">
+                      {notice.fixada && (
+                        <Pin className="w-3.5 h-3.5 text-vivant-green flex-shrink-0" aria-hidden />
+                      )}
+                      <span>{notice.titulo}</span>
                     </p>
                     <p className="text-xs text-[#1A2F4B]/70 line-clamp-2 mb-1">
-                      {notice.conteudo}
+                      {snippetFromContent(notice.conteudo)}
                     </p>
                     <p className="text-xs text-[#1A2F4B]/50">
                       {format(new Date(notice.createdAt), "dd MMM yyyy", { locale: ptBR })}

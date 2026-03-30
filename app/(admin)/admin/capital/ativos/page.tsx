@@ -4,8 +4,8 @@ import { canAccessCapitalAdmin } from "@/lib/capital-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
-import { Building2 } from "lucide-react";
 import Link from "next/link";
+import { CapitalAtivosList } from "./capital-ativos-list";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +22,16 @@ export default async function CapitalAtivosPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  const fmt = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
+  const ativosSerialized = ativos.map((a) => ({
+    id: a.id,
+    totalCotas: a.totalCotas,
+    valorPorCota: Number(a.valorPorCota),
+    taxaAdministracaoPercent: Number(a.taxaAdministracaoPercent),
+    enabled: a.enabled,
+    ativoStatus: a.ativoStatus,
+    property: a.property ? { id: a.property.id, name: a.property.name, slug: a.property.slug, location: a.property.location ?? "", priceValue: a.property.priceValue ?? null } : null,
+    _count: a._count,
+  }));
 
   return (
     <div className="space-y-6">
@@ -45,38 +54,7 @@ export default async function CapitalAtivosPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {ativos.map((a) => (
-            <Card key={a.id} className="border border-gray-200">
-              <CardContent className="p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-vivant-navy/10 flex items-center justify-center flex-shrink-0">
-                      <Building2 className="w-6 h-6 text-vivant-navy" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-vivant-navy">{a.property.name}</h3>
-                      <p className="text-sm text-gray-600">{a.property.location}</p>
-                      <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-500">
-                        <span>{a.totalCotas} cotas</span>
-                        <span>Valor/cota: {fmt(Number(a.valorPorCota))}</span>
-                        <span>Taxa adm: {Number(a.taxaAdministracaoPercent)}%</span>
-                        <span>{a._count.participations} participação(ões)</span>
-                        <span className={`px-2 py-0.5 rounded ${a.enabled ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
-                          {a.enabled ? "Ativo" : "Inativo"}
-                        </span>
-                        <span className="px-2 py-0.5 rounded bg-slate-100">{a.ativoStatus}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <Link href={`/admin/capital/ativos/${a.id}`} className="text-sm font-medium text-vivant-navy hover:underline shrink-0">
-                    Configurar
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <CapitalAtivosList ativos={ativosSerialized} />
       )}
     </div>
   );

@@ -5,6 +5,20 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "./status-badge";
 import { Edit, Trash2, Eye, EyeOff, Building2, Plus } from "lucide-react";
+
+/** Placeholder quando a propriedade não tem imagem (evita 404). */
+const PLACEHOLDER_IMAGE =
+  "data:image/svg+xml," +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="48" viewBox="0 0 64 48"><rect width="64" height="48" fill="#e5e7eb"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-size="10" font-family="sans-serif">Sem foto</text></svg>'
+  );
+/** URLs de placeholder antigas do seed que não existem mais — usar fallback. */
+const BROKEN_PLACEHOLDERS = ["/placeholder-house.jpg", "/placeholder-apt.jpg"];
+function safeImageSrc(url: string | undefined): string {
+  if (!url) return PLACEHOLDER_IMAGE;
+  if (BROKEN_PLACEHOLDERS.some((p) => url.endsWith(p))) return PLACEHOLDER_IMAGE;
+  return url;
+}
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -106,9 +120,9 @@ export function PropertiesTable({ properties }: PropertiesTableProps) {
               <td className="px-6 py-4">
                 <div className="flex items-center gap-3">
                   <img
-                    src={property.images[0]}
+                    src={safeImageSrc(property.images?.[0])}
                     alt={property.name}
-                    className="w-16 h-12 rounded object-cover"
+                    className="w-16 h-12 rounded object-cover bg-gray-100"
                   />
                   <div>
                     <div className="font-medium text-gray-900">

@@ -67,7 +67,7 @@ export default async function VivantCareDashboardPage() {
       icon: DollarSign,
       color: "text-yellow-600",
       bg: "bg-yellow-100",
-      href: "/admin/vivant-care/financeiro",
+      href: "/admin/vivant-care/financeiro/cobrancas",
     },
     {
       title: "Convites Pendentes",

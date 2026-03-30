@@ -17,6 +17,7 @@ import { Building2, Send, CheckCircle2 } from "lucide-react";
 export function PartnerLeadForm(): JSX.Element {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [valorEstimado, setValorEstimado] = useState(1500000);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     register,
@@ -38,17 +39,54 @@ export function PartnerLeadForm(): JSX.Element {
   };
 
   const onSubmit = async (data: PartnerLeadFormData) => {
-    console.log("Lead enviado:", data);
-    
-    // TODO: Integrar com API
-    // await fetch("/api/leads/parceiros", {
-    //   method: "POST",
-    //   body: JSON.stringify(data),
-    // });
-    
-    // Simula envio
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
+    setSubmitError(null);
+
+    const valorFormatado = new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 0,
+    }).format(data.valorEstimado);
+
+    const tipoImovelLabel: Record<PartnerLeadFormData["tipoImovel"], string> = {
+      casa: "Casa",
+      apartamento: "Apartamento",
+      chacara: "Chacara",
+      outro: "Outro",
+    };
+
+    const detalhes = [
+      "Solicitacao de avaliacao - Parceiros",
+      `Nome: ${data.nome}`,
+      `Email: ${data.email}`,
+      `Telefone: ${data.telefone}`,
+      `Cidade: ${data.cidade}`,
+      `UF: ${data.estado}`,
+      `Tipo de imovel: ${tipoImovelLabel[data.tipoImovel]}`,
+      `Valor estimado: ${valorFormatado}`,
+      `Aceita contato: ${data.aceitaContato ? "Sim" : "Nao"}`,
+      `Descricao: ${data.descricaoImovel?.trim() || "Nao informada"}`,
+    ].join("\n");
+
+    const response = await fetch("/api/public/lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        leadTypeKey: "IMOVEL",
+        name: data.nome,
+        phone: data.telefone,
+        email: data.email,
+        city: data.cidade,
+        origin: "Parceiros",
+        message: detalhes,
+      }),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      setSubmitError(payload?.error || "Nao foi possivel enviar sua solicitacao. Tente novamente.");
+      return;
+    }
+
     setIsSubmitted(true);
   };
 
@@ -293,6 +331,10 @@ export function PartnerLeadForm(): JSX.Element {
               </>
             )}
           </Button>
+
+          {submitError && (
+            <p className="text-sm text-center text-red-600">{submitError}</p>
+          )}
 
           <p className="text-xs text-center text-[#1A2F4B]/60">
             Ao enviar, você concorda com nossos termos de privacidade

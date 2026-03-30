@@ -107,7 +107,14 @@ export function getPermissionByKey(key: string): PermissionEntry | undefined {
 
 /** Retorna todas as chaves que concedem a permissão (incluindo a própria). */
 export function getKeysThatGrant(permissionKey: string): string[] {
-  return GRANTED_BY[permissionKey] ?? [permissionKey];
+  const base = GRANTED_BY[permissionKey] ?? [permissionKey];
+  // Quem tem acesso ao admin (admin.view) ou ao módulo (vivantCare.view) enxerga o menu e as telas do Vivant Care.
+  if (permissionKey.startsWith("vivantCare.")) {
+    return Array.from(
+      new Set([...base, "vivantCare.view", "admin.view", "dashboard.admin.view"])
+    );
+  }
+  return base;
 }
 
 export function getCatalogByModule(): Record<string, PermissionEntry[]> {

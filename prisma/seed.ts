@@ -6,33 +6,24 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Iniciando seed do banco de dados...\n');
 
-  // 1. Usuário OWNER (Dono): caio@vivant.com.br / admin123
-  console.log('👤 Criando/atualizando usuário OWNER...');
-  const ownerPassword = await bcrypt.hash('admin123', 10);
-  const ownerEmail = 'caio@vivant.com.br';
-
-  // Se existir admin@vivant.com.br e ainda não existir caio, renomear (mantém id e relações)
-  const oldAdmin = await prisma.user.findUnique({ where: { email: 'admin@vivant.com.br' } });
-  const caioExists = await prisma.user.findUnique({ where: { email: ownerEmail } });
-  if (oldAdmin && !caioExists) {
-    await prisma.user.update({
-      where: { id: oldAdmin.id },
-      data: { email: ownerEmail, name: 'Caio Vivant', password: ownerPassword, active: true },
-    });
-  }
+  // 1. Usuário ADMIN inicial: admin@vivant.com.br / 123456
+  console.log('👤 Criando/atualizando usuário ADMIN inicial...');
+  const adminPassword = await bcrypt.hash('123456', 10);
+  const adminEmail = 'admin@vivant.com.br';
 
   const admin = await prisma.user.upsert({
-    where: { email: ownerEmail },
-    update: { password: ownerPassword, active: true },
+    where: { email: adminEmail },
+    update: { password: adminPassword, active: true, defaultRoute: '/admin' },
     create: {
-      name: 'Caio Vivant',
-      email: ownerEmail,
-      password: ownerPassword,
+      name: 'Administrador Vivant',
+      email: adminEmail,
+      password: adminPassword,
       role: 'ADMIN',
       active: true,
+      defaultRoute: '/admin',
     },
   });
-  console.log('✅ OWNER criado/atualizado:', admin.email);
+  console.log('✅ ADMIN criado/atualizado:', admin.email);
 
   // 1a. Company padrão (evita companyId null no upsert de UserRoleAssignment)
   const defaultCompany = await prisma.company.upsert({
@@ -607,7 +598,7 @@ async function main() {
       price: 'R$ 850.000',
       monthlyFee: 'R$ 800',
       weeks: '8 semanas/ano',
-      images: ['/placeholder-house.jpg'],
+      images: [],
       features: ['Lareira', 'Churrasqueira', 'Jardim', 'Garagem'],
       appreciation: '15% ao ano',
       status: 'DISPONIVEL',
@@ -638,7 +629,7 @@ async function main() {
       price: 'R$ 650.000',
       monthlyFee: 'R$ 600',
       weeks: '6 semanas/ano',
-      images: ['/placeholder-apt.jpg'],
+      images: [],
       features: ['Piscina', 'Academia', 'Vista Mar', 'Segurança 24h'],
       appreciation: '18% ao ano',
       status: 'DISPONIVEL',
@@ -813,10 +804,10 @@ async function main() {
   console.log('✅ Aviso criado:', aviso1.titulo);
 
   console.log('\n✨ Seed concluído com sucesso!\n');
-  console.log('📝 Credenciais de acesso:\n');
-  console.log('👨‍💼 OWNER (Dono):');
-  console.log('   Email: caio@vivant.com.br');
-  console.log('   Senha: admin123');
+  console.log('📝 Credenciais de acesso iniciais:\n');
+  console.log('👨‍💼 ADMIN:');
+  console.log('   Email: admin@vivant.com.br');
+  console.log('   Senha: 123456');
   console.log('   URL: http://localhost:3000/login\n');
   console.log('👤 COTISTA 1:');
   console.log('   Email: joao@vivant.com.br');

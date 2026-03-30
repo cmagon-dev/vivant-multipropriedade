@@ -88,6 +88,8 @@ export function CrmManager() {
   const [assignmentList, setAssignmentList] = useState<AssignmentItem[]>([]);
   const [commercialUsers, setCommercialUsers] = useState<{ id: string; name: string; email: string }[]>([]);
   const [savingAssignment, setSavingAssignment] = useState<string | null>(null);
+  const [deleteTypeId, setDeleteTypeId] = useState<string | null>(null);
+  const [deletingTypeId, setDeletingTypeId] = useState<string | null>(null);
   const [deleteStageId, setDeleteStageId] = useState<string | null>(null);
   const [deletingStageId, setDeletingStageId] = useState<string | null>(null);
 
@@ -274,6 +276,25 @@ export function CrmManager() {
     }
   };
 
+  const deleteType = async (id: string) => {
+    setDeletingTypeId(id);
+    try {
+      const res = await fetch(`/api/crm/lead-types/${id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error ?? "Erro ao excluir funil.");
+        return;
+      }
+      toast.success("Funil excluído com sucesso.");
+      setDeleteTypeId(null);
+      fetchTypes();
+    } catch {
+      toast.error("Erro ao excluir funil.");
+    } finally {
+      setDeletingTypeId(null);
+    }
+  };
+
   if (loading) return <p className="text-gray-500">Carregando...</p>;
 
   const safeTypes = Array.isArray(types) ? types : [];
@@ -393,6 +414,15 @@ export function CrmManager() {
                   checked={t.isActive}
                   onCheckedChange={(checked) => updateType(t.id, { isActive: checked })}
                 />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => setDeleteTypeId(t.id)}
+                  title="Excluir funil"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -631,6 +661,27 @@ export function CrmManager() {
           </Dialog>
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={!!deleteTypeId} onOpenChange={(open) => !open && setDeleteTypeId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir funil</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este funil? Não é possível excluir se existirem leads associados a ele.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteTypeId && deleteType(deleteTypeId)}
+              disabled={!!deletingTypeId}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deletingTypeId ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!deleteStageId} onOpenChange={(open) => !open && setDeleteStageId(null)}>
         <AlertDialogContent>

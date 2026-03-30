@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Calendar, 
-  DollarSign, 
+import {
+  LayoutDashboard,
+  Calendar,
+  DollarSign,
   Menu,
-  Home
+  Building2,
+  Bell,
 } from "lucide-react";
 import {
   Sheet,
@@ -16,32 +17,20 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { signOut } from "next-auth/react";
+import { signOutAndGoToLogin } from "@/lib/auth/signOutClient";
 import { Button } from "@/components/ui/button";
-import { 
-  Users, 
-  FileText, 
-  Bell, 
-  User,
-  LogOut
-} from "lucide-react";
+import { LogOut } from "lucide-react";
+import {
+  COTISTA_NAV_ITEMS,
+  isCotistaNavItemActive,
+} from "@/components/cotista/layout/cotista-nav-config";
 
 const mainItems = [
   { href: "/dashboard", label: "Início", icon: LayoutDashboard },
+  { href: "/dashboard/propriedades", label: "Minhas propriedades", icon: Building2 },
   { href: "/dashboard/calendario", label: "Calendário", icon: Calendar },
   { href: "/dashboard/financeiro", label: "Financeiro", icon: DollarSign },
   { href: "/dashboard/avisos", label: "Avisos", icon: Bell },
-];
-
-const allItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/calendario", label: "Calendário", icon: Calendar },
-  { href: "/dashboard/financeiro", label: "Financeiro", icon: DollarSign },
-  { href: "/dashboard/assembleias", label: "Assembleias", icon: Users },
-  { href: "/dashboard/trocas", label: "Troca de Semanas", icon: Home },
-  { href: "/dashboard/documentos", label: "Documentos", icon: FileText },
-  { href: "/dashboard/avisos", label: "Avisos", icon: Bell },
-  { href: "/dashboard/perfil", label: "Meu Perfil", icon: User },
 ];
 
 export function MobileNav() {
@@ -52,7 +41,10 @@ export function MobileNav() {
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 shadow-lg">
         <div className="flex items-center justify-around h-16 px-2">
           {mainItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+            const isActive =
+              item.href === "/dashboard"
+                ? pathname === "/dashboard"
+                : pathname === item.href || pathname.startsWith(item.href + "/");
             const Icon = item.icon;
             
             return (
@@ -90,18 +82,18 @@ export function MobileNav() {
               </SheetHeader>
               
               <nav className="flex flex-col space-y-1">
-                {allItems.map((item) => {
-                  const isActive = pathname === item.href;
+                {COTISTA_NAV_ITEMS.map((item) => {
+                  const isActive = isCotistaNavItemActive(pathname, item);
                   const Icon = item.icon;
                   
                   return (
                     <Link
-                      key={item.href}
+                      key={item.href + item.label}
                       href={item.href}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                      className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                         isActive
-                          ? "bg-vivant-green text-white"
-                          : "text-[#1A2F4B]/70 hover:bg-slate-50"
+                          ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/25"
+                          : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                       }`}
                     >
                       <Icon className="w-5 h-5" />
@@ -115,7 +107,7 @@ export function MobileNav() {
                 <Button
                   variant="ghost"
                   className="w-full justify-start gap-3 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  onClick={() => void signOutAndGoToLogin()}
                 >
                   <LogOut className="w-5 h-5" />
                   <span className="font-medium">Sair</span>

@@ -27,7 +27,7 @@ export function AdminPortalSidebar({ user }: AdminPortalSidebarProps) {
   const pathname = usePathname();
   
   return (
-    <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
+    <div className="w-64 bg-white border-r border-gray-200 flex flex-col font-sans">
       {/* Logo */}
       <div className="h-16 flex items-center px-6 border-b border-gray-200 flex-shrink-0">
         <div className="flex flex-col">

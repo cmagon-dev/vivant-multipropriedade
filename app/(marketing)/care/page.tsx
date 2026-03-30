@@ -75,9 +75,9 @@ export default function CarePage(): JSX.Element {
               <Button
                 asChild
                 size="lg"
-                className="bg-white text-vivant-green hover:bg-white/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
+                className="w-full sm:w-[320px] bg-white text-vivant-green hover:bg-white/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
               >
-                <Link href="/contato">
+                <Link href="/captar">
                   Quero conhecer mais
                   <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
                 </Link>
@@ -87,45 +87,36 @@ export default function CarePage(): JSX.Element {
                 asChild
                 size="lg"
                 variant="outline"
-                className="bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-vivant-green text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
+                className="w-full sm:w-[320px] bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-vivant-green text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
               >
                 <Link href="/portal-cotista">Acessar Portal do Cotista</Link>
               </Button>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Sobre Vivant Care */}
-      <section id="sobre" className="py-12 sm:py-16 lg:py-20 bg-white scroll-mt-28">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-10 sm:mb-16">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-3 sm:mb-4 px-2">
+            <div className="mt-8 sm:mt-10 max-w-5xl mx-auto text-left bg-white/18 backdrop-blur-md border border-white/35 rounded-2xl p-5 sm:p-7 shadow-xl">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-white mb-2 sm:mb-3">
                 Sobre a Vivant Care
               </h2>
-              <p className="text-lg sm:text-xl text-[#1A2F4B]/70 max-w-3xl mx-auto px-4">
+              <p className="text-lg sm:text-xl text-white/90 mb-4 sm:mb-5">
                 Gestão profissional que transforma sua casa em um lar acolhedor
               </p>
-            </div>
 
-            <div className="prose prose-lg max-w-none text-[#1A2F4B]/80 mb-8 sm:mb-12">
-              <p className="text-base sm:text-lg leading-relaxed mb-4 sm:mb-6">
-                A <strong>Vivant Care</strong> é o braço de <strong>gestão hoteleira e hospitalidade</strong> do 
-                ecossistema Vivant. Enquanto você desfruta da sua cota de multipropriedade, nós cuidamos de 
-                <strong> tudo que você precisa</strong> para ter uma experiência impecável.
-              </p>
-
-              <p className="text-base sm:text-lg leading-relaxed mb-4 sm:mb-6">
-                Nossa equipe é treinada em <strong>hospitalidade de alto padrão</strong>, garantindo que cada 
-                estadia seja memorável. Gerenciamos <strong>ocupação, reservas, limpeza, manutenção preventiva 
-                e concierge premium</strong>, para que você e sua família cheguem e encontrem tudo pronto.
-              </p>
-
-              <p className="text-base sm:text-lg leading-relaxed">
-                Com tecnologia proprietária e governança transparente, você acompanha tudo em tempo real: 
-                <strong> agendamentos, manutenções, relatórios de ocupação</strong> e muito mais.
-              </p>
+              <div className="space-y-3 sm:space-y-4 text-white/90">
+                <p className="text-sm sm:text-base lg:text-lg leading-relaxed">
+                  A Vivant Care é o braço de gestão hoteleira e hospitalidade do ecossistema Vivant. Enquanto você
+                  desfruta da sua cota de multipropriedade, nós cuidamos de tudo que você precisa para ter uma
+                  experiência impecável.
+                </p>
+                <p className="text-sm sm:text-base lg:text-lg leading-relaxed">
+                  Nossa equipe é treinada em hospitalidade de alto padrão, garantindo que cada estadia seja memorável.
+                  Gerenciamos ocupação, reservas, limpeza, manutenção preventiva e concierge premium, para que você e
+                  sua família cheguem e encontrem tudo pronto.
+                </p>
+                <p className="text-sm sm:text-base lg:text-lg leading-relaxed">
+                  Com tecnologia proprietária e governança transparente, você acompanha tudo em tempo real:
+                  agendamentos, manutenções, relatórios de ocupação e muito mais.
+                </p>
+              </div>
             </div>
           </div>
         </div>

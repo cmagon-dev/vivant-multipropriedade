@@ -40,6 +40,7 @@ import {
   SlidersHorizontal,
   ArrowRight,
 } from "lucide-react";
+import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 
 interface Property {
   id: string;
@@ -65,12 +66,26 @@ interface Property {
   highlight: boolean;
 }
 
+/** Placeholder quando a propriedade não tem imagem (evita 404). */
+const PLACEHOLDER_IMAGE =
+  "data:image/svg+xml," +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="256" viewBox="0 0 400 256"><rect width="400" height="256" fill="#e5e7eb"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-size="14" font-family="sans-serif">Sem foto</text></svg>'
+  );
+const BROKEN_PLACEHOLDERS = ["/placeholder-house.jpg", "/placeholder-apt.jpg"];
+function safeImageSrc(url: string | undefined): string {
+  if (!url) return PLACEHOLDER_IMAGE;
+  if (BROKEN_PLACEHOLDERS.some((p) => url.endsWith(p))) return PLACEHOLDER_IMAGE;
+  return url;
+}
+
 interface CasasClientProps {
   properties: Property[];
 }
 
 export function CasasClient({ properties }: CasasClientProps) {
-  const [currentPage, setCurrentPage] = useState(1);
+  const WHATSAPP_NUMBER = "5511999999999";
+  const [activeIndex, setActiveIndex] = useState(0);
   const [filterOpen, setFilterOpen] = useState(false);
   
   const [selectedDestino, setSelectedDestino] = useState("todos");
@@ -80,7 +95,6 @@ export function CasasClient({ properties }: CasasClientProps) {
   const [selectedAreaMin, setSelectedAreaMin] = useState("todos");
   const [selectedCondominio, setSelectedCondominio] = useState("todos");
   
-  const itemsPerPage = 4;
   const [imageIndexes, setImageIndexes] = useState<{[key: string]: number}>({});
 
   const handlePrevImage = (propertyId: string, totalImages: number) => {
@@ -132,13 +146,8 @@ export function CasasClient({ properties }: CasasClientProps) {
     return destinoMatch && cidadeMatch && condominioMatch && precoMatch && quartosMatch && areaMatch;
   });
 
-  const totalPages = Math.ceil(filteredProperties.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentProperties = filteredProperties.slice(startIndex, endIndex);
-
   const handleFilterChange = () => {
-    setCurrentPage(1);
+    setActiveIndex(0);
   };
 
   const clearAllFilters = () => {
@@ -148,8 +157,26 @@ export function CasasClient({ properties }: CasasClientProps) {
     setSelectedQuartos("todos");
     setSelectedAreaMin("todos");
     setSelectedCondominio("todos");
-    setCurrentPage(1);
+    setActiveIndex(0);
   };
+
+  const totalProperties = filteredProperties.length;
+  const isSingleProperty = totalProperties === 1;
+  const safeIndex = totalProperties > 0 ? ((activeIndex % totalProperties) + totalProperties) % totalProperties : 0;
+  const prevIndex = totalProperties > 0 ? (safeIndex - 1 + totalProperties) % totalProperties : 0;
+  const nextIndex = totalProperties > 0 ? (safeIndex + 1) % totalProperties : 0;
+
+  const carouselItems =
+    totalProperties >= 3
+      ? [
+          { property: filteredProperties[prevIndex], position: "side" as const },
+          { property: filteredProperties[safeIndex], position: "center" as const },
+          { property: filteredProperties[nextIndex], position: "side" as const },
+        ]
+      : filteredProperties.map((property, idx) => ({
+          property,
+          position: idx === safeIndex ? ("center" as const) : ("side" as const),
+        }));
 
   const activeFiltersCount = [
     selectedDestino !== "todos",
@@ -184,10 +211,68 @@ export function CasasClient({ properties }: CasasClientProps) {
     return labels[status] || status;
   };
 
+  const getWhatsappLeadSessionKey = (propertyId: string) => `lead:whatsapp:casas:${propertyId}`;
+
+  const shouldTrackWhatsappLead = (propertyId: string) => {
+    if (typeof window === "undefined") return true;
+    try {
+      const key = getWhatsappLeadSessionKey(propertyId);
+      const alreadyTracked = sessionStorage.getItem(key);
+      if (alreadyTracked) return false;
+      sessionStorage.setItem(key, "1");
+      return true;
+    } catch {
+      return true;
+    }
+  };
+
+  const trackWhatsappLead = async (property: Property) => {
+    if (!shouldTrackWhatsappLead(property.id)) return;
+
+    const payload = {
+      leadTypeKey: "IMOVEL",
+      name: `Interesse WhatsApp - ${property.name}`,
+      phone: "11999999999",
+      email: `whatsapp-${property.id}-${Date.now()}@vivant.local`,
+      city: property.cidade || "Não informado",
+      origin: "WhatsApp",
+      message: [
+        "Lead gerado por clique no botão WhatsApp da página Casas.",
+        `Imóvel: ${property.name}`,
+        `Slug: ${property.slug}`,
+        `Destino: ${property.destino?.name ?? "Não informado"}`,
+        `Preço exibido: ${property.price}`,
+        `URL: ${typeof window !== "undefined" ? window.location.href : "/casas"}`,
+      ].join("\n"),
+    };
+
+    try {
+      if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
+        const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+        const sent = navigator.sendBeacon("/api/public/lead", blob);
+        if (sent) return;
+      }
+      await fetch("/api/public/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      });
+    } catch {
+      // Não bloqueia abertura do WhatsApp por falha de telemetria.
+    }
+  };
+
+  const handleWhatsappClick = (property: Property) => {
+    void trackWhatsappLead(property);
+    const text = encodeURIComponent(`Olá! Tenho interesse na ${property.name}`);
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <>
       {/* Hero Section */}
-      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[50vh] sm:min-h-[55vh] flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36">
         {/* Background Image with Overlay */}
         <div
           className="absolute inset-0 z-0"
@@ -202,7 +287,7 @@ export function CasasClient({ properties }: CasasClientProps) {
         </div>
 
         {/* Hero Content */}
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center py-20">
+        <ScrollReveal className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold text-white mb-6">
             Nossas Casas
           </h1>
@@ -211,19 +296,26 @@ export function CasasClient({ properties }: CasasClientProps) {
             Multipropriedade inteligente com valorização garantida.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 mt-24 sm:mt-32">
             <Button
               asChild
               size="lg"
               className="bg-white text-[#1A2F4B] hover:bg-white/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
             >
-              <Link href="/contato">
+              <Link href="/captar">
                 Tenho interesse
                 <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
             </Button>
+            <Button
+              asChild
+              size="lg"
+              className="bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-[#1A2F4B] text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
+            >
+              <Link href="/destinos">Ver Destinos Disponíveis</Link>
+            </Button>
           </div>
-        </div>
+        </ScrollReveal>
       </section>
 
       <main className="py-16 px-4">
@@ -399,22 +491,60 @@ export function CasasClient({ properties }: CasasClientProps) {
             </Sheet>
           </div>
 
-          {/* Lista de Casas */}
-          <div className="grid md:grid-cols-2 gap-8 mb-12">
-            {currentProperties.map((property) => (
+          {/* Lista de Casas em faixa (3 visíveis) */}
+          <div className="relative mb-12">
+            {totalProperties > 1 && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setActiveIndex((idx) => idx - 1)}
+                  className="absolute left-2 sm:left-3 lg:left-[15.5%] top-1/2 -translate-y-1/2 z-20 h-14 w-14 lg:h-20 lg:w-20 p-0 rounded-xl border-2 border-white/80 bg-[#1A2F4B]/55 backdrop-blur-sm text-white shadow-2xl hover:bg-[#1A2F4B]/75"
+                  aria-label="Ir para trás"
+                >
+                  <span className="text-3xl lg:text-5xl leading-none font-light -mt-0.5">{'<'}</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setActiveIndex((idx) => idx + 1)}
+                  className="absolute right-2 sm:right-3 lg:right-[15.5%] top-1/2 -translate-y-1/2 z-20 h-14 w-14 lg:h-20 lg:w-20 p-0 rounded-xl border-2 border-white/80 bg-[#1A2F4B]/55 backdrop-blur-sm text-white shadow-2xl hover:bg-[#1A2F4B]/75"
+                  aria-label="Ir para frente"
+                >
+                  <span className="text-3xl lg:text-5xl leading-none font-light -mt-0.5">{'>'}</span>
+                </Button>
+              </>
+            )}
+
+            <div
+              className={`grid gap-2 sm:gap-4 lg:gap-6 ${
+                isSingleProperty
+                  ? "grid-cols-1 px-0 sm:px-2 lg:px-8 max-w-5xl mx-auto"
+                  : "grid-cols-[0.1fr_1.36fr_0.1fr] sm:grid-cols-[0.34fr_1.06fr_0.34fr] lg:grid-cols-[1fr_1.25fr_1fr] px-0 sm:px-12 lg:px-8"
+              }`}
+            >
+            {carouselItems.map(({ property, position }) => (
               <Card
-                key={property.id}
-                className="overflow-hidden hover:shadow-xl transition-shadow duration-300 border-2 border-transparent hover:border-vivant-gold"
+                key={`${property.id}-${position}`}
+                className={`h-[36.5rem] sm:h-auto overflow-hidden border-2 transition-all duration-500 flex flex-col ${
+                  isSingleProperty
+                    ? "scale-100 border-vivant-gold shadow-2xl z-10"
+                    : position === "center"
+                    ? "scale-[1.02] border-vivant-gold shadow-2xl z-10 lg:scale-[1.14]"
+                    : "scale-[0.72] lg:scale-[0.88] border-transparent opacity-25 saturate-50 shadow-sm"
+                }`}
               >
                 {/* Carousel de Imagens */}
-                <div className="relative h-64 bg-gray-200 group">
+                <div className="relative h-44 sm:h-64 bg-gray-200 group">
                   <img
-                    src={property.images[imageIndexes[property.id] || 0]}
+                    src={safeImageSrc(
+                      property.images?.length
+                        ? property.images[imageIndexes[property.id] || 0]
+                        : undefined
+                    )}
                     alt={property.name}
                     className="w-full h-full object-cover"
                   />
 
-                  {property.images.length > 1 && (
+                  {(property.images?.length ?? 0) > 1 && (
                     <>
                       <button
                         onClick={() => handlePrevImage(property.id, property.images.length)}
@@ -453,39 +583,39 @@ export function CasasClient({ properties }: CasasClientProps) {
                   )}
                 </div>
 
-                <CardHeader>
-                  <CardTitle className="text-2xl text-vivant-navy font-serif">
+                <CardHeader className="pb-2 sm:pb-6 pt-4">
+                  <CardTitle className="text-xl sm:text-2xl text-vivant-navy font-serif">
                     {property.name}
                   </CardTitle>
-                  <CardDescription className="flex items-center gap-2 text-base">
+                  <CardDescription className="flex items-center gap-2 text-sm sm:text-base">
                     <MapPin className="w-4 h-4 text-vivant-gold" />
                     {property.location}
                   </CardDescription>
                 </CardHeader>
 
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4 py-4 border-y border-gray-200">
+                <CardContent className="flex-1 flex flex-col space-y-2.5 sm:space-y-4 pb-4 sm:pb-6">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4 py-2.5 sm:py-4 border-y border-gray-200">
                     <div className="flex flex-col items-center">
                       <Bed className="w-5 h-5 text-vivant-gold mb-1" />
-                      <span className="text-sm font-semibold text-vivant-navy">
+                      <span className="text-xs sm:text-sm font-semibold text-vivant-navy">
                         {property.bedrooms} suítes
                       </span>
                     </div>
                     <div className="flex flex-col items-center">
                       <Bath className="w-5 h-5 text-vivant-gold mb-1" />
-                      <span className="text-sm font-semibold text-vivant-navy">
+                      <span className="text-xs sm:text-sm font-semibold text-vivant-navy">
                         {property.bathrooms} banheiros
                       </span>
                     </div>
                     <div className="flex flex-col items-center">
                       <Maximize className="w-5 h-5 text-vivant-gold mb-1" />
-                      <span className="text-sm font-semibold text-vivant-navy">
+                      <span className="text-xs sm:text-sm font-semibold text-vivant-navy">
                         {property.area}m²
                       </span>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Fração</span>
                       <span className="font-semibold text-vivant-navy">
@@ -500,14 +630,14 @@ export function CasasClient({ properties }: CasasClientProps) {
                     </div>
                   </div>
 
-                  <div className="border-t border-gray-200 pt-4">
-                    <div className="flex justify-between items-center mb-2">
+                  <div className="border-t border-gray-200 pt-2.5 sm:pt-4">
+                    <div className="flex justify-between items-center mb-1 sm:mb-2">
                       <span className="text-gray-600">Investimento</span>
-                      <span className="text-2xl font-bold text-vivant-navy">
+                      <span className="text-xl sm:text-2xl font-bold text-vivant-navy">
                         {property.price}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-sm">
+                    <div className="flex justify-between items-center text-xs sm:text-sm">
                       <span className="text-gray-500">Taxa mensal</span>
                       <span className="text-gray-700 font-semibold">
                         {property.monthlyFee}
@@ -515,16 +645,16 @@ export function CasasClient({ properties }: CasasClientProps) {
                     </div>
                   </div>
 
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-2 sm:p-3">
                     <div className="flex items-center gap-2">
                       <TrendingUp className="w-5 h-5 text-green-600" />
-                      <span className="text-sm font-semibold text-green-800">
+                      <span className="text-xs sm:text-sm font-semibold text-green-800">
                         Valorização: {property.appreciation}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 mt-auto pt-2">
                     <Button
                       asChild
                       variant="outline"
@@ -535,62 +665,20 @@ export function CasasClient({ properties }: CasasClientProps) {
                       </Link>
                     </Button>
                     <Button
-                      asChild
-                      className="flex-1 bg-vivant-navy hover:bg-vivant-navy/90 text-white"
+                      type="button"
+                      onClick={() => handleWhatsappClick(property)}
+                      className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] text-white"
                     >
-                      <a
-                        href={`https://wa.me/5511999999999?text=Olá! Tenho interesse na ${encodeURIComponent(
-                          property.name
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Tenho Interesse
-                      </a>
+                      WhatsApp
                     </Button>
                   </div>
                 </CardContent>
               </Card>
             ))}
+            </div>
           </div>
 
-          {/* Paginação */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-
-              <div className="flex gap-2">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <Button
-                    key={page}
-                    variant={currentPage === page ? "default" : "outline"}
-                    onClick={() => setCurrentPage(page)}
-                    className={
-                      currentPage === page
-                        ? "bg-vivant-navy hover:bg-vivant-navy/90"
-                        : ""
-                    }
-                  >
-                    {page}
-                  </Button>
-                ))}
-              </div>
-
-              <Button
-                variant="outline"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
+          {totalProperties > 1 && null}
         </div>
       </main>
     </>

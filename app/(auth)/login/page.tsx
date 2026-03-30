@@ -129,7 +129,7 @@ export default function LoginPage() {
             type={portal === "admin" ? "email" : "text"}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder={portal === "admin" ? "admin@vivant.com" : "seu@email.com ou CPF"}
+            placeholder={portal === "admin" ? "admin@vivant.com.br" : "seu@email.com ou CPF"}
             className="h-11 border-2 border-slate-200 focus:border-vivant-navy focus:ring-vivant-navy/20"
             required
             disabled={isLoading}

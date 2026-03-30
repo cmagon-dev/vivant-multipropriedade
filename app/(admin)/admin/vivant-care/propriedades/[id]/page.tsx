@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import {
   Home,
   Users,
   Calendar,
+  CalendarRange,
   Trash2,
   Edit,
   ArrowLeft,
@@ -60,6 +61,13 @@ interface Cotista {
   email: string;
 }
 
+function extrairNumeroCota(valor: string): number | null {
+  const match = valor.match(/\d+/);
+  if (!match) return null;
+  const numero = Number(match[0]);
+  return Number.isInteger(numero) && numero > 0 ? numero : null;
+}
+
 const baseProp = "/admin/vivant-care/propriedades";
 
 export default function PropriedadeDetalhesVivantCarePage({ params }: { params: { id: string } }) {
@@ -79,6 +87,19 @@ export default function PropriedadeDetalhesVivantCarePage({ params }: { params: 
     carregarPropriedade();
     carregarCotistas();
   }, [params.id]);
+
+  const opcoesCotasDisponiveis = useMemo(() => {
+    if (!propriedade?.totalCotas || propriedade.totalCotas <= 0) return [];
+    const cotasAlocadas = new Set(
+      propriedade.cotas
+        .map((cota) => extrairNumeroCota(cota.numeroCota))
+        .filter((numero): numero is number => numero !== null)
+    );
+
+    return Array.from({ length: propriedade.totalCotas }, (_, index) => index + 1)
+      .filter((numero) => !cotasAlocadas.has(numero))
+      .map((numero) => `Cota ${numero}`);
+  }, [propriedade]);
 
   const carregarPropriedade = async () => {
     try {
@@ -191,7 +212,19 @@ export default function PropriedadeDetalhesVivantCarePage({ params }: { params: 
             </div>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button asChild variant="outline">
+            <Link href={`${baseProp}/${propriedade.id}/planejamento-semanas`}>
+              <CalendarRange className="w-4 h-4 mr-2" />
+              Planejamento de semanas
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href={`${baseProp}/${propriedade.id}/distribuir-semanas`}>
+              <Users className="w-4 h-4 mr-2" />
+              Distribuir semanas
+            </Link>
+          </Button>
           <Button asChild variant="outline">
             <Link href={`${baseProp}/${propriedade.id}/calendario`}>
               <Calendar className="w-4 h-4 mr-2" />
@@ -280,11 +313,26 @@ export default function PropriedadeDetalhesVivantCarePage({ params }: { params: 
                   </div>
                   <div className="space-y-2">
                     <Label>Número da Cota *</Label>
-                    <Input
-                      placeholder="Ex: Cota 1 de 6"
+                    <Select
                       value={novaCota.numeroCota}
-                      onChange={(e) => setNovaCota({ ...novaCota, numeroCota: e.target.value })}
-                    />
+                      onValueChange={(value) => setNovaCota({ ...novaCota, numeroCota: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma cota disponível" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {opcoesCotasDisponiveis.map((cota) => (
+                          <SelectItem key={cota} value={cota}>
+                            {cota}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {opcoesCotasDisponiveis.length === 0 && (
+                      <p className="text-xs text-amber-600">
+                        Não há cotas disponíveis para alocação nesta propriedade.
+                      </p>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -308,7 +356,11 @@ export default function PropriedadeDetalhesVivantCarePage({ params }: { params: 
                     </div>
                   </div>
                   <div className="flex gap-2 pt-4">
-                    <Button onClick={handleCriarCota} className="flex-1 bg-vivant-green hover:bg-vivant-green/90">
+                    <Button
+                      onClick={handleCriarCota}
+                      disabled={opcoesCotasDisponiveis.length === 0}
+                      className="flex-1 bg-vivant-green hover:bg-vivant-green/90"
+                    >
                       Criar Cota
                     </Button>
                     <Button variant="outline" onClick={() => setShowNovaCota(false)}>

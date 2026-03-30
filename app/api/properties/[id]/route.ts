@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { propertyUpdateSchema } from "@/lib/validations/property-admin";
 import { createAuditLog } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
+import { deleteCapitalAssetConfigCascade } from "@/lib/capital/delete-asset-config-cascade";
 
 // GET /api/properties/[id] - Buscar uma específica — exige properties.view
 export async function GET(
@@ -112,8 +113,32 @@ export async function DELETE(
   }
   const { id } = await params;
   try {
-    await prisma.property.delete({
-      where: { id }
+    const property = await prisma.property.findUnique({
+      where: { id },
+      include: { _count: { select: { cotas: true } } },
+    });
+    if (!property) {
+      return NextResponse.json({ error: "Propriedade não encontrada" }, { status: 404 });
+    }
+    if (property._count.cotas > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Não é possível excluir propriedade com cotas alocadas. Remova as cotas antes.",
+        },
+        { status: 400 }
+      );
+    }
+
+    await prisma.$transaction(async (tx) => {
+      const capitalCfg = await tx.capitalAssetConfig.findUnique({
+        where: { propertyId: id },
+        select: { id: true },
+      });
+      if (capitalCfg) {
+        await deleteCapitalAssetConfigCascade(tx, capitalCfg.id);
+      }
+      await tx.property.delete({ where: { id } });
     });
     
     await createAuditLog({

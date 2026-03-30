@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ContextualHelpAuto } from "@/components/help/ContextualHelpAuto";
 import { HelpTip } from "@/components/help/HelpTip";
 import { MicroOnboarding } from "@/components/help/MicroOnboarding";
 import { NewLeadsAlert } from "@/components/comercial/NewLeadsAlert";
@@ -76,6 +77,7 @@ export function ComercialOverviewClient() {
 
   return (
     <div className="space-y-6">
+      <ContextualHelpAuto />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <h1 className="text-3xl font-bold text-vivant-navy">Painel Comercial</h1>

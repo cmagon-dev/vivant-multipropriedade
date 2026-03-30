@@ -120,7 +120,7 @@ export function Footer(): JSX.Element {
               </li>
               <li>Maringá, PR - Brasil</li>
             </ul>
-            
+
             {/* Redes Sociais */}
             <div className="mt-4">
               <div className="flex items-center gap-3">

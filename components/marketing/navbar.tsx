@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Menu, Facebook, Instagram, Linkedin, Youtube } from "lucide-react";
+import { Menu } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -50,124 +50,71 @@ export function Navbar(): JSX.Element {
           </Link>
 
           {/* Desktop Menu - Centro */}
-          <div className="hidden md:flex items-center justify-center space-x-4 lg:space-x-6 flex-1 mx-4 lg:mx-8">
+          <div className="hidden md:flex items-center justify-center space-x-3 lg:space-x-4 flex-1 mx-auto">
             <Link
               href="/"
-              className="text-[#1A2F4B] hover:text-[#1A2F4B]/70 transition-colors font-medium text-base lg:text-lg text-center whitespace-nowrap"
+              className="text-[#1A2F4B]/90 hover:text-[#1A2F4B] transition-colors font-semibold text-xs lg:text-sm text-center whitespace-nowrap uppercase tracking-[0.12em]"
             >
               Home
             </Link>
             <Link
               href="/modelo"
-              className="text-[#1A2F4B] hover:text-[#1A2F4B]/70 transition-colors font-medium text-base lg:text-lg text-center whitespace-nowrap"
+              className="text-[#1A2F4B]/90 hover:text-[#1A2F4B] transition-colors font-semibold text-xs lg:text-sm text-center whitespace-nowrap uppercase tracking-[0.12em]"
             >
               O Modelo Vivant
             </Link>
             <Link
               href="/destinos"
-              className="text-[#1A2F4B] hover:text-[#1A2F4B]/70 transition-colors font-medium text-base lg:text-lg text-center whitespace-nowrap"
+              className="text-[#1A2F4B]/90 hover:text-[#1A2F4B] transition-colors font-semibold text-xs lg:text-sm text-center whitespace-nowrap uppercase tracking-[0.12em]"
             >
               Destinos
             </Link>
             <Link
               href="/casas"
-              className="text-[#1A2F4B] hover:text-[#1A2F4B]/70 transition-colors font-medium text-base lg:text-lg text-center whitespace-nowrap"
+              className="text-[#1A2F4B]/90 hover:text-[#1A2F4B] transition-colors font-semibold text-xs lg:text-sm text-center whitespace-nowrap uppercase tracking-[0.12em]"
             >
               Nossas Casas
             </Link>
-            <Link
-              href="/contato"
-              className="text-[#1A2F4B] hover:text-[#1A2F4B]/70 transition-colors font-medium text-base lg:text-lg text-center whitespace-nowrap"
-            >
-              Contato
-            </Link>
           </div>
 
-          {/* Área da Direita: Redes Sociais + Ecossistema */}
+          {/* Área da Direita: Ecossistema */}
           <div className="hidden md:flex items-center gap-3 lg:gap-4">
-            {/* Redes Sociais */}
-            <div className="flex items-center gap-2 mr-1">
-              <a
-                href="https://facebook.com/vivantresidences"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#1A2F4B]/40 hover:text-[#1A2F4B] transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-4 h-4" />
-              </a>
-              <a
-                href="https://instagram.com/vivantresidences"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#1A2F4B]/40 hover:text-[#1A2F4B] transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a
-                href="https://linkedin.com/company/vivantresidences"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#1A2F4B]/40 hover:text-[#1A2F4B] transition-colors"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-4 h-4" />
-              </a>
-              <a
-                href="https://youtube.com/@vivantresidences"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#1A2F4B]/40 hover:text-[#1A2F4B] transition-colors"
-                aria-label="YouTube"
-              >
-                <Youtube className="w-4 h-4" />
-              </a>
-            </div>
-
-            {/* Separador vertical */}
-            <div className="h-12 w-px bg-[#1A2F4B]/10"></div>
-
-            {/* Ecossistema */}
-            <div className="flex flex-col items-center">
-              <span className="text-[10px] text-[#1A2F4B]/50 font-medium mb-1">Ecossistema</span>
-              <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
                 {/* Logo Vivant Partners */}
                 <Link
                   href="/parceiros"
-                  className="bg-white px-1.5 py-1 rounded border border-vivant-gold/30 hover:border-vivant-gold hover:shadow-sm transition-all duration-300"
+                  className="bg-white px-2 py-1.5 rounded border border-vivant-gold/40 hover:border-vivant-gold hover:shadow-sm transition-all duration-300"
                 >
                   <img
                     src="/logo-vivant-partners.png"
                     alt="Vivant Partners"
-                    className="h-5 w-auto object-contain"
+                    className="h-6 w-auto object-contain"
                   />
                 </Link>
 
                 {/* Logo Vivant Capital */}
                 <Link 
                   href="/sobre-capital"
-                  className="bg-white px-1.5 py-1 rounded border border-vivant-navy/20 hover:border-vivant-navy hover:shadow-sm transition-all duration-300"
+                  className="bg-white px-2 py-1.5 rounded border border-vivant-navy/25 hover:border-vivant-navy hover:shadow-sm transition-all duration-300"
                 >
                   <img 
                     src="/logo-vivant-capital.png" 
                     alt="Vivant Capital" 
-                    className="h-5 w-auto object-contain"
+                    className="h-6 w-auto object-contain"
                   />
                 </Link>
 
                 {/* Logo Vivant Care */}
                 <Link 
                   href="/care"
-                  className="bg-white px-1.5 py-1 rounded border border-vivant-green/20 hover:border-vivant-green hover:shadow-sm transition-all duration-300"
+                  className="bg-white px-2 py-1.5 rounded border border-vivant-green/25 hover:border-vivant-green hover:shadow-sm transition-all duration-300"
                 >
                   <img 
                     src="/logo-vivant-care.png" 
                     alt="Vivant Care" 
-                    className="h-5 w-auto object-contain"
+                    className="h-6 w-auto object-contain"
                   />
                 </Link>
-              </div>
             </div>
           </div>
 
@@ -193,41 +140,34 @@ export function Navbar(): JSX.Element {
               </SheetHeader>
               
               {/* Navigation Links */}
-              <nav className="flex flex-col space-y-1">
+              <nav className="flex flex-col space-y-1 items-center">
                 <Link
                   href="/"
-                  className="text-[#1A2F4B] hover:bg-[#1A2F4B]/10 transition-colors font-medium text-lg py-4 px-4 rounded-lg"
+                  className="w-full text-center text-[#1A2F4B]/90 hover:bg-[#1A2F4B]/10 transition-colors font-semibold text-base py-3 px-4 rounded-lg uppercase tracking-[0.12em]"
                   onClick={handleLinkClick}
                 >
                   Home
                 </Link>
                 <Link
                   href="/modelo"
-                  className="text-[#1A2F4B] hover:bg-[#1A2F4B]/10 transition-colors font-medium text-lg py-4 px-4 rounded-lg"
+                  className="w-full text-center text-[#1A2F4B]/90 hover:bg-[#1A2F4B]/10 transition-colors font-semibold text-base py-3 px-4 rounded-lg uppercase tracking-[0.12em]"
                   onClick={handleLinkClick}
                 >
                   O Modelo Vivant
                 </Link>
                 <Link
                   href="/destinos"
-                  className="text-[#1A2F4B] hover:bg-[#1A2F4B]/10 transition-colors font-medium text-lg py-4 px-4 rounded-lg"
+                  className="w-full text-center text-[#1A2F4B]/90 hover:bg-[#1A2F4B]/10 transition-colors font-semibold text-base py-3 px-4 rounded-lg uppercase tracking-[0.12em]"
                   onClick={handleLinkClick}
                 >
                   Destinos
                 </Link>
                 <Link
                   href="/casas"
-                  className="text-[#1A2F4B] hover:bg-[#1A2F4B]/10 transition-colors font-medium text-lg py-4 px-4 rounded-lg"
+                  className="w-full text-center text-[#1A2F4B]/90 hover:bg-[#1A2F4B]/10 transition-colors font-semibold text-base py-3 px-4 rounded-lg uppercase tracking-[0.12em]"
                   onClick={handleLinkClick}
                 >
                   Nossas Casas
-                </Link>
-                <Link
-                  href="/contato"
-                  className="text-[#1A2F4B] hover:bg-[#1A2F4B]/10 transition-colors font-medium text-lg py-4 px-4 rounded-lg"
-                  onClick={handleLinkClick}
-                >
-                  Contato
                 </Link>
               </nav>
 
@@ -279,52 +219,6 @@ export function Navbar(): JSX.Element {
                   />
                   <span className="text-sm text-[#1A2F4B]/70">Gestão e Portal Cotista</span>
                 </Link>
-              </div>
-
-              {/* Divider */}
-              <div className="my-6 border-t border-[#1A2F4B]/10"></div>
-
-              {/* Redes Sociais */}
-              <div className="px-4">
-                <p className="text-sm font-semibold text-[#1A2F4B]/60 mb-4">Siga-nos:</p>
-                <div className="flex items-center gap-4">
-                  <a
-                    href="https://facebook.com/vivantresidences"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#1A2F4B]/40 hover:text-[#1A2F4B] transition-colors"
-                    aria-label="Facebook"
-                  >
-                    <Facebook className="w-5 h-5" />
-                  </a>
-                  <a
-                    href="https://instagram.com/vivantresidences"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#1A2F4B]/40 hover:text-[#1A2F4B] transition-colors"
-                    aria-label="Instagram"
-                  >
-                    <Instagram className="w-5 h-5" />
-                  </a>
-                  <a
-                    href="https://linkedin.com/company/vivantresidences"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#1A2F4B]/40 hover:text-[#1A2F4B] transition-colors"
-                    aria-label="LinkedIn"
-                  >
-                    <Linkedin className="w-5 h-5" />
-                  </a>
-                  <a
-                    href="https://youtube.com/@vivantresidences"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#1A2F4B]/40 hover:text-[#1A2F4B] transition-colors"
-                    aria-label="YouTube"
-                  >
-                    <Youtube className="w-5 h-5" />
-                  </a>
-                </div>
               </div>
             </SheetContent>
           </Sheet>

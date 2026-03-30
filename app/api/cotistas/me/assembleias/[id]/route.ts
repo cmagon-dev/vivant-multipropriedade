@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { requirePortalCotista } from "@/lib/auth/cotistaPortalSession";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).userType !== "cotista") {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const auth = await requirePortalCotista(session);
+    if (!auth.ok) return auth.response;
+    const cotistaId = auth.cotistaId;
+
     const { id } = await ctx.params;
     const cotista = await prisma.cotista.findUnique({
-      where: { id: session.user.id },
+      where: { id: cotistaId },
       include: { cotas: { select: { propertyId: true } } },
     });
     if (!cotista) return NextResponse.json({ error: "Cotista não encontrado" }, { status: 404 });

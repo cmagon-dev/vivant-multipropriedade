@@ -24,15 +24,18 @@ export function DestinationFeaturesInput({ value, onChange }: DestinationFeature
     desc: "",
   });
   
-  const addFeature = () => {
-    if (newFeature.icon.trim() && newFeature.title.trim() && newFeature.desc.trim()) {
-      if (value.length >= 4) {
-        alert("Máximo de 4 features permitidas");
-        return;
-      }
-      onChange([...value, newFeature]);
-      setNewFeature({ icon: "", title: "", desc: "" });
+  const addFeature = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (value.length >= 4) {
+      alert("Máximo de 4 features permitidas");
+      return;
     }
+    if (!newFeature.icon.trim() || !newFeature.title.trim() || !newFeature.desc.trim()) {
+      return;
+    }
+    onChange([...value, { ...newFeature }]);
+    setNewFeature({ icon: "", title: "", desc: "" });
   };
   
   const removeFeature = (index: number) => {
@@ -111,7 +114,7 @@ export function DestinationFeaturesInput({ value, onChange }: DestinationFeature
             <Button
               type="button"
               onClick={addFeature}
-              disabled={!newFeature.icon.trim() || !newFeature.title.trim() || !newFeature.desc.trim()}
+              disabled={value.length >= 4 || !newFeature.icon.trim() || !newFeature.title.trim() || !newFeature.desc.trim()}
               className="w-full"
             >
               <Plus className="w-4 h-4 mr-2" />

@@ -1,53 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { requirePortalCotista } from "@/lib/auth/cotistaPortalSession";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session || (session.user as any).userType !== "cotista") {
-      return NextResponse.json(
-        { error: "Não autorizado" },
-        { status: 401 }
-      );
-    }
+    const auth = await requirePortalCotista(session);
+    if (!auth.ok) return auth.response;
+    const cotistaId = auth.cotistaId;
 
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get("limit") || "10");
 
-    const cotista = await prisma.cotista.findUnique({
-      where: { id: session.user.id },
-      include: {
-        cotas: {
-          select: { propertyId: true }
-        }
-      }
+    const cotasAtivas = await prisma.cotaPropriedade.findMany({
+      where: { cotistaId, ativo: true },
+      select: { propertyId: true },
     });
 
-    if (!cotista) {
-      return NextResponse.json(
-        { error: "Cotista não encontrado" },
-        { status: 404 }
-      );
-    }
+    const propertyIds = Array.from(new Set(cotasAtivas.map((c) => c.propertyId)));
 
-    const propertyIds = cotista.cotas.map(c => c.propertyId);
+    if (propertyIds.length === 0) {
+      return NextResponse.json({ avisos: [] });
+    }
 
     const avisos = await prisma.mensagem.findMany({
       where: {
         propertyId: { in: propertyIds },
-        ativa: true
+        ativa: true,
       },
-      orderBy: [
-        { fixada: "desc" },
-        { createdAt: "desc" }
-      ],
-      take: limit
+      include: {
+        property: { select: { id: true, name: true } },
+      },
+      orderBy: [{ fixada: "desc" }, { createdAt: "desc" }],
+      take: Math.min(Math.max(limit, 1), 100),
     });
 
-    return NextResponse.json({ avisos });
+    return NextResponse.json(
+      { avisos },
+      {
+        headers: {
+          "Cache-Control": "private, no-store, max-age=0",
+        },
+      }
+    );
 
   } catch (error) {
     console.error("Erro ao carregar avisos:", error);

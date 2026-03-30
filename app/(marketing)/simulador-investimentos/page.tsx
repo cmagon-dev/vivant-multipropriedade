@@ -30,23 +30,34 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
   } | null>(null);
   const [liquidezResult, setLiquidezResult] = useState<LiquidezResult | null>(null);
 
+  const formatCurrency = (value: number): string =>
+    new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+
+  const formatPercent = (value: number): string =>
+    `${new Intl.NumberFormat("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value)}%`;
+
   const handleFormSubmit = (data: InvestmentInputFormData): void => {
     // Armazena os dados do investimento e abre o modal de captura de lead
     setPendingInvestmentData(data);
     setShowLeadDialog(true);
   };
 
-  const handleLeadCaptured = (capturedLeadData: {
+  const handleLeadCaptured = async (capturedLeadData: {
     nome: string;
     email: string;
     telefone: string;
-  }): void => {
+  }): Promise<void> => {
     // Marca que o lead foi capturado e armazena os dados
     setIsLeadCaptured(true);
     setLeadData(capturedLeadData);
-
-    // Aqui você pode salvar o lead no banco de dados ou enviar para um serviço
-    console.log("Lead capturado:", capturedLeadData);
 
     // Calcula a análise de investimento com os dados armazenados
     if (pendingInvestmentData) {
@@ -55,6 +66,45 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
         pendingInvestmentData.ipcaProjetado
       );
       setAnalysis(result);
+
+      const mensagemLead = [
+        "Solicitacao de analise completa - Simulador de Investimentos",
+        `Nome: ${capturedLeadData.nome}`,
+        `Email: ${capturedLeadData.email}`,
+        `Telefone: ${capturedLeadData.telefone}`,
+        `Aporte informado: ${formatCurrency(pendingInvestmentData.valorInvestido)}`,
+        `IPCA projetado selecionado: ${formatPercent(pendingInvestmentData.ipcaProjetado * 100)} a.a.`,
+        "",
+        "Resultados calculados no simulador:",
+        `Valor investido: ${result.valorInvestido}`,
+        `Total a receber: ${result.totalReceber}`,
+        `Lucro liquido estimado: ${result.lucroLiquido}`,
+        `ROI em 60 meses: ${result.roi}`,
+        `TIR anual estimada: ${result.tir}`,
+      ].join("\n");
+
+      try {
+        const createLeadResponse = await fetch("/api/public/lead", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            leadTypeKey: "INVESTIDOR",
+            name: capturedLeadData.nome,
+            phone: capturedLeadData.telefone,
+            email: capturedLeadData.email,
+            city: "Online",
+            origin: "Simulador Investimentos",
+            message: mensagemLead,
+          }),
+        });
+
+        if (!createLeadResponse.ok) {
+          const errorPayload = await createLeadResponse.json().catch(() => ({}));
+          console.error("Falha ao criar lead do simulador:", errorPayload);
+        }
+      } catch (error) {
+        console.error("Falha ao criar lead do simulador:", error);
+      }
 
       // Scroll suave para os resultados
       setTimeout(() => {
@@ -91,7 +141,7 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
       />
 
       {/* Hero Section */}
-      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden pt-32 sm:pt-36 lg:pt-40">
+      <section className="relative min-h-[50vh] sm:min-h-[55vh] flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36">
         {/* Background Image with Overlay */}
         <div
           className="absolute inset-0 z-0"
@@ -105,7 +155,7 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
           <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/85 via-[#1A2F4B]/75 to-[#F8F9FA]" />
         </div>
 
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white mb-4 sm:mb-6 leading-tight">
               Simulador de Investimentos

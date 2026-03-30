@@ -225,6 +225,8 @@ model SystemTask {
   productKey        String?
   priority          SystemTaskPriority @default(MED)
   meta              Json?
+  createdByUserId   String?
+  source            String?
 
   @@index([status])
   @@index([dueAt])
@@ -448,6 +450,10 @@ model Property {
   assembleias     Assembleia[]
   mensagens       Mensagem[]
   documentos      Documento[]
+  propertyWeeks   PropertyWeek[]
+  allocationCycles PropertyAllocationCycle[]
+  weekExchangeRequests WeekExchangeRequest[]
+  notificacoes    Notificacao[]
   // Vivant Capital: camada de investimento sobre o imóvel (sem duplicar dados)
   capitalAssetConfigs CapitalAssetConfig[]
 
@@ -536,6 +542,8 @@ model Cotista {
   cotas             CotaPropriedade[]
   reservas          Reserva[]
   trocasSemanas     TrocaSemana[]
+  weekExchangeRequests WeekExchangeRequest[]
+  weekPeerInterests WeekExchangePeerInterest[]
   votosAssembleia   VotoAssembleia[]
   mensagens         Mensagem[]
   notificacoes      Notificacao[]
@@ -566,6 +574,8 @@ model CotaPropriedade {
   
   cobrancas         Cobranca[]
   reservas          Reserva[]
+  weekAllocations   PropertyWeekAllocation[]
+  weekExchangeRequests WeekExchangeRequest[]
   
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
@@ -936,17 +946,187 @@ model Notificacao {
   id           String   @id @default(cuid())
   cotistaId    String
   cotista      Cotista  @relation(fields: [cotistaId], references: [id], onDelete: Cascade)
+  /// Escopo da casa (oportunidades / trocas): filtro e auditoria; não substitui destino por cotista.
+  propertyId   String?
+  property     Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
   tipo         String
   titulo       String
   mensagem     String   @db.Text
   lida         Boolean  @default(false)
   url          String?
+  expiresAt    DateTime?
   createdAt    DateTime @default(now())
   
   @@index([cotistaId])
+  @@index([propertyId])
   @@index([lida])
   @@index([createdAt])
   @@map("notificacoes")
+}
+
+// ===== SEMANAS POR PROPRIEDADE + DISTRIBUIÇÃO + TROCAS MEDIADAS =====
+
+enum WeekSeasonType {
+  BAIXA
+  MEDIA
+  ALTA
+  SUPER_ALTA
+}
+
+/// Semana canônica do calendário da casa (única fonte de verdade para UI e trocas).
+model PropertyWeek {
+  id                String   @id @default(cuid())
+  propertyId        String
+  property          Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  year              Int
+  weekIndex         Int
+  startDate         DateTime
+  endDate           DateTime
+  label             String?
+  seasonType        WeekSeasonType @default(MEDIA)
+  weight            Decimal  @db.Decimal(12, 4)
+  isHoliday         Boolean  @default(false)
+  isSchoolVacation  Boolean  @default(false)
+  isBlocked         Boolean  @default(false)
+  isExchangeAllowed Boolean  @default(true)
+  color             String?
+  notes             String?  @db.Text
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  allocations       PropertyWeekAllocation[]
+  requestsAsOwned   WeekExchangeRequest[] @relation("OwnedWeek")
+  requestsAsDesired WeekExchangeRequest[] @relation("DesiredWeek")
+  peerOffers        WeekExchangePeerInterest[] @relation("OfferedWeek")
+
+  @@unique([propertyId, year, weekIndex])
+  @@index([propertyId, year])
+  @@index([startDate, endDate])
+  @@map("property_weeks")
+}
+
+model PropertyAllocationCycle {
+  id          String   @id @default(cuid())
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  label       String
+  yearRef     Int?
+  status      String   @default("RASCUNHO")
+  notes       String?  @db.Text
+  finalizedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  allocations PropertyWeekAllocation[]
+
+  @@index([propertyId])
+  @@map("property_allocation_cycles")
+}
+
+model PropertyWeekAllocation {
+  id               String   @id @default(cuid())
+  cycleId          String
+  cycle            PropertyAllocationCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  cotaId           String
+  cota             CotaPropriedade @relation(fields: [cotaId], references: [id], onDelete: Cascade)
+  propertyWeekId   String
+  propertyWeek     PropertyWeek @relation(fields: [propertyWeekId], references: [id], onDelete: Cascade)
+  locked           Boolean  @default(false)
+  simulationOnly Boolean  @default(false)
+  notes            String?  @db.Text
+  createdAt        DateTime @default(now())
+
+  @@unique([cycleId, propertyWeekId])
+  @@index([cotaId])
+  @@index([propertyWeekId])
+  @@map("property_week_allocations")
+}
+
+enum WeekExchangeRequestStatus {
+  REQUESTED
+  UNDER_ADMIN_REVIEW
+  ADMIN_OPTION_FOUND
+  PUBLISHED_TO_PEERS
+  PEER_INTEREST_FOUND
+  NEGOTIATION_IN_PROGRESS
+  PENDING_ADMIN_APPROVAL
+  APPROVED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+/// Solicitação de troca — nenhuma conclusão automática; admin sempre no fluxo.
+model WeekExchangeRequest {
+  id                    String   @id @default(cuid())
+  propertyId            String
+  property              Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  cotistaId             String
+  cotista               Cotista @relation(fields: [cotistaId], references: [id], onDelete: Cascade)
+  cotaId                String
+  cota                  CotaPropriedade @relation(fields: [cotaId], references: [id], onDelete: Cascade)
+  ownedPropertyWeekId   String
+  ownedWeek             PropertyWeek @relation("OwnedWeek", fields: [ownedPropertyWeekId], references: [id], onDelete: Restrict)
+  desiredPropertyWeekId String?
+  desiredWeek           PropertyWeek? @relation("DesiredWeek", fields: [desiredPropertyWeekId], references: [id], onDelete: SetNull)
+  desiredPeriodStart    DateTime?
+  desiredPeriodEnd      DateTime?
+  acceptsAlternatives   Boolean  @default(false)
+  publicToPeers         Boolean  @default(false)
+  status                  WeekExchangeRequestStatus @default(REQUESTED)
+  expiresAt               DateTime?
+  notes                   String?  @db.Text
+  adminNotes              String?  @db.Text
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  peerInterests WeekExchangePeerInterest[]
+  eventLogs     WeekExchangeEventLog[]
+
+  @@index([propertyId])
+  @@index([cotistaId])
+  @@index([status])
+  @@map("week_exchange_requests")
+}
+
+enum WeekPeerInterestStatus {
+  PENDING
+  WITHDRAWN
+  APPROVED
+  REJECTED
+}
+
+model WeekExchangePeerInterest {
+  id                    String   @id @default(cuid())
+  requestId             String
+  request               WeekExchangeRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  interestedCotistaId   String
+  interestedCotista     Cotista @relation(fields: [interestedCotistaId], references: [id], onDelete: Cascade)
+  offeredPropertyWeekId String
+  offeredWeek           PropertyWeek @relation("OfferedWeek", fields: [offeredPropertyWeekId], references: [id], onDelete: Cascade)
+  message               String?  @db.Text
+  status                WeekPeerInterestStatus @default(PENDING)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([requestId])
+  @@index([interestedCotistaId])
+  @@map("week_exchange_peer_interests")
+}
+
+model WeekExchangeEventLog {
+  id         String   @id @default(cuid())
+  requestId  String
+  request    WeekExchangeRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  actorType  String
+  actorId    String?
+  action     String
+  payload    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([requestId])
+  @@index([createdAt])
+  @@map("week_exchange_event_logs")
 }
 
 // ===== VIVANT CAPITAL (camada investimento sobre imóveis existentes) =====

@@ -17,6 +17,8 @@ export function getPostLoginRedirectFromToken(token: JWT | null): string {
   if (userType === "admin") {
     if (roleKey === "OWNER" || roleKey === "SUPER_ADMIN") return "/admin/overview";
     if (roleKey === "COMMERCIAL") return "/dashboard/comercial";
+    /** Role COTISTA no User: portal do cotista (/dashboard), não admin */
+    if (roleKey === "COTISTA") return "/dashboard";
     if (roleKey === "STAFF" || roleKey === "ADMIN") return "/dashboard";
     return "/admin/overview";
   }

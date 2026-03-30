@@ -69,7 +69,8 @@ function getHomeRouteFromContext({
     case "COMMERCIAL":
       return "/dashboard/comercial";
     case "COTISTA":
-      return "/cotista";
+      /** User (admin) com role COTISTA: mesmo portal em /dashboard */
+      return userType === "admin" ? "/dashboard" : "/cotista";
     case "STAFF":
     case "ADMIN":
       return "/dashboard";

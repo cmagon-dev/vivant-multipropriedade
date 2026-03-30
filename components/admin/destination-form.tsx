@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { destinationCreateSchema, DestinationCreateInput } from "@/lib/validations/destination-admin";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { SlugInput } from "@/components/admin/slug-input";
 import { DestinationFeaturesInput } from "@/components/admin/destination-features-input";
+import { GradientColorPicker } from "@/components/admin/gradient-color-picker";
 import { toast } from "sonner";
 
 interface DestinationFormProps {
@@ -43,11 +44,10 @@ export function DestinationForm({ destination }: DestinationFormProps) {
     }
   });
   
-  const { register, handleSubmit, formState: { errors }, watch, setValue } = form;
+  const { register, handleSubmit, formState: { errors }, watch, setValue, control } = form;
   
   const nameValue = watch("name");
   const slugValue = watch("slug");
-  const featuresValue = watch("features");
   const publishedValue = watch("published");
   
   const onSubmit = async (data: DestinationCreateInput) => {
@@ -156,17 +156,18 @@ export function DestinationForm({ destination }: DestinationFormProps) {
         
         <div>
           <Label htmlFor="color">Gradiente Tailwind *</Label>
-          <Input
-            id="color"
-            {...register("color")}
-            placeholder="from-blue-500 to-cyan-400"
+          <Controller
+            name="color"
+            control={control}
+            render={({ field }) => (
+              <GradientColorPicker
+                id="color"
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.color?.message as string | undefined}
+              />
+            )}
           />
-          {errors.color && (
-            <p className="text-sm text-red-600 mt-1">{errors.color.message}</p>
-          )}
-          <p className="text-xs text-gray-500 mt-1">
-            Use formato Tailwind: from-[cor]-[intensidade] to-[cor]-[intensidade]
-          </p>
         </div>
         
         <div>
@@ -259,9 +260,15 @@ export function DestinationForm({ destination }: DestinationFormProps) {
           Destaques do Destino (4 obrigatórios)
         </h2>
         
-        <DestinationFeaturesInput
-          value={featuresValue || []}
-          onChange={(features) => setValue("features", features)}
+        <Controller
+          name="features"
+          control={control}
+          render={({ field }) => (
+            <DestinationFeaturesInput
+              value={field.value ?? []}
+              onChange={field.onChange}
+            />
+          )}
         />
         {errors.features && (
           <p className="text-sm text-red-600 mt-1">{errors.features.message as string}</p>

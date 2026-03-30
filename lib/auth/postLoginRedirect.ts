@@ -42,7 +42,8 @@ export function getPostLoginRedirectRoute(session: SessionLike | null): string {
     case "COMMERCIAL":
       return "/dashboard/comercial";
     case "COTISTA":
-      return "/cotista";
+      /** User admin com role COTISTA: mesmo portal em /dashboard (evita /cotista bloqueado para userType admin no middleware) */
+      return userType === "admin" ? "/dashboard" : "/cotista";
     case "STAFF":
     case "ADMIN":
     default:

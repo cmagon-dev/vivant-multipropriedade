@@ -1,10 +1,11 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { canAccessCapitalAdmin } from "@/lib/capital-auth";
+import { canAccessCapitalAdmin, canManageCapital } from "@/lib/capital-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users } from "lucide-react";
+import { VincularInvestidorButton } from "./vincular-investidor-button";
 
 export const dynamic = "force-dynamic";
 
@@ -23,15 +24,21 @@ export default async function CapitalInvestidoresPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-vivant-navy">Investidores</h1>
-        <p className="text-gray-500 mt-1">Perfis de investidores do Vivant Capital</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-vivant-navy">Investidores</h1>
+          <p className="text-gray-500 mt-1">Perfis de investidores do Vivant Capital (vinculados para participar de ativos)</p>
+        </div>
+        {canManageCapital(session) && <VincularInvestidorButton />}
       </div>
 
       {investidores.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-gray-500">
-            Nenhum investidor cadastrado. Crie um perfil vinculando um usuário em Usuários.
+          <CardContent className="py-12 text-center text-gray-500 space-y-2">
+            <p>Nenhum investidor com perfil cadastrado.</p>
+            <p className="text-sm">
+              Clique em <strong>Vincular usuário</strong> acima para criar o perfil de investidor de um usuário. Assim ele aparece aqui e pode ser vinculado a ativos nas participações.
+            </p>
           </CardContent>
         </Card>
       ) : (

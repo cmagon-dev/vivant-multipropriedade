@@ -53,7 +53,12 @@ export default async function CasaPage({ params }: CasaPageProps) {
     notFound();
   }
 
-  const images = property.images as string[];
+  const rawImages = (property.images as string[]) || [];
+  const brokenPlaceholders = ["/placeholder-house.jpg", "/placeholder-apt.jpg"];
+  const filtered = rawImages.filter(
+    (u) => !brokenPlaceholders.some((p) => u.endsWith(p))
+  );
+  const images = filtered.length ? filtered : ["/placeholder-property.svg"];
   const features = property.features as string[];
 
   const statusLabel = (status: string) => {

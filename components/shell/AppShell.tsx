@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -12,8 +11,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-  LogOut,
   LayoutDashboard,
+  LayoutGrid,
   Home,
   GitBranch,
   Users,
@@ -33,15 +32,18 @@ import {
   TrendingUp,
   PieChart,
   BarChart3,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SECTION_TITLES, SECTION_ORDER } from "@/lib/navigation/menu";
 import type { ShellMenuItem } from "@/lib/navigation/menu";
+import { SignOutButton } from "@/components/shell/SignOutButton";
 
 export type AppShellMenuItem = ShellMenuItem;
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard,
+  LayoutGrid,
   Home,
   GitBranch,
   Users,
@@ -91,6 +93,21 @@ function groupItemsBySection(items: AppShellMenuItem[]): Map<string | undefined,
   return map;
 }
 
+/** Evita marcar o item "raiz" ativo em todas as subrotas (ex.: /dashboard vs /dashboard/calendario). */
+function isNavActive(pathname: string, href: string): boolean {
+  const p = pathname.endsWith("/") && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
+  const h = href.endsWith("/") && href.length > 1 ? href.slice(0, -1) : href;
+  if (p === h) return true;
+  const exactRoots = ["/dashboard", "/admin/vivant-care"];
+  if (exactRoots.includes(h)) return false;
+  return p.startsWith(h + "/");
+}
+
+function navItemMatchesPath(pathname: string, item: AppShellMenuItem): boolean {
+  if (isNavActive(pathname, item.href)) return true;
+  return item.subItems?.some((c) => isNavActive(pathname, c.href)) ?? false;
+}
+
 function getSectionContainingPathname(
   pathname: string,
   bySection: Map<string | undefined, AppShellMenuItem[]>
@@ -98,10 +115,111 @@ function getSectionContainingPathname(
   for (const sectionKey of SECTION_ORDER) {
     if (!sectionKey) continue;
     const items = bySection.get(sectionKey) ?? [];
-    if (items.some((item) => pathname === item.href || pathname.startsWith(item.href + "/")))
-      return sectionKey;
+    if (items.some((item) => navItemMatchesPath(pathname, item))) return sectionKey;
   }
   return null;
+}
+
+/** Item com children: pai só expande/colapsa; links ficam nos filhos. */
+function SidebarExpandableNavGroup({
+  item,
+  pathname,
+  isVivantCare,
+  navClassName,
+}: {
+  item: AppShellMenuItem;
+  pathname: string;
+  isVivantCare: boolean;
+  /** Classes extras no wrapper (ex.: px do bloco __none) */
+  navClassName?: string;
+}) {
+  const subItems = item.subItems ?? [];
+  const Icon = ICON_MAP[item.iconKey] ?? HelpCircle;
+  const prevPathname = useRef(pathname);
+  const [open, setOpen] = useState(() => navItemMatchesPath(pathname, item));
+
+  useEffect(() => {
+    if (prevPathname.current !== pathname) {
+      prevPathname.current = pathname;
+      if (navItemMatchesPath(pathname, item)) setOpen(true);
+    }
+  }, [pathname, item]);
+
+  const submenuHasActive = subItems.some((c) => isNavActive(pathname, c.href));
+
+  const toggle = () => setOpen((o) => !o);
+
+  return (
+    <div className={cn(isVivantCare ? "space-y-1.5" : "space-y-0.5")}>
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        className={cn(
+          "flex w-full items-center gap-3 rounded-lg text-left font-medium transition-colors",
+          navClassName ?? "px-4 py-3 text-sm",
+          submenuHasActive
+            ? isVivantCare
+              ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/25"
+              : "bg-vivant-navy text-white"
+            : isVivantCare
+              ? "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+              : "text-vivant-navy hover:bg-vivant-navy/10"
+        )}
+      >
+        <Icon
+          className={cn(
+            "h-5 w-5 flex-shrink-0",
+            !submenuHasActive && isVivantCare && "text-slate-500"
+          )}
+        />
+        <span className="flex-1 min-w-0">{item.name}</span>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 flex-shrink-0 transition-transform duration-200",
+            open && "rotate-180",
+            submenuHasActive ? "text-white" : isVivantCare && "text-slate-400"
+          )}
+          aria-hidden
+        />
+      </button>
+      <div
+        className={cn(
+          "grid transition-[grid-template-rows] duration-200 ease-out",
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        )}
+      >
+          <div className="flex min-h-0 flex-col overflow-hidden">
+          <div className="flex flex-col gap-0.5 pb-0.5">
+            {subItems.map((child) => {
+              const childActive = isNavActive(pathname, child.href);
+              return (
+                <Link
+                  key={child.href}
+                  href={child.href}
+                  className={cn(
+                    "flex items-center rounded-lg py-2 text-sm font-medium transition-colors",
+                    navClassName
+                      ? "pl-11 pr-3"
+                      : "pl-11 pr-4",
+                    childActive
+                      ? isVivantCare
+                        ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/25"
+                        : "bg-vivant-navy text-white"
+                      : isVivantCare
+                        ? "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                        : "text-vivant-navy hover:bg-vivant-navy/10"
+                  )}
+                >
+                  {child.name}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function AppShell({
@@ -128,8 +246,8 @@ export function AppShell({
   }, [pathname, bySection]);
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+    <div className="flex bg-gray-50 min-h-screen">
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 font-sans min-h-screen sticky top-0 self-start">
         <div className="h-16 flex items-center px-6 border-b border-gray-200 flex-shrink-0">
           <Link href="/" className="block">
             <img src="/logo-vivant.png" alt="Vivant" className="h-10" />
@@ -156,30 +274,56 @@ export function AppShell({
                     className={cn(
                       "px-3 py-2.5 rounded-lg text-sm font-medium uppercase tracking-wider text-vivant-navy",
                       "hover:bg-vivant-navy/10 hover:text-vivant-navy hover:no-underline",
-                      "data-[state=open]:bg-vivant-navy/5 data-[state=open]:text-vivant-navy"
+                      "data-[state=open]:bg-vivant-navy/5 data-[state=open]:text-vivant-navy",
+                      sectionKey === "vivantcare" &&
+                        "bg-emerald-500 text-white shadow-md shadow-emerald-500/25 hover:bg-emerald-600 hover:text-white data-[state=open]:bg-emerald-600 data-[state=open]:text-white"
                     )}
                   >
                     {sectionTitle}
                   </AccordionTrigger>
                   <AccordionContent className="overflow-hidden pb-1 pt-0">
-                    <div className="space-y-0.5 pl-1">
+                    <div
+                      className={cn(
+                        "pl-1",
+                        sectionKey === "vivantcare" ? "space-y-2" : "space-y-0.5"
+                      )}
+                    >
                       {items.map((item) => {
-                        const isActive =
-                          pathname === item.href || pathname.startsWith(item.href + "/");
+                        const isVivantCare = sectionKey === "vivantcare";
+                        if (item.subItems?.length) {
+                          return (
+                            <SidebarExpandableNavGroup
+                              key={item.href}
+                              item={item}
+                              pathname={pathname}
+                              isVivantCare={isVivantCare}
+                            />
+                          );
+                        }
                         const Icon = ICON_MAP[item.iconKey] ?? HelpCircle;
+                        const isActive = isNavActive(pathname, item.href);
                         return (
                           <Link
                             key={item.href}
                             href={item.href}
                             className={cn(
-                              "flex items-center gap-3 rounded-lg py-2.5 pl-3 pr-2 transition-colors text-base",
+                              "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
                               isActive
-                                ? "bg-vivant-navy text-white"
-                                : "text-vivant-navy hover:bg-vivant-navy/10"
+                                ? isVivantCare
+                                  ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/25"
+                                  : "bg-vivant-navy text-white"
+                                : isVivantCare
+                                  ? "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                                  : "text-vivant-navy hover:bg-vivant-navy/10"
                             )}
                           >
-                            <Icon className="w-5 h-5 flex-shrink-0" />
-                            <span className="font-medium">{item.name}</span>
+                            <Icon
+                              className={cn(
+                                "h-5 w-5 flex-shrink-0",
+                                !isActive && isVivantCare && "text-slate-500"
+                              )}
+                            />
+                            <span>{item.name}</span>
                           </Link>
                         );
                       })}
@@ -193,9 +337,19 @@ export function AppShell({
             <div className="mt-4 pt-2 border-t border-gray-100">
               <div className="space-y-0.5">
                 {bySection.get("__none")!.map((item) => {
-                  const isActive =
-                    pathname === item.href || pathname.startsWith(item.href + "/");
+                  if (item.subItems?.length) {
+                    return (
+                      <SidebarExpandableNavGroup
+                        key={item.href}
+                        item={item}
+                        pathname={pathname}
+                        isVivantCare={false}
+                        navClassName="px-3 py-2.5 text-base"
+                      />
+                    );
+                  }
                   const Icon = ICON_MAP[item.iconKey] ?? HelpCircle;
+                  const isActive = isNavActive(pathname, item.href);
                   return (
                     <Link
                       key={item.href}
@@ -233,10 +387,10 @@ export function AppShell({
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 self-start min-h-0">
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 shadow-sm">
           <div>
-            <h1 className="text-xl font-bold text-vivant-navy font-serif">
+            <h1 className="text-xl font-bold text-vivant-navy font-sans">
               {title}
             </h1>
             <p className="text-xs text-gray-500">
@@ -244,19 +398,12 @@ export function AppShell({
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => signOut({ callbackUrl: "/login" })}
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sair
-            </Button>
+            <SignOutButton variant="outline" size="sm" />
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto min-h-0">
-          <div className="max-w-7xl mx-auto p-6">
+        <main className="flex-1 py-6">
+          <div className="max-w-7xl mx-auto px-6">
             {children}
           </div>
         </main>

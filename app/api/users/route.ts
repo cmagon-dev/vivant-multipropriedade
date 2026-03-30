@@ -87,6 +87,7 @@ export async function POST(request: NextRequest) {
         email: validated.email,
         password: hashedPassword,
         role: "EDITOR",
+        ...(roleKey === "COTISTA" ? { defaultRoute: "/dashboard" } : {}),
       },
       select: {
         id: true,
@@ -110,6 +111,25 @@ export async function POST(request: NextRequest) {
         companyId: defaultCompany?.id ?? null,
       },
     });
+
+    /** Role COTISTA: mesmo login admin, mas portal usa tabela `cotistas` (APIs /api/cotistas/me/*). */
+    if (roleKey === "COTISTA") {
+      await prisma.cotista.upsert({
+        where: { email: validated.email },
+        create: {
+          name: validated.name,
+          email: validated.email,
+          cpf: `PENDING-${user.id}`,
+          password: hashedPassword,
+          active: true,
+        },
+        update: {
+          name: validated.name,
+          password: hashedPassword,
+          active: true,
+        },
+      });
+    }
     for (const key of extraKeys) {
       const perm = await prisma.permission.findUnique({ where: { key } });
       if (perm) {

@@ -1,11 +1,12 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { canAccessCapitalAdmin } from "@/lib/capital-auth";
+import { canAccessCapitalAdmin, canManageCapital } from "@/lib/capital-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
-import { DollarSign, Building2 } from "lucide-react";
+import { DollarSign } from "lucide-react";
 import Link from "next/link";
+import { NovaDistribuicaoModal } from "./nova-distribuicao-modal";
 
 export const dynamic = "force-dynamic";
 
@@ -31,15 +32,23 @@ export default async function CapitalDistribuicoesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-vivant-navy">Distribuições</h1>
-        <p className="text-gray-500 mt-1">Distribuição de resultados por competência</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-vivant-navy">Distribuições</h1>
+          <p className="text-gray-500 mt-1">Distribuição de resultados por competência</p>
+        </div>
+        {canManageCapital(session) && <NovaDistribuicaoModal />}
       </div>
 
       {distributions.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-gray-500">
-            Nenhuma distribuição cadastrada.
+          <CardContent className="py-12 text-center text-gray-500 space-y-2">
+            <p>Nenhuma distribuição cadastrada.</p>
+            <p className="text-sm">
+              {canManageCapital(session)
+                ? "Clique em Nova distribuição para registrar o resultado de um ativo em uma competência (mês/ano). O sistema gera os itens por investidor automaticamente."
+                : "Aguarde o administrador cadastrar distribuições."}
+            </p>
           </CardContent>
         </Card>
       ) : (

@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ContextualHelpAuto } from "@/components/help/ContextualHelpAuto";
 import { HelpTip } from "@/components/help/HelpTip";
 import { MicroOnboarding } from "@/components/help/MicroOnboarding";
-import { Plus, List, LayoutGrid, Search, ChevronLeft, ChevronRight } from "lucide-react";
-import { LeadCard } from "./lead-card";
+import { Plus, Search } from "lucide-react";
 import { NewLeadDialog } from "./new-lead-dialog";
 import { LeadDetailSheet } from "./lead-detail-sheet";
 import { NewLeadsAlert } from "./NewLeadsAlert";
@@ -27,8 +27,6 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { getStageStyle } from "@/lib/crm/stageColors";
-import { cn } from "@/lib/utils";
 
 type LeadType = {
   id: string;
@@ -75,7 +73,7 @@ export function LeadsBoard() {
   const [types, setTypes] = useState<LeadType[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
+  const [viewMode] = useState<"kanban" | "table">("table");
   const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
   const [newLeadOpen, setNewLeadOpen] = useState(false);
   const [detailLeadId, setDetailLeadId] = useState<string | null>(null);
@@ -268,6 +266,7 @@ export function LeadsBoard() {
 
   return (
     <div className="flex h-[calc(100vh-180px)] flex-col gap-4">
+      <ContextualHelpAuto />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <h1 className="text-3xl font-bold text-vivant-navy">Leads</h1>
@@ -279,7 +278,7 @@ export function LeadsBoard() {
             tutorialKey="comercial.leads"
             steps={[
               { id: "1", title: "Produtos", content: "Escolha o produto (Imóvel, Investidor, Cotista) no seletor acima." },
-              { id: "2", title: "Etapas", content: "Cada coluna do kanban é uma etapa. Clique no lead para ver detalhes e mover." },
+              { id: "2", title: "Lista", content: "Os leads aparecem em lista por etapa. Clique em Abrir para ver detalhes e mover." },
               { id: "3", title: "Novo lead", content: "Use o botão Novo Lead para cadastrar um contato." },
             ]}
           />
@@ -351,118 +350,10 @@ export function LeadsBoard() {
                   className="w-full pl-9 pr-4 py-2 border rounded-md text-sm"
                 />
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1">
-                  <Button
-                    variant={viewMode === "kanban" ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => setViewMode("kanban")}
-                  >
-                    <LayoutGrid className="w-4 h-4 mr-1" />
-                    Kanban
-                  </Button>
-                  <Button
-                    variant={viewMode === "table" ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => setViewMode("table")}
-                  >
-                    <List className="w-4 h-4 mr-1" />
-                    Lista
-                  </Button>
-                </div>
-                {viewMode === "kanban" && (
-                  <div className="flex gap-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => scrollColumns("left")}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => scrollColumns("right")}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
 
           <div className="flex-1 min-h-0 pt-2">
-            {viewMode === "kanban" && (
-              <div
-                ref={kanbanRef}
-                className={`h-full overflow-x-auto overflow-y-hidden pb-3 ${
-                  isDragging ? "cursor-grabbing" : "cursor-grab"
-                }`}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={endDrag}
-                onMouseLeave={endDrag}
-              >
-                <div className="flex h-full items-stretch gap-4">
-                  {stages.map((stage) => {
-                    const style = getStageStyle(
-                      stage.name,
-                      stage.isFinal,
-                      stage.finalStatus
-                    );
-                    const count = (leadsByStage[stage.id] ?? []).length;
-                    return (
-                      <div
-                        key={stage.id}
-                        data-stage-id={stage.id}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, stage.id)}
-                        className="flex h-full min-w-[320px] max-w-[360px] flex-col rounded-lg bg-gray-100"
-                      >
-                        <div className={cn("h-1.5 w-full rounded-t-lg", style.barClass)} />
-                        <div className="flex flex-1 flex-col p-3 pt-2">
-                          <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
-                            <span className={cn("truncate", style.titleClass)}>
-                              {stage.name}
-                            </span>
-                            <span className={style.badgeClass}>{count}</span>
-                          </div>
-                          <div
-                            className="flex-1 min-h-0 overflow-y-auto space-y-2"
-                            onDragOver={(e) => e.preventDefault()}
-                          >
-                            {(leadsByStage[stage.id] ?? []).map((lead) => (
-                              <div
-                                key={lead.id}
-                                draggable
-                                onDragStart={(e) => {
-                                  e.stopPropagation();
-                                  e.dataTransfer.setData("text/plain", lead.id);
-                                  e.dataTransfer.effectAllowed = "move";
-                                  e.dataTransfer.setData("application/json", JSON.stringify({ leadId: lead.id }));
-                                }}
-                                onPointerDown={(e) => e.stopPropagation()}
-                                className="cursor-grab active:cursor-grabbing select-none"
-                              >
-                                <LeadCard
-                                  lead={lead}
-                                  onClick={() => setDetailLeadId(lead.id)}
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {viewMode === "table" && (
               <div className="h-full overflow-y-auto">
                 <Card>
                   <CardContent className="p-0">
@@ -508,7 +399,6 @@ export function LeadsBoard() {
                   </CardContent>
                 </Card>
               </div>
-            )}
           </div>
         </>
       )}

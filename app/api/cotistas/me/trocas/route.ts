@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { requirePortalCotista } from "@/lib/auth/cotistaPortalSession";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as { userType?: string }).userType !== "cotista") {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-    const cotistaId = session.user.id;
+    const auth = await requirePortalCotista(session);
+    if (!auth.ok) return auth.response;
+    const cotistaId = auth.cotistaId;
     const trocas = await prisma.trocaSemana.findMany({
       where: { cotistaSolicitante: cotistaId },
       include: {
@@ -32,10 +32,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as { userType?: string }).userType !== "cotista") {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-    const cotistaId = session.user.id;
+    const auth = await requirePortalCotista(session);
+    if (!auth.ok) return auth.response;
+    const cotistaId = auth.cotistaId;
     const body = await request.json().catch(() => ({}));
     const { observacoes, reservaOferecida, propriedadeDesejada, semanasDesejadas } = body;
     const troca = await prisma.trocaSemana.create({

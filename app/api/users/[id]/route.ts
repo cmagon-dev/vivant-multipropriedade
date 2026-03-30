@@ -82,7 +82,17 @@ export async function PUT(
   try {
     const body = await request.json();
     const validated = userUpdateSchema.parse(body);
-    
+
+    const beforeUser = await prisma.user.findUnique({
+      where: { id: params.id },
+      select: {
+        email: true,
+        userRoleAssignments: { take: 1, include: { role: { select: { key: true } } } },
+      },
+    });
+    const beforeEmail = beforeUser?.email;
+    const beforeRoleKey = beforeUser?.userRoleAssignments?.[0]?.role?.key ?? null;
+
     const updateData: Record<string, unknown> = {
       ...(validated.name !== undefined && { name: validated.name }),
       ...(validated.email !== undefined && { email: validated.email }),
@@ -148,7 +158,44 @@ export async function PUT(
       entityId: user.id,
       changes: validated,
     });
-    
+
+    const syncCotista = await prisma.user.findUnique({
+      where: { id: params.id },
+      include: { userRoleAssignments: { take: 1, include: { role: { select: { key: true } } } } },
+    });
+    const roleKeyNow =
+      validated.roleKey !== undefined && validated.roleKey !== null
+        ? validated.roleKey
+        : syncCotista?.userRoleAssignments?.[0]?.role?.key ?? beforeRoleKey;
+
+    if (roleKeyNow === "COTISTA" && syncCotista && beforeEmail) {
+      const pwd = validated.password ? (updateData.password as string) : undefined;
+      const existing = await prisma.cotista.findFirst({
+        where: { OR: [{ email: beforeEmail }, { email: syncCotista.email }] },
+      });
+      if (existing) {
+        await prisma.cotista.update({
+          where: { id: existing.id },
+          data: {
+            name: syncCotista.name,
+            email: syncCotista.email,
+            ...(pwd ? { password: pwd } : {}),
+            active: syncCotista.active,
+          },
+        });
+      } else {
+        await prisma.cotista.create({
+          data: {
+            name: syncCotista.name,
+            email: syncCotista.email,
+            cpf: `PENDING-${syncCotista.id}`,
+            password: pwd ?? (await prisma.user.findUnique({ where: { id: syncCotista.id }, select: { password: true } }))!.password,
+            active: syncCotista.active,
+          },
+        });
+      }
+    }
+
     return NextResponse.json(user);
   } catch (error: any) {
     // Evita erros internos do console ao inspecionar objetos complexos (ex: erros do Prisma/Zod)
@@ -186,6 +233,15 @@ export async function DELETE(
   }
   
   try {
+    const toDelete = await prisma.user.findUnique({
+      where: { id: params.id },
+      select: { email: true, userRoleAssignments: { take: 1, include: { role: { select: { key: true } } } } },
+    });
+    const rk = toDelete?.userRoleAssignments?.[0]?.role?.key;
+    if (rk === "COTISTA" && toDelete?.email) {
+      await prisma.cotista.deleteMany({ where: { email: toDelete.email } }).catch(() => {});
+    }
+
     await prisma.user.delete({
       where: { id: params.id }
     });

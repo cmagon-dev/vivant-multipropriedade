@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 function canAccess(session: any) {
   if (!session || (session.user as { userType?: string }).userType !== "admin") return false;
@@ -68,6 +70,35 @@ export async function POST(request: NextRequest) {
       },
       include: { property: { select: { id: true, name: true } }, _count: { select: { pautas: true } } },
     });
+
+    const statusFinal = a.status;
+    if (statusFinal === "AGENDADA" || statusFinal === "EM_ANDAMENTO") {
+      const cotasAtivas = await prisma.cotaPropriedade.findMany({
+        where: { propertyId: a.propertyId, ativo: true },
+        select: { cotistaId: true },
+      });
+      const cotistaIds = Array.from(new Set(cotasAtivas.map((c) => c.cotistaId)));
+      if (cotistaIds.length > 0) {
+        const dataFmt = format(new Date(a.dataRealizacao), "dd/MM/yyyy 'às' HH:mm", {
+          locale: ptBR,
+        });
+        const propNome = a.property?.name ?? "Imóvel";
+        const desc = String(descricao).trim();
+        const msgBody =
+          desc.length > 220 ? `${desc.slice(0, 220)}…` : desc;
+
+        await prisma.notificacao.createMany({
+          data: cotistaIds.map((cotistaId) => ({
+            cotistaId,
+            tipo: "ASSEMBLEIA",
+            titulo: `Nova assembleia: ${titulo}`,
+            mensagem: `${propNome} — ${dataFmt}. ${msgBody}`,
+            url: `/dashboard/assembleias/${a.id}`,
+          })),
+        });
+      }
+    }
+
     return NextResponse.json(a);
   } catch (e) {
     console.error("Erro ao criar assembleia:", e);

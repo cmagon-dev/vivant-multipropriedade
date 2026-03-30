@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell, LogOut, User, Settings } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { signOutAndGoToLogin } from "@/lib/auth/signOutClient";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -59,7 +59,7 @@ export function AdminPortalHeader({ user }: AdminPortalHeaderProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="text-red-600 focus:text-red-600"
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={() => void signOutAndGoToLogin()}
             >
               <LogOut className="w-4 h-4 mr-2" />
               Sair

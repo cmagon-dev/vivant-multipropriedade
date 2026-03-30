@@ -12,6 +12,10 @@ import { BookOpen, X } from "lucide-react";
 const STORAGE_PREFIX = "help-dismissed-";
 
 function getStorageKey(pathname: string): string {
+  // Mantém compatibilidade geral e força nova exibição no comercial após ajuste de layout.
+  if (pathname.startsWith("/dashboard/comercial")) {
+    return `${STORAGE_PREFIX}comercial-v2-${pathname}`;
+  }
   return `${STORAGE_PREFIX}${pathname}`;
 }
 
@@ -65,10 +69,10 @@ export function ContextualHelpAuto() {
   }
 
   return (
-    <Card className="mb-6 border-vivant-gold/40 bg-amber-50/80 dark:bg-amber-950/20">
+    <Card className="mb-6 border-blue-200 bg-blue-50/80 dark:border-blue-900/50 dark:bg-blue-950/20">
       <CardHeader className="pb-2 pt-4 px-4 flex flex-row items-start justify-between gap-2">
         <div className="flex items-center gap-2 text-vivant-navy">
-          <BookOpen className="h-5 w-5 shrink-0 text-amber-700" />
+          <BookOpen className="h-5 w-5 shrink-0 text-blue-700 dark:text-blue-400" />
           <span className="font-semibold text-sm">Ajuda rápida — primeira vez nesta tela</span>
         </div>
         <Button
@@ -83,7 +87,7 @@ export function ContextualHelpAuto() {
       </CardHeader>
       <CardContent className="px-4 pb-4 pt-0 space-y-3">
         <p className="font-medium text-vivant-navy text-sm">{topic.title}</p>
-        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{topic.shortDescription}</p>
+        <p className="text-sm text-blue-800/80 dark:text-blue-200/80 line-clamp-2">{topic.shortDescription}</p>
         <div className="flex flex-wrap gap-2">
           <Button variant="default" size="sm" className="gap-1.5" onClick={handleReadFull} asChild>
             <Link href={`/admin/help/${slug}`}>Ler ajuda completa</Link>

@@ -1,12 +1,13 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { canAccessCapitalAdmin } from "@/lib/capital-auth";
+import { canAccessCapitalAdmin, canManageCapital } from "@/lib/capital-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { PieChart, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { NovaParticipacaoModal } from "./nova-participacao-modal";
 
 export const dynamic = "force-dynamic";
 
@@ -27,15 +28,21 @@ export default async function CapitalParticipacoesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-vivant-navy">Participações</h1>
-        <p className="text-gray-500 mt-1">Investidor x ativo (cotas e percentuais)</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-vivant-navy">Participações</h1>
+          <p className="text-gray-500 mt-1">Investidor x ativo (cotas e percentuais)</p>
+        </div>
+        {canManageCapital(session) && <NovaParticipacaoModal />}
       </div>
 
       {participations.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-gray-500">
-            Nenhuma participação cadastrada.
+          <CardContent className="py-12 text-center text-gray-500 space-y-2">
+            <p>Nenhuma participação cadastrada.</p>
+            <p className="text-sm">
+              Clique em <strong>Nova participação</strong> para vincular um investidor a um ativo (informe as cotas). Assim o investidor passa a ter participação e aparece no portal.
+            </p>
           </CardContent>
         </Card>
       ) : (

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Waves, Shield, Car, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 
 export const revalidate = 60;
 
@@ -32,7 +33,7 @@ export default async function CasasPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA]">
+    <div className="bg-[#F8F9FA]">
       <Navbar />
       
       <CasasClient properties={propertiesFormatted} />
@@ -40,7 +41,7 @@ export default async function CasasPage() {
       {/* Por que Vivant Section */}
       <section className="py-16 lg:py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
+          <ScrollReveal className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-4 px-2">
               Por que escolher a Vivant?
             </h2>
@@ -48,7 +49,7 @@ export default async function CasasPage() {
               Multipropriedade inteligente com curadoria de destinos e
               propriedades de alto padrão
             </p>
-          </div>
+          </ScrollReveal>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {[
@@ -92,7 +93,7 @@ export default async function CasasPage() {
 
       {/* CTA Final */}
       <section className="py-16 lg:py-20 bg-gradient-to-br from-[#1A2F4B] to-[#2A4F6B]">
-        <div className="container mx-auto px-4 sm:px-6 text-center">
+        <ScrollReveal className="container mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-6 px-2">
             Interessado em uma dessas casas?
           </h2>
@@ -107,7 +108,7 @@ export default async function CasasPage() {
           >
             <Link href="/contato">Fale Conosco</Link>
           </Button>
-        </div>
+        </ScrollReveal>
       </section>
 
       <Footer />

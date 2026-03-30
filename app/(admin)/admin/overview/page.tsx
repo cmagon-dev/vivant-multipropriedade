@@ -8,7 +8,6 @@ import { LayoutDashboard, Activity, CheckSquare, AlertTriangle } from "lucide-re
 import Link from "next/link";
 import { getUserContext } from "@/lib/auth/getUserContext";
 import { HelpTip } from "@/components/help/HelpTip";
-import { MicroOnboarding } from "@/components/help/MicroOnboarding";
 
 export default async function AdminOverviewPage() {
   const session = await getServerSession(authOptions);
@@ -77,15 +76,6 @@ export default async function AdminOverviewPage() {
           </p>
         )}
       </div>
-
-      <MicroOnboarding
-        tutorialKey="admin.overview"
-        steps={[
-          { id: "1", title: "Visão do Dono", content: "Aqui você vê eventos e tarefas de todos os painéis em um só lugar." },
-          { id: "2", title: "Eventos", content: "Cada ação importante (login, criação, etc.) gera um evento visível em Eventos." },
-          { id: "3", title: "Tarefas", content: "Pendências e alertas aparecem em Tarefas para você acompanhar." },
-        ]}
-      />
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
         {canViewEvents && (

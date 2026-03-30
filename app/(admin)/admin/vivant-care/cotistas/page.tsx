@@ -3,11 +3,12 @@
 import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Plus, Mail, User, Phone, Home, Loader2, Search } from "lucide-react";
+import { Plus, Mail, User, Phone, Home, Loader2, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface Cotista {
   id: string;
@@ -41,6 +42,33 @@ export default function VivantCareCotistasPage() {
     }
     load();
   }, []);
+
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (cotista: Cotista) => {
+    if (
+      !confirm(
+        `Tem certeza que deseja excluir o cotista "${cotista.name}"? Todas as cotas, reservas e dados vinculados serão removidos. Esta ação não pode ser desfeita.`
+      )
+    ) {
+      return;
+    }
+    setDeletingId(cotista.id);
+    try {
+      const res = await fetch(`/api/admin/cotistas/${cotista.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error ?? "Erro ao excluir cotista");
+        return;
+      }
+      setCotistas((prev) => prev.filter((c) => c.id !== cotista.id));
+      toast.success("Cotista excluído com sucesso.");
+    } catch {
+      toast.error("Erro ao excluir cotista.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const filtered = useMemo(() => {
     if (!search.trim()) return cotistas;
@@ -126,15 +154,32 @@ export default function VivantCareCotistasPage() {
                           )}
                         </div>
                       </div>
-                      <span
-                        className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium ${
-                          cotista.active
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-200 text-gray-600"
-                        }`}
-                      >
-                        {cotista.active ? "Ativo" : "Inativo"}
-                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            cotista.active
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-200 text-gray-600"
+                          }`}
+                        >
+                          {cotista.active ? "Ativo" : "Inativo"}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-9 w-9 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                          onClick={() => handleDelete(cotista)}
+                          disabled={deletingId === cotista.id}
+                          title="Excluir cotista"
+                        >
+                          {deletingId === cotista.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                     {cotista.cotas?.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { requirePortalCotista } from "@/lib/auth/cotistaPortalSession";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
@@ -9,19 +10,15 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session || (session.user as any).userType !== "cotista") {
-      return NextResponse.json(
-        { error: "Não autorizado" },
-        { status: 401 }
-      );
-    }
+    const auth = await requirePortalCotista(session);
+    if (!auth.ok) return auth.response;
+    const cotistaId = auth.cotistaId;
 
     const cobranca = await prisma.cobranca.findFirst({
       where: {
         id: params.id,
         cota: {
-          cotistaId: session.user.id
+          cotistaId
         }
       },
       include: {

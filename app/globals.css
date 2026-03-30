@@ -13,6 +13,14 @@
   h1, h2, h3 {
     font-family: var(--font-playfair), Georgia, 'Times New Roman', serif !important;
   }
+
+  /* Sidebar: mesma fonte sans em todo o menu (títulos de seção + itens) */
+  aside h1,
+  aside h2,
+  aside h3 {
+    font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont,
+      'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  }
 }
 
 @layer base {
@@ -192,4 +200,53 @@ section[id] {
 
 .help-content-wrapper .help-content {
   margin-bottom: 0.5rem;
+}
+
+/* ===== Marketing text reveal ===== */
+@keyframes vivantRevealUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal-on-scroll > * {
+  opacity: 0;
+}
+
+.reveal-on-scroll.reveal-single {
+  opacity: 0;
+}
+
+.reveal-on-scroll.is-visible > * {
+  animation: vivantRevealUp 1200ms ease-out forwards;
+}
+
+.reveal-on-scroll.reveal-single.is-visible {
+  animation: vivantRevealUp 1200ms ease-out forwards;
+}
+
+.reveal-on-scroll.is-visible > *:nth-child(1) { animation-delay: 140ms; }
+.reveal-on-scroll.is-visible > *:nth-child(2) { animation-delay: 300ms; }
+.reveal-on-scroll.is-visible > *:nth-child(3) { animation-delay: 460ms; }
+.reveal-on-scroll.is-visible > *:nth-child(4) { animation-delay: 620ms; }
+.reveal-on-scroll.is-visible > *:nth-child(5) { animation-delay: 780ms; }
+.reveal-on-scroll.is-visible > *:nth-child(6) { animation-delay: 940ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on-scroll > * {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+
+  .reveal-on-scroll.reveal-single {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
 }

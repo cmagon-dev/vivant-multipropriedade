@@ -6,6 +6,13 @@
 
 import { hasPermissionKey } from "@/lib/auth/permissions";
 
+export type MenuSubItemConfig = {
+  label: string;
+  href: string;
+  /** Se definido, o usuário precisa de pelo menos uma destas permissões. Senão, vale o `requiredPermissions` do item pai. */
+  requiredPermissions?: string[];
+};
+
 export type MenuItemConfig = {
   label: string;
   href: string;
@@ -14,6 +21,8 @@ export type MenuItemConfig = {
   requiredPermissions: string[];
   /** Seção da sidebar para agrupamento visual. */
   section?: "dashboard" | "comercial" | "propriedades" | "vivantcare" | "capital" | "administracao" | "suporte";
+  /** Sublinks (não usar a chave "children": reservada na serialização RSC → cliente). */
+  subItems?: MenuSubItemConfig[];
 };
 
 const SECTIONS_ORDER: MenuItemConfig["section"][] = ["dashboard", "comercial", "propriedades", "vivantcare", "capital", "administracao", "suporte"];
@@ -35,17 +44,17 @@ export const UNIFIED_MENU_CONFIG: MenuItemConfig[] = [
     section: "dashboard",
   },
   {
+    label: "Leads",
+    href: "/dashboard/comercial/leads",
+    iconKey: "LayoutGrid",
+    requiredPermissions: ["comercial.view", "crm.view"],
+    section: "comercial",
+  },
+  {
     label: "Funis / CRM",
     href: "/admin/crm",
     iconKey: "GitBranch",
     requiredPermissions: ["crm.manage"],
-    section: "comercial",
-  },
-  {
-    label: "Leads",
-    href: "/dashboard/comercial/leads",
-    iconKey: "Users",
-    requiredPermissions: ["comercial.view", "crm.view"],
     section: "comercial",
   },
   {
@@ -111,6 +120,18 @@ export const UNIFIED_MENU_CONFIG: MenuItemConfig[] = [
     iconKey: "DollarSign",
     requiredPermissions: ["vivantCare.financeiro.view", "vivantCare.financeiro.manage"],
     section: "vivantcare",
+    subItems: [
+      { label: "Pagamentos", href: "/admin/vivant-care/financeiro/cobrancas" },
+      {
+        label: "Lançar cobranças",
+        href: "/admin/vivant-care/financeiro/lancar-cobrancas",
+        requiredPermissions: ["vivantCare.financeiro.manage"],
+      },
+      {
+        label: "Situação por casa",
+        href: "/admin/vivant-care/financeiro/por-propriedade",
+      },
+    ],
   },
   {
     label: "Avisos",
@@ -211,16 +232,10 @@ export const UNIFIED_MENU_CONFIG: MenuItemConfig[] = [
     requiredPermissions: ["help.view", "help.manage"],
     section: "suporte",
   },
-  {
-    label: "Ajuda Contextual",
-    href: "/admin/help-contextual",
-    iconKey: "FileText",
-    requiredPermissions: ["help.manage"],
-    section: "suporte",
-  },
 ];
 
 const FULL_ACCESS_ROLES = ["OWNER", "SUPER_ADMIN"];
+const HIDDEN_MENU_SECTIONS: Array<NonNullable<MenuItemConfig["section"]>> = ["capital"];
 
 /**
  * Filtra itens do menu pelo conjunto de permissões (e role).
@@ -231,14 +246,44 @@ export function filterMenuByPermission(
   permissions: string[],
   roleKey?: string | null
 ): MenuItemConfig[] {
-  if (roleKey && FULL_ACCESS_ROLES.includes(roleKey)) return items;
-  return items.filter((item) =>
+  const visibleItems = items.filter(
+    (item) => !(item.section && HIDDEN_MENU_SECTIONS.includes(item.section))
+  );
+  if (roleKey && FULL_ACCESS_ROLES.includes(roleKey)) return visibleItems;
+  return visibleItems.filter((item) =>
     item.requiredPermissions.some((perm) => hasPermissionKey(permissions, perm))
   );
 }
 
+/**
+ * Remove subitens cujo `requiredPermissions` (ou o do pai) o usuário não atende.
+ */
+export function filterMenuSubItemsByPermission(
+  items: MenuItemConfig[],
+  permissions: string[],
+  roleKey?: string | null
+): MenuItemConfig[] {
+  if (roleKey && FULL_ACCESS_ROLES.includes(roleKey)) {
+    return items;
+  }
+  return items.map((item) => {
+    if (!item.subItems?.length) return item;
+    const subItems = item.subItems.filter((sub) => {
+      const perms = sub.requiredPermissions ?? item.requiredPermissions;
+      return perms.some((p) => hasPermissionKey(permissions, p));
+    });
+    return { ...item, subItems };
+  });
+}
+
 /** Formato esperado pelo AppShell (name, href, iconKey, section). */
-export type ShellMenuItem = { name: string; href: string; iconKey: string; section?: MenuItemConfig["section"] };
+export type ShellMenuItem = {
+  name: string;
+  href: string;
+  iconKey: string;
+  section?: MenuItemConfig["section"];
+  subItems?: { name: string; href: string }[];
+};
 
 /** Títulos das seções para exibição na sidebar. */
 export const SECTION_TITLES: Record<NonNullable<MenuItemConfig["section"]>, string> = {
@@ -261,5 +306,6 @@ export function toShellMenuItems(items: MenuItemConfig[]): ShellMenuItem[] {
     href: item.href,
     iconKey: item.iconKey,
     section: item.section,
+    subItems: item.subItems?.map((c) => ({ name: c.label, href: c.href })),
   }));
 }

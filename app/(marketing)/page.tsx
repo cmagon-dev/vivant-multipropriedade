@@ -11,7 +11,7 @@ import {
 import { Navbar } from "@/components/marketing/navbar";
 import { Footer } from "@/components/marketing/footer";
 import { WhatsAppButton } from "@/components/marketing/whatsapp-button";
-import { DestinationCard } from "@/components/marketing/destination-card";
+import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 import {
   Home,
   Users,
@@ -25,13 +25,11 @@ import {
   Award,
   CheckCircle2,
   MapPin,
-  Bed,
   DollarSign,
   Target,
   Phone,
 } from "lucide-react";
 import type { Metadata } from "next";
-import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Vivant Residences - Sua Casa de Férias em Multipropriedade",
@@ -47,48 +45,17 @@ export const metadata: Metadata = {
 
 export const revalidate = 60;
 
-const getStatusBadge = (status: string) => {
-  const statusConfig = {
-    DISPONIVEL: { label: "DISPONÍVEL", color: "bg-green-500" },
-    ULTIMAS_COTAS: { label: "ÚLTIMAS COTAS", color: "bg-orange-500" },
-    PRE_LANCAMENTO: { label: "PRÉ-LANÇAMENTO", color: "bg-blue-500" },
-    VENDIDO: { label: "VENDIDO", color: "bg-gray-500" },
-  };
-  return statusConfig[status as keyof typeof statusConfig] || statusConfig.DISPONIVEL;
-};
-
 export default async function HomePage() {
-  const [highlightedProperties, destinations] = await Promise.all([
-    prisma.property.findMany({
-      where: {
-        published: true,
-        highlight: true,
-      },
-      include: {
-        destino: true,
-      },
-      orderBy: { createdAt: "desc" },
-      take: 4,
-    }),
-    prisma.destination.findMany({
-      where: {
-        published: true,
-      },
-      orderBy: { order: "asc" },
-      take: 4,
-    }),
-  ]);
-
   return (
     <div className="min-h-screen bg-[#F8F9FA]">
       <Navbar />
       <WhatsAppButton />
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-32 sm:pt-36 lg:pt-40">
+      <section className="relative min-h-[50vh] sm:min-h-[55vh] flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36">
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/hero-home.png"
+            src="/images/home-banner-vivant.png"
             alt="Família aproveitando momento de lazer"
             fill
             priority
@@ -98,7 +65,7 @@ export default async function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/60 via-[#1A2F4B]/40 via-[#1A2F4B]/20 to-[#F8F9FA]/60" />
         </div>
         <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8">
-          <div className="max-w-4xl mx-auto">
+          <ScrollReveal className="max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 sm:px-6 py-2 sm:py-3 mb-6 sm:mb-8">
               <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white flex-shrink-0" />
               <span className="text-white text-base sm:text-xl font-light italic">
@@ -112,7 +79,7 @@ export default async function HomePage() {
               Desfrute de casas de alto padrão em destinos exclusivos.
               Multipropriedade com gestão profissional e segurança jurídica.
             </p>
-            <div className="flex flex-col items-center gap-3 sm:gap-4 px-4">
+            <div className="flex flex-row flex-wrap justify-center items-center gap-3 sm:gap-4 px-4">
               <Button
                 asChild
                 size="lg"
@@ -128,34 +95,27 @@ export default async function HomePage() {
                 size="lg"
                 className="w-full sm:w-auto bg-white text-[#1A2F4B] hover:bg-white/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
               >
-                <Link href="/contato">
+                <Link href="/captar">
                   Comece sua jornada aqui
                   <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
                 </Link>
               </Button>
-              <Button
-                asChild
-                size="lg"
-                className="w-full sm:w-auto bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-[#1A2F4B] text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
-              >
-                <Link href="/casas">Ver Casas Disponíveis</Link>
-              </Button>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* O que é Multipropriedade */}
       <section className="py-16 lg:py-20 bg-gradient-to-b from-white to-[#F8F9FA]">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="max-w-4xl mx-auto text-center mb-12">
+          <ScrollReveal className="max-w-4xl mx-auto text-center mb-12">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-4 px-2">
               Multipropriedade Inteligente
             </h2>
             <p className="text-base sm:text-lg text-[#1A2F4B]/70 px-2">
               Tenha sua casa de lazer com custo fracionado e gestão profissional
             </p>
-          </div>
+          </ScrollReveal>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mb-8">
             <Card className="border-2 border-[#1A2F4B]/10 hover:border-[#1A2F4B]/30 transition-all shadow-lg">
               <CardContent className="p-6 text-center">
@@ -186,7 +146,7 @@ export default async function HomePage() {
               </CardContent>
             </Card>
           </div>
-          <div className="max-w-5xl mx-auto">
+          <ScrollReveal className="max-w-5xl mx-auto">
             <Card className="border-2 border-vivant-gold/30 bg-gradient-to-br from-amber-50/50 to-white shadow-xl">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
@@ -210,7 +170,7 @@ export default async function HomePage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </ScrollReveal>
           <div className="text-center mt-8">
             <Button asChild size="lg" className="min-h-[48px]">
               <Link href="/modelo">
@@ -222,126 +182,14 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Destinos Preview */}
-      <section className="py-16 lg:py-20 bg-gradient-to-b from-white to-[#F8F9FA]">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-4 px-2">
-              Nossos Destinos
-            </h2>
-            <p className="text-base sm:text-lg text-[#1A2F4B]/70 px-2">
-              Múltiplos destinos exclusivos para você aproveitar
-            </p>
-          </div>
-          {destinations.length > 0 ? (
-            <div className="flex flex-wrap justify-center gap-6 max-w-7xl mx-auto">
-              {destinations.map((destination) => (
-                <DestinationCard
-                  key={destination.id}
-                  destination={{
-                    ...destination,
-                    images: [],
-                  }}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-[#1A2F4B]/60">Nenhum destino disponível no momento.</p>
-          )}
-          <div className="text-center mt-8">
-            <Button asChild size="lg" variant="outline" className="min-h-[48px]">
-              <Link href="/destinos">
-                Ver Todos os Destinos
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Casas em Destaque */}
-      <section className="py-16 lg:py-20 bg-gradient-to-b from-white to-[#F8F9FA]">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-4 px-2">
-              Casas em Destaque
-            </h2>
-            <p className="text-base sm:text-lg text-[#1A2F4B]/70 px-2">
-              Propriedades exclusivas com infraestrutura completa
-            </p>
-          </div>
-          {highlightedProperties.length > 0 ? (
-            <div className="flex flex-wrap justify-center gap-6 max-w-7xl mx-auto">
-              {highlightedProperties.map((property) => {
-                const images = Array.isArray(property.images) ? property.images : [];
-                const firstImage = images[0] || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop";
-                const status = getStatusBadge(property.status);
-                return (
-                  <Card key={property.id} className="border-2 border-vivant-gold hover:shadow-2xl transition-all overflow-hidden group w-full md:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]">
-                    <div className="aspect-[4/3] relative overflow-hidden">
-                      <div
-                        className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-500"
-                        style={{ backgroundImage: `url('${firstImage}')` }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                      <div className="absolute top-4 right-4">
-                        <span className={`${status.color} text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg`}>
-                          {property.highlight ? "🔥 DESTAQUE" : status.label}
-                        </span>
-                      </div>
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <h3 className="text-xl font-serif font-bold text-white mb-1">{property.name}</h3>
-                        <div className="flex items-center gap-2 text-white/90">
-                          <MapPin className="w-4 h-4" />
-                          <span className="text-sm">{property.location}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <CardContent className="p-5">
-                      <div className="flex items-center gap-4 text-sm text-[#1A2F4B]/70 mb-3">
-                        <div className="flex items-center gap-1">
-                          <Bed className="w-4 h-4" />
-                          <span>{property.bedrooms} suítes</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Home className="w-4 h-4" />
-                          <span>{property.area}m²</span>
-                        </div>
-                      </div>
-                      <div className="mb-3">
-                        <p className="text-2xl font-bold text-[#1A2F4B]">{property.price}</p>
-                        <p className="text-xs text-[#1A2F4B]/60">Fração {property.fraction} • {property.appreciation}</p>
-                      </div>
-                      <Button asChild className="w-full">
-                        <Link href={`/casas/${property.slug}`}>Ver Detalhes</Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-center text-[#1A2F4B]/60">Nenhuma casa em destaque no momento.</p>
-          )}
-          <div className="text-center mt-8">
-            <Button asChild size="lg" className="min-h-[48px]">
-              <Link href="/casas">
-                Ver Todas as Casas
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
       {/* Sobre a Vivant */}
       <section className="py-16 lg:py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="max-w-4xl mx-auto">
+          <ScrollReveal className="max-w-4xl mx-auto">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-8 text-center">
               Sobre a Vivant
             </h2>
-            <div className="space-y-6 text-[#1A2F4B]/80 mb-12">
+            <ScrollReveal className="space-y-6 text-[#1A2F4B]/80 mb-12">
               <p className="text-base sm:text-lg leading-relaxed">
                 A <strong>Vivant</strong> nasceu da percepção de que investir em uma casa de veraneio
                 tradicional não faz mais sentido no mundo moderno. Por que comprometer centenas de milhares
@@ -370,7 +218,7 @@ export default async function HomePage() {
                 manutenção ou burocracias) e <strong>valorização garantida</strong> (seus ativos crescem
                 enquanto você relaxa). Esse é o futuro do lazer inteligente.
               </p>
-            </div>
+            </ScrollReveal>
             <div className="grid md:grid-cols-3 gap-6">
               <Card className="border-2 border-[#1A2F4B]/20 shadow-lg">
                 <CardHeader className="bg-gradient-to-br from-[#1A2F4B] to-[#2A4F6B] text-white p-6">
@@ -412,21 +260,21 @@ export default async function HomePage() {
                 </CardContent>
               </Card>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* Ecossistema Vivant */}
       <section className="pt-8 pb-16 lg:pb-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
+          <ScrollReveal className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-4 px-2">
               O Ecossistema Vivant
             </h2>
             <p className="text-base sm:text-lg text-[#1A2F4B]/70 px-2">
               Mais do que multipropriedade: um sistema completo para você viver, cuidar e investir
             </p>
-          </div>
+          </ScrollReveal>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             <Card className="border-2 border-[#1A2F4B]/20 hover:border-[#1A2F4B] hover:shadow-xl transition-all group">
               <CardContent className="p-6 text-center">
@@ -483,14 +331,14 @@ export default async function HomePage() {
       {/* Por que Vivant? */}
       <section className="py-16 lg:py-20 bg-gradient-to-b from-[#F8F9FA] to-white">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
+          <ScrollReveal className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-4 px-2">
               Por que escolher a Vivant?
             </h2>
             <p className="text-base sm:text-lg text-[#1A2F4B]/70 px-2">
               Diferenciais que fazem toda a diferença na sua experiência
             </p>
-          </div>
+          </ScrollReveal>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             <Card className="border-2 border-[#1A2F4B]/10 hover:shadow-xl transition-all">
               <CardContent className="p-6">
@@ -540,7 +388,7 @@ export default async function HomePage() {
 
       {/* CTA Final */}
       <section className="py-16 lg:py-20 bg-gradient-to-br from-[#1A2F4B] to-[#2A4F6B]">
-        <div className="container mx-auto px-4 sm:px-6 text-center">
+        <ScrollReveal className="container mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-6 px-2">
             Pronto para realizar o sonho da casa de férias?
           </h2>
@@ -555,7 +403,7 @@ export default async function HomePage() {
               <Link href="/contato">Fale Conosco</Link>
             </Button>
           </div>
-        </div>
+        </ScrollReveal>
       </section>
 
       <Footer />

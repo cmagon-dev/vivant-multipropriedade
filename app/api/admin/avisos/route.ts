@@ -60,6 +60,28 @@ export async function POST(request: NextRequest) {
       },
       include: { property: { select: { id: true, name: true } } },
     });
+
+    if (msg.ativa) {
+      const cotasAtivas = await prisma.cotaPropriedade.findMany({
+        where: { propertyId: msg.propertyId, ativo: true },
+        select: { cotistaId: true },
+      });
+
+      const cotistaIds = Array.from(new Set(cotasAtivas.map((c) => c.cotistaId)));
+
+      if (cotistaIds.length > 0) {
+        await prisma.notificacao.createMany({
+          data: cotistaIds.map((cotistaId) => ({
+            cotistaId,
+            tipo: "AVISO",
+            titulo: msg.titulo,
+            mensagem: msg.conteudo,
+            url: "/dashboard/avisos",
+          })),
+        });
+      }
+    }
+
     return NextResponse.json(msg);
   } catch (e) {
     console.error("Erro ao criar aviso:", e);

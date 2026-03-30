@@ -40,8 +40,8 @@ export function UsersTable({ accounts }: UsersTableProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Tem certeza que deseja deletar o usuário "${name}"?`)) return;
+  const handleDeleteAdmin = async (id: string, name: string) => {
+    if (!confirm(`Tem certeza que deseja deletar o usuário admin "${name}"?`)) return;
 
     setIsDeleting(id);
     try {
@@ -55,6 +55,32 @@ export function UsersTable({ accounts }: UsersTableProps) {
       }
     } catch (error) {
       toast.error("Erro ao deletar usuário");
+    } finally {
+      setIsDeleting(null);
+    }
+  };
+
+  const handleDeleteCotista = async (id: string, name: string) => {
+    if (
+      !confirm(
+        `Tem certeza que deseja excluir o cotista "${name}"?\nTodas as cotas, reservas e dados vinculados a este cotista serão removidos. Esta ação não pode ser desfeita.`
+      )
+    ) {
+      return;
+    }
+
+    setIsDeleting(id);
+    try {
+      const res = await fetch(`/api/admin/cotistas/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Cotista excluído com sucesso");
+        router.refresh();
+      } else {
+        const error = await res.json().catch(() => ({}));
+        toast.error(error.error || "Erro ao excluir cotista");
+      }
+    } catch (error) {
+      toast.error("Erro ao excluir cotista");
     } finally {
       setIsDeleting(null);
     }
@@ -89,9 +115,6 @@ export function UsersTable({ accounts }: UsersTableProps) {
               Conta
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Tipo
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Role / Perfil
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -122,11 +145,6 @@ export function UsersTable({ accounts }: UsersTableProps) {
                     </div>
                   </div>
                 </div>
-              </td>
-              <td className="px-6 py-4">
-                <Badge variant={account.tipo === "admin" ? "default" : "secondary"}>
-                  {account.tipo === "admin" ? "Admin" : "Cotista"}
-                </Badge>
               </td>
               <td className="px-6 py-4">
                 {account.tipo === "admin" ? (
@@ -164,18 +182,29 @@ export function UsersTable({ accounts }: UsersTableProps) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(account.id, account.name)}
+                        onClick={() => handleDeleteAdmin(account.id, account.name)}
                         disabled={isDeleting === account.id}
                       >
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </Button>
                     </>
                   ) : (
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href="/admin-portal/cotistas" title="Ver cotistas no Portal">
-                        <ExternalLink className="w-4 h-4" />
-                      </Link>
-                    </Button>
+                    <>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href="/admin-portal/cotistas" title="Ver cotistas no Portal">
+                          <ExternalLink className="w-4 h-4" />
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteCotista(account.id, account.name)}
+                        disabled={isDeleting === account.id}
+                        title="Excluir cotista"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </Button>
+                    </>
                   )}
                 </div>
               </td>

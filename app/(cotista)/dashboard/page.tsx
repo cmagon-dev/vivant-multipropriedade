@@ -10,41 +10,121 @@ import {
   Calendar, 
   DollarSign, 
   Home, 
+  Layers,
   CheckCircle2,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface DashboardStats {
   proximasReservas: number;
   pagamentosPendentes: number;
-  propriedades: number;
+  cotasAtivas: number;
+  quantidadePropriedades: number;
   proximaSemana: string | null;
   statusFinanceiro?: "EM_DIA" | "PENDENTE";
+  /** Com cotaId na URL: métricas só da propriedade da cota selecionada no header */
+  escopo?: "propriedade" | "todas";
 }
 
 export default function DashboardPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (status !== "authenticated") return;
+
+    let cancelled = false;
+
     async function loadStats() {
       try {
-        const response = await fetch("/api/cotistas/me/stats");
-        if (response.ok) {
-          const data = await response.json();
-          setStats(data);
+        const [statsRes, propsRes] = await Promise.all([
+          fetch("/api/cotistas/me/stats", {
+            credentials: "include",
+            cache: "no-store",
+          }),
+          fetch("/api/cotistas/me/propriedades", {
+            credentials: "include",
+            cache: "no-store",
+          }),
+        ]);
+
+        let data: DashboardStats | null = null;
+        if (statsRes.ok) {
+          data = (await statsRes.json()) as DashboardStats;
         }
+
+        /** Mesma contagem da página Minhas propriedades (imóveis distintos com cota ativa). */
+        let qtdPropriedadesDistintas = 0;
+        if (propsRes.ok) {
+          const pj = await propsRes.json();
+          qtdPropriedadesDistintas = Array.isArray(pj.propriedades)
+            ? pj.propriedades.length
+            : 0;
+          if (data) {
+            data = { ...data, quantidadePropriedades: qtdPropriedadesDistintas };
+          }
+        }
+
+        const semCotas =
+          !data ||
+          (data.cotasAtivas === 0 && data.quantidadePropriedades === 0);
+        if (semCotas) {
+          const r2 = await fetch("/api/cotistas/me/cotas", {
+            credentials: "include",
+            cache: "no-store",
+          });
+          if (r2.ok) {
+            const j = await r2.json();
+            const cotas = (j.cotas ?? []) as Array<{
+              property?: { id?: string };
+            }>;
+            if (cotas.length > 0) {
+              const propIds = new Set(
+                cotas
+                  .map((c) => c.property?.id)
+                  .filter((id): id is string => Boolean(id))
+              );
+              data = {
+                proximasReservas: data?.proximasReservas ?? 0,
+                pagamentosPendentes: data?.pagamentosPendentes ?? 0,
+                cotasAtivas: cotas.length,
+                quantidadePropriedades: propIds.size,
+                proximaSemana: data?.proximaSemana ?? null,
+                statusFinanceiro: data?.statusFinanceiro ?? "EM_DIA",
+                escopo: "todas",
+              };
+            }
+          }
+        }
+
+        if (propsRes.ok && data) {
+          data = { ...data, quantidadePropriedades: qtdPropriedadesDistintas };
+        }
+
+        if (!cancelled) setStats(data);
       } catch (error) {
         console.error("Erro ao carregar estatísticas:", error);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
-    loadStats();
-  }, []);
+    void loadStats();
+
+    const onFocus = () => {
+      void loadStats();
+    };
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("propertyChanged", onFocus);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("propertyChanged", onFocus);
+    };
+  }, [status]);
 
   if (loading) {
     return (
@@ -66,29 +146,63 @@ export default function DashboardPage() {
         <p className="text-[#1A2F4B]/70">
           Bem-vindo ao seu Portal do Cotista Vivant Care
         </p>
+        {stats != null && (stats.cotasAtivas > 0 || stats.quantidadePropriedades > 0) && (
+          <p className="mt-2 text-sm text-[#1A2F4B]/85">
+            {stats.escopo === "propriedade" ? (
+              <>
+                Nesta propriedade (contexto do seletor):{" "}
+                <span className="font-semibold text-[#1A2F4B]">{stats.cotasAtivas}</span>{" "}
+                {stats.cotasAtivas === 1 ? "cota" : "cotas"}.
+              </>
+            ) : (
+              <>
+                Resumo geral:{" "}
+                <span className="font-semibold text-[#1A2F4B]">{stats.cotasAtivas}</span>{" "}
+                {stats.cotasAtivas === 1 ? "cota ativa" : "cotas ativas"} em{" "}
+                <span className="font-semibold text-[#1A2F4B]">{stats.quantidadePropriedades}</span>{" "}
+                {stats.quantidadePropriedades === 1 ? "propriedade" : "propriedades"}.
+              </>
+            )}
+          </p>
+        )}
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-5">
         <StatsCard
           title="Próximas Reservas"
-          value={stats?.proximasReservas || 0}
+          value={stats?.proximasReservas ?? 0}
           subtitle="Semanas confirmadas"
           icon={Calendar}
           color="green"
         />
         <StatsCard
           title="Pagamentos Pendentes"
-          value={stats?.pagamentosPendentes || 0}
+          value={stats?.pagamentosPendentes ?? 0}
           subtitle="Cobranças em aberto"
           icon={DollarSign}
           color={stats?.pagamentosPendentes ? "orange" : "green"}
         />
         <StatsCard
-          title="Minhas Propriedades"
-          value={stats?.propriedades || 0}
-          subtitle="Cotas ativas"
+          title="Minhas propriedades"
+          value={stats?.quantidadePropriedades ?? 0}
+          subtitle={
+            stats == null
+              ? "—"
+              : stats.quantidadePropriedades === 0
+                ? "Nenhum imóvel vinculado"
+                : stats.quantidadePropriedades === 1
+                  ? "1 propriedade no seu nome"
+                  : `${stats.quantidadePropriedades} propriedades no seu nome`
+          }
           icon={Home}
           color="blue"
+        />
+        <StatsCard
+          title="Cotas ativas"
+          value={stats?.cotasAtivas ?? 0}
+          subtitle="Total de cotas no seu nome"
+          icon={Layers}
+          color="green"
         />
         <StatsCard
           title="Status"

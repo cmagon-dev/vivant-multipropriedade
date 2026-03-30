@@ -6,9 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Mail, Loader2 } from "lucide-react";
+import { ArrowLeft, Mail, Loader2, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+
+interface CreatedInviteData {
+  name: string;
+  email: string;
+  phone?: string | null;
+  inviteToken: string;
+}
 
 export default function NovoConviteVivantCarePage() {
   const router = useRouter();
@@ -19,6 +26,38 @@ export default function NovoConviteVivantCarePage() {
     phone: "",
   });
   const [sending, setSending] = useState(false);
+  const [createdInvite, setCreatedInvite] = useState<CreatedInviteData | null>(null);
+
+  const buildInviteLink = (token: string) =>
+    typeof window !== "undefined" ? `${window.location.origin}/convite/${token}` : "";
+
+  const normalizeWhatsappPhone = (phone?: string | null) => {
+    const digits = (phone || "").replace(/\D/g, "");
+    if (!digits) return "";
+    if (digits.startsWith("55")) return digits;
+    if (digits.length === 10 || digits.length === 11) return `55${digits}`;
+    return digits;
+  };
+
+  const buildWhatsappLink = (invite: CreatedInviteData) => {
+    const inviteLink = buildInviteLink(invite.inviteToken);
+    const text = [
+      `Olá, ${invite.name}!`,
+      "",
+      "Seu convite da Vivant foi criado. Para concluir seu cadastro, acesse o link abaixo:",
+      inviteLink,
+      "",
+      "Se precisar de ajuda, estou à disposição.",
+    ].join("\n");
+    const encodedText = encodeURIComponent(text);
+    const phone = normalizeWhatsappPhone(invite.phone);
+    return phone ? `https://wa.me/${phone}?text=${encodedText}` : `https://wa.me/?text=${encodedText}`;
+  };
+
+  const openWhatsappInvite = (invite: CreatedInviteData) => {
+    const url = buildWhatsappLink(invite);
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,8 +69,20 @@ export default function NovoConviteVivantCarePage() {
         body: JSON.stringify(formData),
       });
       if (res.ok) {
-        toast.success("Convite enviado com sucesso!");
-        router.push("/admin/vivant-care/convites");
+        const data = await res.json();
+        if (data?.cotista?.inviteToken) {
+          const inviteData: CreatedInviteData = {
+            name: data.cotista.name || formData.name,
+            email: data.cotista.email || formData.email,
+            phone: data.cotista.phone || formData.phone,
+            inviteToken: data.cotista.inviteToken,
+          };
+          setCreatedInvite(inviteData);
+          toast.success("Convite criado! Envie também pelo WhatsApp.");
+        } else {
+          toast.success("Convite enviado com sucesso!");
+          router.push("/admin/vivant-care/convites");
+        }
       } else {
         const data = await res.json();
         toast.error(data.error || "Erro ao enviar convite");
@@ -114,6 +165,26 @@ export default function NovoConviteVivantCarePage() {
             <p className="text-sm text-gray-500">
               Após enviar o convite, você pode associar cotas ao cotista em Cotistas ou no aceite do convite.
             </p>
+            {createdInvite && (
+              <div className="rounded-lg border border-vivant-green/30 bg-vivant-green/5 p-4 space-y-3">
+                <p className="text-sm text-vivant-navy">
+                  Convite criado para <strong>{createdInvite.name}</strong>. Agora você pode enviar a mensagem pronta no WhatsApp.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    type="button"
+                    className="bg-[#25D366] hover:bg-[#20bd5a] text-white"
+                    onClick={() => openWhatsappInvite(createdInvite)}
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Enviar convite por WhatsApp
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => router.push("/admin/vivant-care/convites")}>
+                    Ir para convites
+                  </Button>
+                </div>
+              </div>
+            )}
             <div className="flex gap-2 pt-4">
               <Button type="submit" className="flex-1 bg-vivant-green hover:bg-vivant-green/90" disabled={sending}>
                 {sending ? (

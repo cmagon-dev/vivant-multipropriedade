@@ -99,6 +99,8 @@ export async function POST(request: NextRequest) {
         id: cotista.id,
         name: cotista.name,
         email: cotista.email,
+        phone: cotista.phone,
+        inviteToken: cotista.inviteToken,
       }
     });
 

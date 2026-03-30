@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, Copy, Clock, AlertCircle, ExternalLink, Plus, Loader2 } from "lucide-react";
+import { Mail, Copy, Clock, AlertCircle, ExternalLink, Plus, Loader2, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -19,6 +19,7 @@ interface Convite {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
   inviteToken: string | null;
   inviteTokenExpiry: string | null;
   invitedAt: string | null;
@@ -56,6 +57,32 @@ export default function VivantCareConvitesPage() {
   const openInviteLink = (token: string) => {
     const url = typeof window !== "undefined" ? `${window.location.origin}/convite/${token}` : "";
     window.open(url, "_blank");
+  };
+
+  const normalizeWhatsappPhone = (phone?: string | null) => {
+    const digits = (phone || "").replace(/\D/g, "");
+    if (!digits) return "";
+    if (digits.startsWith("55")) return digits;
+    if (digits.length === 10 || digits.length === 11) return `55${digits}`;
+    return digits;
+  };
+
+  const openWhatsappInvite = (convite: Convite) => {
+    if (!convite.inviteToken) return;
+    const inviteUrl = typeof window !== "undefined" ? `${window.location.origin}/convite/${convite.inviteToken}` : "";
+    const text = encodeURIComponent(
+      [
+        `Olá, ${convite.name}!`,
+        "",
+        "Seu convite da Vivant está pronto. Para concluir seu cadastro, acesse o link abaixo:",
+        inviteUrl,
+        "",
+        "Se precisar de ajuda, estou à disposição.",
+      ].join("\n")
+    );
+    const phone = normalizeWhatsappPhone(convite.phone);
+    const waUrl = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+    window.open(waUrl, "_blank", "noopener,noreferrer");
   };
 
   const isExpired = (expiry: string | null) => (expiry ? new Date(expiry) < new Date() : true);
@@ -159,6 +186,10 @@ export default function VivantCareConvitesPage() {
                           <Button size="sm" variant="outline" onClick={() => copyInviteLink(convite.inviteToken!)}>
                             <Copy className="w-4 h-4 mr-2" />
                             Copiar link
+                          </Button>
+                          <Button size="sm" className="bg-[#25D366] hover:bg-[#20bd5a] text-white" onClick={() => openWhatsappInvite(convite)}>
+                            <MessageCircle className="w-4 h-4 mr-2" />
+                            WhatsApp
                           </Button>
                           <Button size="sm" className="bg-vivant-green hover:bg-vivant-green/90" onClick={() => openInviteLink(convite.inviteToken!)}>
                             <ExternalLink className="w-4 h-4 mr-2" />

@@ -6,6 +6,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import {
   UNIFIED_MENU_CONFIG,
   filterMenuByPermission,
+  filterMenuSubItemsByPermission,
   toShellMenuItems,
 } from "@/lib/navigation/menu";
 
@@ -27,7 +28,9 @@ export default async function ComercialLayout({
   const permissions = user.permissions ?? [];
   const roleKey = user.roleKey ?? null;
   const filtered = filterMenuByPermission(UNIFIED_MENU_CONFIG, permissions, roleKey);
-  const menuItems = toShellMenuItems(filtered);
+  const menuItems = toShellMenuItems(
+    filterMenuSubItemsByPermission(filtered, permissions, roleKey)
+  );
 
   return (
     <AppShell

@@ -1,7 +1,6 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { ContextualHelpAuto } from "@/components/help/ContextualHelpAuto";
 
 type BrandConfig = { name: string; description: string };
 
@@ -20,12 +19,7 @@ export function DashboardLayoutWrapper({
   const isComercial = pathname?.startsWith("/dashboard/comercial");
 
   if (isComercial) {
-    return (
-      <>
-        <ContextualHelpAuto />
-        {children}
-      </>
-    );
+    return <>{children}</>;
   }
 
   return (

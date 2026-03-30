@@ -23,7 +23,10 @@ export default function AvisosPage() {
   useEffect(() => {
     async function loadAvisos() {
       try {
-        const response = await fetch("/api/cotistas/me/avisos?limit=50");
+        const response = await fetch("/api/cotistas/me/avisos?limit=50", {
+          credentials: "same-origin",
+          cache: "no-store",
+        });
         if (response.ok) {
           const data = await response.json();
           setAvisos(data.avisos || []);

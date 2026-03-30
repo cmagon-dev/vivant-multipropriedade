@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { propertyUpdateSchema } from "@/lib/validations/property-admin";
 import { createAuditLog } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
+import { deleteCapitalAssetConfigCascade } from "@/lib/capital/delete-asset-config-cascade";
 
 export async function GET(
   request: Request,
@@ -179,8 +180,15 @@ export async function DELETE(
       );
     }
 
-    await prisma.property.delete({
-      where: { id: params.id }
+    await prisma.$transaction(async (tx) => {
+      const capitalCfg = await tx.capitalAssetConfig.findUnique({
+        where: { propertyId: params.id },
+        select: { id: true },
+      });
+      if (capitalCfg) {
+        await deleteCapitalAssetConfigCascade(tx, capitalCfg.id);
+      }
+      await tx.property.delete({ where: { id: params.id } });
     });
 
     await createAuditLog({

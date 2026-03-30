@@ -7,9 +7,6 @@ export type HelpTopic = {
   content: string;
 };
 
-const BASE_PLACEHOLDER =
-  "Conteúdo detalhado do manual será adicionado aqui. Esta seção explicará objetivos, principais ações, exemplos de uso e boas práticas para este módulo/tela.";
-
 export const HELP_TOPICS: HelpTopic[] = [
   // Visão do Dono / Dashboard
   {
@@ -272,7 +269,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Propriedades",
     shortDescription: "Cadastro e gestão de imóveis/casas do ecossistema.",
     routeReference: "/admin/casas",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   {
     slug: "destinos",
@@ -280,7 +277,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Propriedades",
     shortDescription: "Cadastro e organização dos destinos onde há propriedades.",
     routeReference: "/admin/destinos",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   // Vivant Care (macro)
   {
@@ -289,7 +286,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Vivant Care",
     shortDescription: "Visão geral do módulo Vivant Care dentro do admin.",
     routeReference: "/admin/vivant-care",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   {
     slug: "cotistas-care",
@@ -297,7 +294,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Vivant Care",
     shortDescription: "Gestão de cotistas que acessam o portal do cotista.",
     routeReference: "/admin/vivant-care/cotistas",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   {
     slug: "convites-care",
@@ -305,7 +302,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Vivant Care",
     shortDescription: "Criação e acompanhamento de convites enviados a cotistas.",
     routeReference: "/admin/vivant-care/convites",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   {
     slug: "propriedades-care",
@@ -313,15 +310,15 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Vivant Care",
     shortDescription: "Propriedades disponibilizadas dentro do portal do cotista.",
     routeReference: "/admin/vivant-care/propriedades",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   {
     slug: "financeiro-care",
     title: "Financeiro do Care",
     module: "Vivant Care",
     shortDescription: "Cobranças, faturas e fluxo financeiro do portal do cotista.",
-    routeReference: "/admin/vivant-care/financeiro",
-    content: BASE_PLACEHOLDER,
+    routeReference: "/admin/vivant-care/financeiro/cobrancas",
+    content: "",
   },
   {
     slug: "avisos-care",
@@ -329,7 +326,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Vivant Care",
     shortDescription: "Comunicados e avisos enviados aos cotistas.",
     routeReference: "/admin/vivant-care/avisos",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   {
     slug: "documentos-care",
@@ -337,7 +334,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Vivant Care",
     shortDescription: "Documentos disponibilizados para os cotistas.",
     routeReference: "/admin/vivant-care/documentos",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   {
     slug: "assembleias-care",
@@ -345,7 +342,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Vivant Care",
     shortDescription: "Configuração e acompanhamento de assembleias de cotistas.",
     routeReference: "/admin/vivant-care/assembleias",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   {
     slug: "trocas-care",
@@ -353,7 +350,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Vivant Care",
     shortDescription: "Gestão de solicitações de troca de semanas dos cotistas.",
     routeReference: "/admin/vivant-care/trocas",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   // Vivant Capital (macro)
   {
@@ -362,7 +359,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Vivant Capital",
     shortDescription: "Visão geral dos investimentos sobre imóveis.",
     routeReference: "/admin/capital",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   {
     slug: "ativos-capital",
@@ -370,7 +367,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Vivant Capital",
     shortDescription: "Configuração de imóveis como ativos de capital.",
     routeReference: "/admin/capital/ativos",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   {
     slug: "investidores-capital",
@@ -378,7 +375,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Vivant Capital",
     shortDescription: "Perfis de investidores que participam dos ativos.",
     routeReference: "/admin/capital/investidores",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   {
     slug: "participacoes-capital",
@@ -386,7 +383,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Vivant Capital",
     shortDescription: "Relação investidor × ativo (cotas, percentuais).",
     routeReference: "/admin/capital/participacoes",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   {
     slug: "distribuicoes-capital",
@@ -394,7 +391,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Vivant Capital",
     shortDescription: "Distribuições de resultados por competência.",
     routeReference: "/admin/capital/distribuicoes",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   {
     slug: "solicitacoes-capital",
@@ -402,7 +399,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Vivant Capital",
     shortDescription: "Solicitações de liquidez (antecipação/resgate).",
     routeReference: "/admin/capital/solicitacoes",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   {
     slug: "relatorios-capital",
@@ -410,7 +407,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Vivant Capital",
     shortDescription: "Relatórios financeiros e documentos do módulo Capital.",
     routeReference: "/admin/capital/relatorios",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   // Administração
   {
@@ -419,7 +416,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Administração",
     shortDescription: "Gestão de usuários administrativos do sistema.",
     routeReference: "/admin/usuarios",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
   {
     slug: "permissoes-admin",
@@ -427,7 +424,7 @@ Você tem uma visão objetiva e ordenada do que está acontecendo no sistema, co
     module: "Administração",
     shortDescription: "Configuração de roles e permissões (RBAC).",
     routeReference: "/admin/roles",
-    content: BASE_PLACEHOLDER,
+    content: "",
   },
 ];
 

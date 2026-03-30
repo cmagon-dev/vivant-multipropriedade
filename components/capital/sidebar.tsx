@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, PieChart, DollarSign, FileText, Send, LogOut } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { signOutAndGoToLogin } from "@/lib/auth/signOutClient";
 import { Button } from "@/components/ui/button";
 
 const menuItems = [
@@ -18,7 +18,7 @@ export function CapitalSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-200">
+    <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-200 font-sans">
       <div className="p-6 border-b border-slate-200">
         <div className="flex items-center gap-3">
           <span className="font-semibold text-vivant-navy">Vivant Capital</span>
@@ -42,7 +42,7 @@ export function CapitalSidebar() {
         })}
       </nav>
       <div className="p-4 border-t border-slate-200">
-        <Button variant="ghost" size="sm" className="w-full justify-start text-gray-600" onClick={() => signOut({ callbackUrl: "/login" })}>
+        <Button variant="ghost" size="sm" className="w-full justify-start text-gray-600" onClick={() => void signOutAndGoToLogin()}>
           <LogOut className="w-4 h-4 mr-2" />
           Sair
         </Button>

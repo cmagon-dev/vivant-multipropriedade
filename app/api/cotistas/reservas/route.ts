@@ -1,19 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { requirePortalCotista } from "@/lib/auth/cotistaPortalSession";
 import { prisma } from "@/lib/prisma";
 import { getWeekInfo } from "@/lib/calendar-rotation";
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session || (session.user as any).userType !== "cotista") {
-      return NextResponse.json(
-        { error: "Não autorizado" },
-        { status: 401 }
-      );
-    }
+    const auth = await requirePortalCotista(session);
+    if (!auth.ok) return auth.response;
+    const cotistaId = auth.cotistaId;
 
     const body = await request.json();
     const { cotaId, ano, numeroSemana, observacoes } = body;
@@ -21,7 +18,7 @@ export async function POST(request: NextRequest) {
     const cota = await prisma.cotaPropriedade.findFirst({
       where: {
         id: cotaId,
-        cotistaId: session.user.id,
+        cotistaId,
         ativo: true
       }
     });
@@ -67,7 +64,7 @@ export async function POST(request: NextRequest) {
       },
       create: {
         cotaId,
-        cotistaId: session.user.id,
+        cotistaId,
         ano,
         numeroSemana,
         dataInicio: weekInfo.startDate,

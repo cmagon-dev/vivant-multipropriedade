@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, MapPin, Thermometer, Users, TrendingUp, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 
 interface Destination {
   id: string;
@@ -68,6 +69,24 @@ export function DestinosClient({ destinations }: DestinosClientProps) {
     setIsCarouselPaused(false);
   };
 
+  const totalDestinations = destinations.length;
+  const safeIndex = totalDestinations > 0 ? ((currentSlide % totalDestinations) + totalDestinations) % totalDestinations : 0;
+  const prevIndex = totalDestinations > 0 ? (safeIndex - 1 + totalDestinations) % totalDestinations : 0;
+  const nextIndex = totalDestinations > 0 ? (safeIndex + 1) % totalDestinations : 0;
+
+  const featuredDestinations =
+    totalDestinations >= 3
+      ? [
+          { destination: destinations[prevIndex], position: "side" as const, index: prevIndex },
+          { destination: destinations[safeIndex], position: "center" as const, index: safeIndex },
+          { destination: destinations[nextIndex], position: "side" as const, index: nextIndex },
+        ]
+      : destinations.map((destination, idx) => ({
+          destination,
+          position: idx === safeIndex ? ("center" as const) : ("side" as const),
+          index: idx,
+        }));
+
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   };
@@ -105,7 +124,7 @@ export function DestinosClient({ destinations }: DestinosClientProps) {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-32 sm:pt-36 lg:pt-40">
+      <section className="relative min-h-[50vh] sm:min-h-[55vh] flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36">
         {/* Background Image Carousel with Overlay */}
         <div className="absolute inset-0 z-0">
           {heroImages.length > 0 ? (
@@ -143,7 +162,7 @@ export function DestinosClient({ destinations }: DestinosClientProps) {
 
         {/* Hero Content */}
         <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8">
-          <div className="max-w-4xl mx-auto">
+          <ScrollReveal className="max-w-4xl mx-auto">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
               Nossos Destinos
             </h1>
@@ -171,193 +190,128 @@ export function DestinosClient({ destinations }: DestinosClientProps) {
                 <Link href="/casas">Ver Casas Disponíveis</Link>
               </Button>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* Seleção de Destinos + Conteúdo */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-white">
+      <section className="relative pt-16 sm:pt-20 lg:pt-24 pb-12 sm:pb-16 lg:pb-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="max-w-5xl mx-auto">
-          {/* Abas de Seleção */}
-          <div className="flex flex-wrap justify-center gap-3 mb-8 sm:mb-12">
-            {destinations.map((dest, idx) => (
-              <button
-                key={dest.id}
-                onClick={() => setCurrentSlide(idx)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all ${
-                  idx === currentSlide
-                    ? `bg-gradient-to-br ${dest.color} text-white shadow-lg scale-105`
-                    : "bg-white text-vivant-navy border-2 border-gray-200 hover:border-vivant-gold"
-                }`}
-              >
-                <span className="text-2xl">{dest.emoji}</span>
-                <span>{dest.name}</span>
-              </button>
-            ))}
-          </div>
+          <ScrollReveal className="max-w-[92rem] mx-auto">
+          {/* Faixa estilo Nossas Casas */}
+          <div className="relative mb-8">
+            {totalDestinations > 1 && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handlePrev}
+                  className="absolute left-2 sm:left-3 lg:left-[15.5%] top-1/2 -translate-y-1/2 z-20 h-14 w-14 lg:h-20 lg:w-20 p-0 rounded-xl border-2 border-white/80 bg-[#1A2F4B]/55 backdrop-blur-sm text-white shadow-2xl hover:bg-[#1A2F4B]/75"
+                  aria-label="Ir para trás"
+                >
+                  <span className="text-3xl lg:text-5xl leading-none font-light -mt-0.5">{"<"}</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleNext}
+                  className="absolute right-2 sm:right-3 lg:right-[15.5%] top-1/2 -translate-y-1/2 z-20 h-14 w-14 lg:h-20 lg:w-20 p-0 rounded-xl border-2 border-white/80 bg-[#1A2F4B]/55 backdrop-blur-sm text-white shadow-2xl hover:bg-[#1A2F4B]/75"
+                  aria-label="Ir para frente"
+                >
+                  <span className="text-3xl lg:text-5xl leading-none font-light -mt-0.5">{">"}</span>
+                </Button>
+              </>
+            )}
 
-          {/* Card do Destino Selecionado */}
-          <Card className="overflow-hidden border-2 border-gray-200 shadow-lg max-w-4xl mx-auto">
-            {/* Carrossel de Imagens (se houver) */}
-            {hasImages ? (
-              <div className="relative aspect-[21/9] overflow-hidden group/carousel">
-                <div
-                  className="absolute inset-0 bg-cover bg-center transition-all duration-700 cursor-pointer"
-                  style={{
-                    backgroundImage: `url('${images[currentImageIndex]}')`,
-                  }}
-                  onClick={toggleCarouselPause}
-                  title={isCarouselPaused ? "Clique para retomar" : "Clique para pausar"}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
-                
-                {/* Indicador de pausa */}
-                {isCarouselPaused && images.length > 1 && (
-                  <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 z-10">
-                    <div className="flex gap-0.5">
-                      <div className="w-1 h-3 bg-white rounded-sm" />
-                      <div className="w-1 h-3 bg-white rounded-sm" />
+            <div className="grid grid-cols-[0.22fr_1.14fr_0.22fr] sm:grid-cols-[0.34fr_1.06fr_0.34fr] lg:grid-cols-[1fr_1.25fr_1fr] gap-2 sm:gap-4 lg:gap-6 px-1 sm:px-12 lg:px-8">
+              {featuredDestinations.map(({ destination, position, index }) => (
+                <Card
+                  key={`${destination.id}-${position}`}
+                  className={`h-[44rem] overflow-hidden border-2 transition-all duration-700 ease-out flex flex-col ${
+                    position === "center"
+                      ? "scale-[1.04] border-vivant-gold shadow-2xl z-10 lg:scale-[1.14] lg:translate-x-0"
+                      : index === prevIndex
+                        ? "scale-[0.8] lg:scale-[0.88] lg:-translate-x-6 border-transparent opacity-30 saturate-50 shadow-sm"
+                        : "scale-[0.8] lg:scale-[0.88] lg:translate-x-6 border-transparent opacity-30 saturate-50 shadow-sm"
+                  }`}
+                >
+                  <div className="relative h-64 min-h-64 max-h-64 bg-gray-200">
+                    <div
+                      className="absolute inset-0 bg-cover bg-center"
+                      style={{
+                        backgroundImage: `url('${destination.images?.[0] || "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format&fit=crop"}')`,
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
+                    <div className="absolute top-4 left-4 bg-vivant-gold text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                      Destino
                     </div>
-                    Pausado
-                  </div>
-                )}
-                
-                {/* Controles de navegação do carrossel */}
-                {images.length > 1 && (
-                  <>
-                    <button
-                      onClick={handlePrevImage}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg opacity-0 group-hover/carousel:opacity-100 transition-opacity z-10"
-                      aria-label="Imagem anterior"
-                    >
-                      <ChevronLeft className="w-4 h-4 text-vivant-navy" />
-                    </button>
-                    <button
-                      onClick={handleNextImage}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg opacity-0 group-hover/carousel:opacity-100 transition-opacity z-10"
-                      aria-label="Próxima imagem"
-                    >
-                      <ChevronRight className="w-4 h-4 text-vivant-navy" />
-                    </button>
-                    
-                    {/* Indicadores */}
-                    <div className="absolute bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-                      {images.map((_, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setCurrentImageIndex(idx)}
-                          className={`h-2 rounded-full transition-all ${
-                            idx === currentImageIndex
-                              ? "w-8 bg-white"
-                              : "w-2 bg-white/60 hover:bg-white/80"
-                          }`}
-                          aria-label={`Ir para imagem ${idx + 1}`}
-                        />
-                      ))}
-                    </div>
-                  </>
-                )}
-                
-                <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 text-white">
-                  <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
-                    <div className="text-4xl sm:text-5xl">{currentDestination?.emoji}</div>
-                    <div>
-                      <h2 className="text-xl sm:text-2xl font-serif font-bold">
-                        {currentDestination?.name}
-                      </h2>
-                      <p className="text-sm sm:text-base text-white/90">
-                        {currentDestination?.state}
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <h3 className="text-2xl text-white font-serif font-bold line-clamp-1">
+                        {destination.name}
+                      </h3>
+                      <p className="text-sm text-white/90 flex items-center gap-2 line-clamp-1">
+                        <MapPin className="w-4 h-4" />
+                        {destination.location}
                       </p>
                     </div>
                   </div>
-                  <p className="text-base sm:text-lg font-light mb-2">
-                    {currentDestination?.subtitle}
-                  </p>
-                  <div className="flex items-center gap-2 text-white/90">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-sm">{currentDestination?.location}</span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className={`bg-gradient-to-br ${currentDestination?.color} p-6 sm:p-8 text-white`}>
-                <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
-                  <div className="text-4xl sm:text-5xl">{currentDestination?.emoji}</div>
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-serif font-bold">
-                      {currentDestination?.name}
-                    </h2>
-                    <p className="text-sm sm:text-base text-white/90">
-                      {currentDestination?.state}
-                    </p>
-                  </div>
-                </div>
-                <p className="text-base sm:text-lg font-light mb-2">
-                  {currentDestination?.subtitle}
-                </p>
-                <div className="flex items-center gap-2 text-white/90">
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-sm">{currentDestination?.location}</span>
-                </div>
-              </div>
-            )}
 
-            <CardContent className="p-6 sm:p-8 space-y-4 sm:space-y-6">
-              {/* Description */}
-              <div>
-                <h3 className="text-base sm:text-lg font-bold text-[#1A2F4B] mb-2">
-                  Sobre o Destino
-                </h3>
-                <p className="text-[#1A2F4B]/70 leading-relaxed text-sm sm:text-base">
-                  {currentDestination?.description}
-                </p>
-              </div>
+                  <CardHeader className="h-24">
+                    <CardTitle className="text-2xl text-vivant-navy font-serif flex items-center gap-2 line-clamp-1">
+                      <span className="text-2xl">{destination.emoji}</span>
+                      {destination.name}
+                    </CardTitle>
+                    <CardDescription className="text-base text-vivant-navy/70 line-clamp-2 min-h-[48px]">
+                      {destination.subtitle}
+                    </CardDescription>
+                  </CardHeader>
 
-              {/* Features em Grid Compacto */}
-              <div>
-                <h3 className="text-base sm:text-lg font-bold text-[#1A2F4B] mb-3">
-                  Destaques
-                </h3>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {currentDestination?.features.map((feature, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200"
-                    >
-                      <div className="text-xl sm:text-2xl">{feature.icon}</div>
-                      <div>
-                        <h4 className="font-semibold text-[#1A2F4B] text-sm mb-0.5">
-                          {feature.title}
-                        </h4>
-                        <p className="text-xs text-gray-600">{feature.desc}</p>
+                  <CardContent className="flex-1 space-y-4 flex flex-col">
+                    <div className="grid grid-cols-2 gap-4 py-4 border-y border-gray-200 min-h-[96px]">
+                      <div className="flex flex-col items-center">
+                        <Thermometer className="w-5 h-5 text-vivant-gold mb-1" />
+                        <span className="text-sm font-semibold text-vivant-navy text-center">
+                          {destination.climate}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <Users className="w-5 h-5 text-vivant-gold mb-1" />
+                        <span className="text-sm font-semibold text-vivant-navy text-center">
+                          {destination.lifestyle}
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
 
-              {/* Appreciation */}
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-green-600" />
-                  <h3 className="font-bold text-green-800">
-                    Valorização
-                  </h3>
-                </div>
-                <p className="text-sm text-green-700 mt-1">
-                  {currentDestination?.appreciation}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+                    <div className="min-h-[84px]">
+                      <span className="text-gray-600 text-sm">Destaques</span>
+                      <div className="mt-2 space-y-1 min-h-[52px]">
+                        {(destination.features ?? []).slice(0, 2).map((feature, idx) => (
+                          <div key={idx} className="flex items-start gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-vivant-gold mt-0.5" />
+                            <span className="text-sm text-vivant-navy/80 line-clamp-1">{feature.title}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-green-200 bg-green-50 p-2 mt-auto">
+                      <div className="flex items-center gap-1.5 text-green-800">
+                        <TrendingUp className="w-4 h-4" />
+                        <span className="text-xs font-bold">Valorização</span>
+                      </div>
+                      <p className="text-xs text-green-700 mt-1">{destination.appreciation}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-[#1A2F4B] to-[#2A4F6B]">
-        <div className="container mx-auto px-4 sm:px-6 text-center">
+        <ScrollReveal className="container mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-4 sm:mb-6 px-2">
             Pronto para conhecer nossos destinos?
           </h2>
@@ -381,7 +335,7 @@ export function DestinosClient({ destinations }: DestinosClientProps) {
               <Link href="/contato">Fale Conosco</Link>
             </Button>
           </div>
-        </div>
+        </ScrollReveal>
       </section>
     </>
   );

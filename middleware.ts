@@ -80,6 +80,10 @@ export async function middleware(request: NextRequest) {
       url.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(url);
     }
+    /** Usuário com role COTISTA (portal) não acessa o painel admin — só o portal em /dashboard */
+    if (token.roleKey === "COTISTA") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
     const permissions = (token.permissions as string[] | undefined) ?? [];
     const isOwner = token.roleKey === "OWNER" || token.roleKey === "SUPER_ADMIN";
     const hasAdminView = isOwner || hasPermissionKey(permissions, "admin.view") || token.roleKey === "ADMIN";
@@ -236,7 +240,11 @@ export async function middleware(request: NextRequest) {
     }
     if (token.userType === "cotista") return NextResponse.next();
     const permissions = (token.permissions as string[] | undefined) ?? [];
-    const hasDashboard = (token.roleKey === "OWNER" || token.roleKey === "SUPER_ADMIN") || hasPermissionKey(permissions, "dashboard.view");
+    const hasDashboard =
+      token.roleKey === "COTISTA" ||
+      token.roleKey === "OWNER" ||
+      token.roleKey === "SUPER_ADMIN" ||
+      hasPermissionKey(permissions, "dashboard.view");
     if (hasDashboard) return NextResponse.next();
     return NextResponse.redirect(new URL("/403", request.url));
   }

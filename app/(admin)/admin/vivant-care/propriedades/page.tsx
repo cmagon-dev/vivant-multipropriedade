@@ -58,7 +58,15 @@ export default async function VivantCarePropriedadesPage() {
             </CardContent>
           </Card>
         ) : (
-          propriedades.map((prop) => (
+          propriedades.map((prop) => {
+            const cotasAlocadas = prop._count.cotas;
+            const cotasCapacidade = prop.totalCotas;
+            const textoCotas =
+              cotasCapacidade != null && cotasCapacidade > 0
+                ? `${cotasAlocadas} / ${cotasCapacidade} cota(s)`
+                : `${cotasAlocadas} cota(s)`;
+
+            return (
             <Card key={prop.id} className="border border-gray-200">
               <CardContent className="p-6">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -74,9 +82,12 @@ export default async function VivantCarePropriedadesPage() {
                         {prop.destino?.name} · {prop.cidade}
                       </p>
                       <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-500">
-                        <span className="inline-flex items-center gap-1">
+                        <span
+                          className="inline-flex items-center gap-1"
+                          title="Cotas alocadas a cotistas / total configurado no cadastro da propriedade (Casas)"
+                        >
                           <Users className="w-4 h-4" />
-                          {prop._count.cotas} cota(s)
+                          {textoCotas}
                         </span>
                         <span className="inline-flex items-center gap-1">
                           <Bell className="w-4 h-4" />
@@ -125,7 +136,8 @@ export default async function VivantCarePropriedadesPage() {
                 )}
               </CardContent>
             </Card>
-          ))
+            );
+          })
         )}
       </div>
     </div>
