@@ -6,7 +6,13 @@ import { signOut, getCsrfToken } from "next-auth/react";
 export async function signOutAndGoToLogin(): Promise<void> {
   if (typeof window === "undefined") return;
 
-  const loginUrl = `${window.location.origin}/login`;
+  const currentPath = window.location.pathname;
+  const isCotistaArea =
+    currentPath.startsWith("/dashboard") ||
+    currentPath.startsWith("/cotista") ||
+    currentPath.startsWith("/portal-cotista");
+  const loginPath = isCotistaArea ? "/login-cotista" : "/login";
+  const loginUrl = `${window.location.origin}${loginPath}`;
 
   try {
     await signOut({ redirect: false, callbackUrl: loginUrl });

@@ -913,7 +913,7 @@ export default function ApresentacaoPage() {
                 </div>
                 <div className="bg-white rounded-lg p-4 shadow-md">
                   <p className="text-sm text-[#1A2F4B]/60 mb-1">Telefone</p>
-                  <p className="font-semibold text-[#1A2F4B]">(44) 98809-7007</p>
+                  <p className="font-semibold text-[#1A2F4B]">(44) 99969-1196</p>
                 </div>
               </div>
             </div>
@@ -1005,7 +1005,7 @@ export default function ApresentacaoPage() {
           <p className="text-white/60 text-sm mb-6">Maringá, PR - Brasil</p>
           <div className="space-y-2 text-white/70 text-sm">
             <p>contato@vivantresidences.com.br</p>
-            <p>(44) 98809-7007</p>
+            <p>(44) 99969-1196</p>
           </div>
           <div className="mt-8 pt-6 border-t border-white/10 text-xs text-white/50">
             <p>&copy; 2026 Vivant Residences. Todos os direitos reservados.</p>

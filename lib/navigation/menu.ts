@@ -51,7 +51,7 @@ export const UNIFIED_MENU_CONFIG: MenuItemConfig[] = [
     section: "comercial",
   },
   {
-    label: "Funis / CRM",
+    label: "Parâmetros",
     href: "/admin/crm",
     iconKey: "GitBranch",
     requiredPermissions: ["crm.manage"],
@@ -65,11 +65,11 @@ export const UNIFIED_MENU_CONFIG: MenuItemConfig[] = [
     section: "comercial",
   },
   {
-    label: "Eventos",
+    label: "LOGS",
     href: "/admin/events",
     iconKey: "Activity",
     requiredPermissions: ["events.view", "events.manage"],
-    section: "comercial",
+    section: "administracao",
   },
   {
     label: "Casas",

@@ -16,10 +16,12 @@ export async function GET(request: NextRequest) {
 
     const cotasAtivas = await prisma.cotaPropriedade.findMany({
       where: { cotistaId, ativo: true },
-      select: { propertyId: true },
+      select: { propertyId: true, property: { select: { condominio: true, destinoId: true } } },
     });
 
     const propertyIds = Array.from(new Set(cotasAtivas.map((c) => c.propertyId)));
+    const condominios = Array.from(new Set(cotasAtivas.map((c) => c.property.condominio).filter(Boolean)));
+    const destinoIds = Array.from(new Set(cotasAtivas.map((c) => c.property.destinoId).filter(Boolean)));
 
     if (propertyIds.length === 0) {
       return NextResponse.json({ avisos: [] });
@@ -27,11 +29,20 @@ export async function GET(request: NextRequest) {
 
     const avisos = await prisma.mensagem.findMany({
       where: {
-        propertyId: { in: propertyIds },
         ativa: true,
+        OR: [
+          // Compatibilidade legado (antigos sem targetType explícito)
+          { propertyId: { in: propertyIds } },
+          { targetType: "CASA", propertyId: { in: propertyIds } },
+          { targetType: "COTISTA", targetCotistaId: cotistaId },
+          { targetType: "CONDOMINIO", targetCondominio: { in: condominios as string[] } },
+          { targetType: "DESTINO", targetDestinoId: { in: destinoIds as string[] } },
+        ],
       },
       include: {
         property: { select: { id: true, name: true } },
+        targetCotista: { select: { id: true, name: true } },
+        targetDestino: { select: { id: true, name: true } },
       },
       orderBy: [{ fixada: "desc" }, { createdAt: "desc" }],
       take: Math.min(Math.max(limit, 1), 100),

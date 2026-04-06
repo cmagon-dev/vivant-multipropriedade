@@ -4,6 +4,7 @@ import { getBrandConfig } from "@/lib/domain";
 import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "sonner";
 import { Providers } from "./providers";
+import { GlobalWhatsAppFloating } from "@/components/marketing/global-whatsapp-floating";
 
 // Importação absoluta do CSS global
 import "@/app/globals.css";
@@ -82,6 +83,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <Providers>
           {children}
+          <GlobalWhatsAppFloating />
           <Toaster position="top-right" richColors />
         </Providers>
         <Analytics />

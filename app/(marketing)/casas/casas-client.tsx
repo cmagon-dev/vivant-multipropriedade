@@ -84,7 +84,7 @@ interface CasasClientProps {
 }
 
 export function CasasClient({ properties }: CasasClientProps) {
-  const WHATSAPP_NUMBER = "5511999999999";
+  const WHATSAPP_NUMBER = "5544999691196";
   const [activeIndex, setActiveIndex] = useState(0);
   const [filterOpen, setFilterOpen] = useState(false);
   
@@ -232,7 +232,7 @@ export function CasasClient({ properties }: CasasClientProps) {
     const payload = {
       leadTypeKey: "IMOVEL",
       name: `Interesse WhatsApp - ${property.name}`,
-      phone: "11999999999",
+      phone: "44999691196",
       email: `whatsapp-${property.id}-${Date.now()}@vivant.local`,
       city: property.cidade || "Não informado",
       origin: "WhatsApp",

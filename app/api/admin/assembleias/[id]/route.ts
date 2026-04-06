@@ -22,11 +22,49 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
       where: { id },
       include: {
         property: { select: { id: true, name: true } },
-        pautas: { orderBy: { ordem: "asc" }, include: { _count: { select: { votos: true } } } },
+        pautas: {
+          orderBy: { ordem: "asc" },
+          include: {
+            votos: { select: { cotistaId: true, voto: true } },
+            _count: { select: { votos: true } },
+          },
+        },
       },
     });
     if (!a) return NextResponse.json({ error: "Assembleia não encontrada" }, { status: 404 });
-    return NextResponse.json(a);
+    const totalCotistasElegiveis = await prisma.cotaPropriedade.count({
+      where: { propertyId: a.propertyId, ativo: true },
+    });
+    const cotistasQueVotaram = new Set(
+      a.pautas.flatMap((pauta) => pauta.votos.map((voto) => voto.cotistaId))
+    ).size;
+    const pautas = a.pautas.map((pauta) => {
+      const resumo = pauta.votos.reduce(
+        (acc, voto) => {
+          if (voto.voto === "FAVOR") acc.favor += 1;
+          if (voto.voto === "CONTRA") acc.contra += 1;
+          if (voto.voto === "ABSTENCAO") acc.abstencao += 1;
+          return acc;
+        },
+        { favor: 0, contra: 0, abstencao: 0 }
+      );
+      return {
+        ...pauta,
+        resumoVotos: resumo,
+      };
+    });
+    return NextResponse.json({
+      ...a,
+      pautas,
+      participacao: {
+        totalCotistasElegiveis,
+        cotistasQueVotaram,
+        percentual:
+          totalCotistasElegiveis > 0
+            ? Number(((cotistasQueVotaram / totalCotistasElegiveis) * 100).toFixed(2))
+            : 0,
+      },
+    });
   } catch (e) {
     console.error("Erro ao buscar assembleia:", e);
     return NextResponse.json({ error: "Erro ao buscar assembleia" }, { status: 500 });

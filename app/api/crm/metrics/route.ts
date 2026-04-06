@@ -54,7 +54,17 @@ export async function GET() {
     orderBy: [{ leadTypeId: "asc" }, { order: "asc" }],
   });
   const owners = await prisma.user.findMany({
-    where: { id: { in: Array.from(new Set(byOwner.map((o) => o.ownerUserId))) } },
+    where: {
+      id: {
+        in: Array.from(
+          new Set(
+            byOwner
+              .map((o) => o.ownerUserId)
+              .filter((id): id is string => !!id)
+          )
+        ),
+      },
+    },
     select: { id: true, name: true, email: true },
   });
 
@@ -76,7 +86,11 @@ export async function GET() {
     .slice(0, 10);
 
   const ranking = byOwner
-    .map((o) => ({ ownerUserId: o.ownerUserId, won: o._count.id, owner: ownerMap.get(o.ownerUserId) }))
+    .map((o) => ({
+      ownerUserId: o.ownerUserId,
+      won: o._count.id,
+      owner: o.ownerUserId ? ownerMap.get(o.ownerUserId) : null,
+    }))
     .filter((x) => x.owner)
     .sort((a, b) => b.won - a.won);
 

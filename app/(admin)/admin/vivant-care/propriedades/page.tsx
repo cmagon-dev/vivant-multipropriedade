@@ -4,7 +4,7 @@ import { hasPermission } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
-import { Building2, Plus, Users, FileText, Bell } from "lucide-react";
+import { Building2, Users, FileText, Bell } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -35,19 +35,13 @@ export default async function VivantCarePropriedadesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
         <div>
           <h1 className="text-3xl font-bold text-vivant-navy">Propriedades</h1>
           <p className="text-gray-500 mt-1">
             Propriedades do portal do cotista e vínculo com cotas
           </p>
         </div>
-        <Link href="/admin/vivant-care/propriedades/nova">
-          <span className="inline-flex items-center justify-center rounded-md bg-vivant-navy px-4 py-2 text-sm font-medium text-white hover:bg-vivant-navy/90">
-            <Plus className="w-4 h-4 mr-2" />
-            Nova propriedade
-          </span>
-        </Link>
       </div>
 
       <div className="grid gap-4">
@@ -105,7 +99,7 @@ export default async function VivantCarePropriedadesPage() {
                       href={`/admin/vivant-care/propriedades/${prop.id}`}
                       className="text-sm font-medium text-vivant-navy hover:underline"
                     >
-                      Ver detalhes
+                      Editar
                     </Link>
                     <span className="text-gray-300">|</span>
                     <Link

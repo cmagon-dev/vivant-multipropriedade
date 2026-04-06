@@ -20,6 +20,13 @@ const TIPO_LABEL: Record<string, string> = {
   LEMBRETE: "Lembrete",
 };
 
+const TARGET_LABEL: Record<string, string> = {
+  CASA: "Casa",
+  COTISTA: "Cotista",
+  CONDOMINIO: "Condomínio",
+  DESTINO: "Destino",
+};
+
 export default async function VivantCareAvisosPage() {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
@@ -32,6 +39,8 @@ export default async function VivantCareAvisosPage() {
   const avisos = await prisma.mensagem.findMany({
     include: {
       property: { select: { id: true, name: true } },
+      targetCotista: { select: { id: true, name: true } },
+      targetDestino: { select: { id: true, name: true } },
     },
     orderBy: [{ fixada: "desc" }, { createdAt: "desc" }],
     take: 100,
@@ -97,7 +106,14 @@ export default async function VivantCareAvisosPage() {
                     <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-gray-500">
                       <span className="inline-flex items-center gap-1">
                         <Building2 className="w-3 h-3" />
-                        {msg.property?.name ?? "—"}
+                        {(() => {
+                          const targetType = msg.targetType ?? "CASA";
+                          if (targetType === "CASA") return `${TARGET_LABEL[targetType]}: ${msg.property?.name ?? "—"}`;
+                          if (targetType === "COTISTA") return `${TARGET_LABEL[targetType]}: ${msg.targetCotista?.name ?? "—"}`;
+                          if (targetType === "CONDOMINIO") return `${TARGET_LABEL[targetType]}: ${msg.targetCondominio ?? "—"}`;
+                          if (targetType === "DESTINO") return `${TARGET_LABEL[targetType]}: ${msg.targetDestino?.name ?? "—"}`;
+                          return msg.property?.name ?? "—";
+                        })()}
                       </span>
                       <span>
                         {format(new Date(msg.createdAt), "dd MMM yyyy", {

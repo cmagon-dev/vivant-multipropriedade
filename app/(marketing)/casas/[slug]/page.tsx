@@ -273,7 +273,7 @@ export default async function CasaPage({ params }: CasaPageProps) {
                       size="lg"
                     >
                       <a
-                        href={`https://wa.me/5511999999999?text=Olá! Tenho interesse na ${encodeURIComponent(
+                        href={`https://wa.me/5544999691196?text=Olá! Tenho interesse na ${encodeURIComponent(
                           property.name
                         )}`}
                         target="_blank"
@@ -332,7 +332,7 @@ export default async function CasaPage({ params }: CasaPageProps) {
                   className="bg-white text-vivant-navy hover:bg-white/90"
                 >
                   <a
-                    href={`https://wa.me/5511999999999?text=Olá! Quero agendar uma visita à ${encodeURIComponent(
+                    href={`https://wa.me/5544999691196?text=Olá! Quero agendar uma visita à ${encodeURIComponent(
                       property.name
                     )}`}
                     target="_blank"

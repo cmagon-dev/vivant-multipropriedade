@@ -103,7 +103,7 @@ export async function sendInviteEmail({ to, name, inviteToken }: SendInviteEmail
                   <strong>Vivant Care</strong> - Gestão Hoteleira de Excelência
                 </p>
                 <p style="color: #64748B; font-size: 12px; margin: 0;">
-                  care@vivant.com.br | (11) 9999-9999
+                  care@vivant.com.br | (44) 99969-1196
                 </p>
               </td>
             </tr>
@@ -173,7 +173,7 @@ export async function sendNotificationEmail({ to, subject, message, ctaUrl, ctaT
             <tr>
               <td style="background-color: #F8F9FA; padding: 20px; text-align: center;">
                 <p style="color: #64748B; font-size: 12px; margin: 0;">
-                  Vivant Care | care@vivant.com.br | (11) 9999-9999
+                  Vivant Care | care@vivant.com.br | (44) 99969-1196
                 </p>
               </td>
             </tr>

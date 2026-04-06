@@ -3,7 +3,7 @@
 import { MessageCircle } from "lucide-react";
 
 export function WhatsAppButton(): JSX.Element {
-  const phoneNumber = "5511999999999"; // Substitua pelo número real
+  const phoneNumber = "5544999691196";
   const message = encodeURIComponent("Olá! Gostaria de saber mais sobre a Vivant Multipropriedade.");
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
 
@@ -12,7 +12,7 @@ export function WhatsAppButton(): JSX.Element {
       href={whatsappUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 z-50 lg:hidden group"
+      className="fixed bottom-6 right-6 z-50 group"
       aria-label="Falar no WhatsApp"
     >
       {/* Círculo de pulsação externo */}

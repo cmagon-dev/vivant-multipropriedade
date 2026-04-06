@@ -479,7 +479,7 @@ export function generateInvestmentProposal(
   doc.setFontSize(8);
   doc.setTextColor(COLORS.textLight);
   doc.text(
-    "Vivant Residences | Maringá, PR | contato@vivantresidences.com.br | (44) 98809-7007",
+    "Vivant Residences | Maringá, PR | contato@vivantresidences.com.br | (44) 99969-1196",
     pageWidth / 2,
     pageHeight - 10,
     { align: "center" }

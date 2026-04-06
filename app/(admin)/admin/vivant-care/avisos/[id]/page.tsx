@@ -25,9 +25,20 @@ const PRIORIDADE_LABEL: Record<string, string> = {
   URGENTE: "Urgente",
 };
 
+const TARGET_LABEL: Record<string, string> = {
+  CASA: "Casa",
+  COTISTA: "Cotista",
+  CONDOMINIO: "Condomínio",
+  DESTINO: "Destino",
+};
+
 interface Aviso {
   id: string;
-  propertyId: string;
+  propertyId: string | null;
+  targetType?: "CASA" | "COTISTA" | "CONDOMINIO" | "DESTINO";
+  targetCotistaId?: string | null;
+  targetCondominio?: string | null;
+  targetDestinoId?: string | null;
   titulo: string;
   conteudo: string;
   tipo: string;
@@ -36,6 +47,8 @@ interface Aviso {
   ativa: boolean;
   createdAt: string;
   property?: { id: string; name: string };
+  targetCotista?: { id: string; name: string };
+  targetDestino?: { id: string; name: string };
 }
 
 export default function AvisoDetalhePage() {
@@ -88,7 +101,14 @@ export default function AvisoDetalhePage() {
             <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-gray-500">
               <span className="inline-flex items-center gap-1">
                 <Building2 className="w-4 h-4" />
-                {aviso.property?.name ?? "-"}
+                {(() => {
+                  const targetType = aviso.targetType ?? "CASA";
+                  if (targetType === "CASA") return `${TARGET_LABEL[targetType]}: ${aviso.property?.name ?? "-"}`;
+                  if (targetType === "COTISTA") return `${TARGET_LABEL[targetType]}: ${aviso.targetCotista?.name ?? "-"}`;
+                  if (targetType === "CONDOMINIO") return `${TARGET_LABEL[targetType]}: ${aviso.targetCondominio ?? "-"}`;
+                  if (targetType === "DESTINO") return `${TARGET_LABEL[targetType]}: ${aviso.targetDestino?.name ?? "-"}`;
+                  return aviso.property?.name ?? "-";
+                })()}
               </span>
               <span>{TIPO_LABEL[aviso.tipo] ?? aviso.tipo}</span>
               <span>{PRIORIDADE_LABEL[aviso.prioridade] ?? aviso.prioridade}</span>

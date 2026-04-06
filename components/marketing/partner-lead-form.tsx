@@ -171,7 +171,7 @@ export function PartnerLeadForm(): JSX.Element {
               <Input
                 id="telefone"
                 type="tel"
-                placeholder="11999999999"
+                placeholder="44999691196"
                 {...register("telefone")}
                 className={`h-12 text-base ${
                   errors.telefone ? "border-red-500" : "border-vivant-navy/30"

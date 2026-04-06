@@ -277,7 +277,7 @@ export default function PortalCotistaPage(): JSX.Element {
                       Nossa equipe está sempre disponível para garantir que sua experiência seja impecável.
                     </p>
                     <p className="text-xs text-vivant-green font-medium mt-2">
-                      care@vivant.com.br | (11) 9999-9999
+                      care@vivant.com.br | (44) 99969-1196
                     </p>
                   </div>
                 </div>

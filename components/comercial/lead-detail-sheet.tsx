@@ -63,7 +63,9 @@ type Lead = {
     helpText?: string | null;
   };
   leadType: { id: string; key: string; name: string };
-  owner?: { id: string; name: string; email: string };
+  owner?: { id: string; name: string; email: string } | null;
+  canRedistribute?: boolean;
+  responsibleCandidates?: { id: string; name: string; email: string }[];
   stages?: { id: string; name: string; isFinal?: boolean; finalStatus?: string }[];
   activities: { id: string; type: string; message: string | null; createdAt: string; actor: { name: string } }[];
 };
@@ -97,6 +99,7 @@ export function LeadDetailSheet({
   const [editEmail, setEditEmail] = useState("");
   const [editSource, setEditSource] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [editResponsibleUserId, setEditResponsibleUserId] = useState<string>("__unassigned__");
   const [saving, setSaving] = useState(false);
   const [moveStageId, setMoveStageId] = useState("");
   const [moving, setMoving] = useState(false);
@@ -145,6 +148,7 @@ export function LeadDetailSheet({
         setEditEmail(data.email ?? "");
         setEditSource(data.source ?? "");
         setEditNotes(data.notes ?? "");
+        setEditResponsibleUserId(data.owner?.id ?? "__unassigned__");
         setMoveStageId(data.stageId ?? "");
       })
       .catch(() => toast.error("Erro ao carregar lead"))
@@ -175,6 +179,9 @@ export function LeadDetailSheet({
           email: editEmail.trim(),
           source: editSource.trim() || null,
           notes: editNotes.trim() || null,
+          ownerUserId: lead.canRedistribute
+            ? (editResponsibleUserId === "__unassigned__" ? null : editResponsibleUserId)
+            : undefined,
         }),
       });
       if (!res.ok) {
@@ -183,7 +190,15 @@ export function LeadDetailSheet({
         return;
       }
       const updated = await res.json();
-      setLead(updated);
+      setLead((prev) =>
+        prev
+          ? {
+              ...updated,
+              canRedistribute: prev.canRedistribute,
+              responsibleCandidates: prev.responsibleCandidates ?? [],
+            }
+          : updated
+      );
       toast.success("Dados atualizados.");
       onUpdated();
     } finally {
@@ -348,6 +363,26 @@ export function LeadDetailSheet({
               <p className="text-sm text-gray-700 py-1.5">
                 {lead.origin ? lead.origin : "Sistema interno"}
               </p>
+            </div>
+            <div className="space-y-3">
+              <Label>Responsável</Label>
+              {lead.canRedistribute ? (
+                <Select value={editResponsibleUserId} onValueChange={setEditResponsibleUserId}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__unassigned__">Não distribuído</SelectItem>
+                    {(lead.responsibleCandidates ?? []).map((u) => (
+                      <SelectItem key={u.id} value={u.id}>
+                        {u.name} ({u.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="text-sm text-gray-700 py-1.5">{lead.owner?.name ?? "Não distribuído"}</p>
+              )}
             </div>
             <div className="space-y-3">
               <Label>Fonte (UTM / referência)</Label>

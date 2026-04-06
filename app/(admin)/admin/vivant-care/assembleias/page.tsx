@@ -36,6 +36,12 @@ export default async function VivantCareAssembleiasPage() {
   const assembleias = await prisma.assembleia.findMany({
     include: {
       property: { select: { id: true, name: true } },
+      pautas: {
+        select: {
+          id: true,
+          votos: { select: { cotistaId: true } },
+        },
+      },
       _count: { select: { pautas: true } },
     },
     orderBy: { dataRealizacao: "desc" },
@@ -71,6 +77,12 @@ export default async function VivantCareAssembleiasPage() {
           assembleias.map((a) => (
             <Card key={a.id} className="border border-gray-200">
               <CardContent className="p-6">
+                {(() => {
+                  const cotistasQueVotaram = new Set(
+                    a.pautas.flatMap((pauta) => pauta.votos.map((voto) => voto.cotistaId))
+                  ).size;
+                  const totalVotos = a.pautas.reduce((acc, pauta) => acc + pauta.votos.length, 0);
+                  return (
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-lg bg-vivant-navy/10 flex items-center justify-center flex-shrink-0">
                     <Vote className="w-5 h-5 text-vivant-navy" />
@@ -88,6 +100,8 @@ export default async function VivantCareAssembleiasPage() {
                       <span>{TIPO_LABEL[a.tipo] ?? a.tipo}</span>
                       <span>{format(new Date(a.dataRealizacao), "dd MMM yyyy HH:mm", { locale: ptBR })}</span>
                       <span>{a._count.pautas} pauta(s)</span>
+                      <span>{cotistasQueVotaram} cotista(s) votaram</span>
+                      <span>{totalVotos} voto(s) registrados</span>
                       <span className={`px-2 py-0.5 rounded ${a.status === "FINALIZADA" ? "bg-green-100 text-green-700" : a.status === "CANCELADA" ? "bg-gray-100 text-gray-600" : "bg-amber-100 text-amber-800"}`}>
                         {STATUS_LABEL[a.status] ?? a.status}
                       </span>
@@ -97,6 +111,8 @@ export default async function VivantCareAssembleiasPage() {
                     </Link>
                   </div>
                 </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           ))

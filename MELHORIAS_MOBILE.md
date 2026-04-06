@@ -129,7 +129,7 @@ Este documento registra todas as melhorias de UI/UX mobile implementadas em **05
 
 ### Configuração:
 ```typescript
-const phoneNumber = "5511999999999"; // ⚠️ ATUALIZAR COM NÚMERO REAL
+const phoneNumber = "5544999691196";
 const message = "Olá! Gostaria de saber mais sobre a Vivant Multipropriedade.";
 ```
 

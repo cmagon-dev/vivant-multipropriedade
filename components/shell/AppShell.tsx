@@ -41,6 +41,45 @@ import { SignOutButton } from "@/components/shell/SignOutButton";
 
 export type AppShellMenuItem = ShellMenuItem;
 
+type PanelArea = {
+  key: "vivant" | "vivantcare" | "partners" | "capital";
+  label: string;
+  href: string;
+  logoSrc: string;
+  isMatch: (pathname: string) => boolean;
+};
+
+const PANEL_AREAS: PanelArea[] = [
+  {
+    key: "vivant",
+    label: "Vivant",
+    href: "/admin/overview",
+    logoSrc: "/logo-vivant.png",
+    isMatch: (pathname) => pathname.startsWith("/admin") && !pathname.startsWith("/admin/vivant-care") && !pathname.startsWith("/admin/capital"),
+  },
+  {
+    key: "vivantcare",
+    label: "Vivant Care",
+    href: "/admin/vivant-care",
+    logoSrc: "/logo-vivant-care.png",
+    isMatch: (pathname) => pathname.startsWith("/admin/vivant-care"),
+  },
+  {
+    key: "partners",
+    label: "Vivant Partners",
+    href: "/dashboard/comercial",
+    logoSrc: "/logo-vivant-partners.png",
+    isMatch: (pathname) => pathname.startsWith("/dashboard/comercial"),
+  },
+  {
+    key: "capital",
+    label: "Vivant Capital",
+    href: "/admin/capital",
+    logoSrc: "/logo-vivant-capital.png",
+    isMatch: (pathname) => pathname.startsWith("/admin/capital"),
+  },
+];
+
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard,
   LayoutGrid,
@@ -98,7 +137,7 @@ function isNavActive(pathname: string, href: string): boolean {
   const p = pathname.endsWith("/") && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
   const h = href.endsWith("/") && href.length > 1 ? href.slice(0, -1) : href;
   if (p === h) return true;
-  const exactRoots = ["/dashboard", "/admin/vivant-care"];
+  const exactRoots = ["/dashboard", "/dashboard/comercial", "/admin/vivant-care"];
   if (exactRoots.includes(h)) return false;
   return p.startsWith(h + "/");
 }
@@ -230,6 +269,31 @@ export function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
   const bySection = useMemo(() => groupItemsBySection(menuItems), [menuItems]);
+  const [sidebarMode, setSidebarMode] = useState<"vivant" | "vivantcare">(
+    pathname.startsWith("/admin/vivant-care") ? "vivantcare" : "vivant"
+  );
+  const [contextMenuOpen, setContextMenuOpen] = useState(false);
+  const contextMenuRef = useRef<HTMLDivElement | null>(null);
+  const [hiddenLogos, setHiddenLogos] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (pathname.startsWith("/admin/vivant-care")) {
+      setSidebarMode("vivantcare");
+    } else if (pathname.startsWith("/admin")) {
+      setSidebarMode("vivant");
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    const onClickOutside = (event: MouseEvent) => {
+      if (!contextMenuRef.current) return;
+      if (!contextMenuRef.current.contains(event.target as Node)) {
+        setContextMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
 
   const initialOpenSections = useMemo(() => {
     const active = getSectionContainingPathname(pathname, bySection);
@@ -239,52 +303,187 @@ export function AppShell({
   const [openSections, setOpenSections] = useState<string[]>(initialOpenSections);
 
   useEffect(() => {
+    if (sidebarMode === "vivantcare") {
+      setOpenSections(["vivantcare"]);
+    }
+  }, [sidebarMode]);
+
+  useEffect(() => {
     const active = getSectionContainingPathname(pathname, bySection);
     if (active) {
-      setOpenSections((prev) => (prev.includes(active) ? prev : [...prev, active]));
+      if (sidebarMode === "vivantcare") {
+        setOpenSections(["vivantcare"]);
+      } else {
+        setOpenSections((prev) => (prev.includes(active) ? prev : [...prev, active]));
+      }
     }
-  }, [pathname, bySection]);
+  }, [pathname, bySection, sidebarMode]);
+
+  const preferredSections =
+    sidebarMode === "vivantcare"
+      ? (["vivantcare"] as const)
+      : SECTION_ORDER.filter((section) => section !== "vivantcare");
+
+  const hasPreferredSections = preferredSections.some((sectionKey) => {
+    const items = sectionKey ? bySection.get(sectionKey) : undefined;
+    return !!items?.length;
+  });
+
+  const visibleSections = hasPreferredSections ? preferredSections : SECTION_ORDER;
+  const activeArea = PANEL_AREAS.find((area) => area.isMatch(pathname)) ?? PANEL_AREAS[0];
+
+  const onLogoError = (logoSrc: string) => {
+    setHiddenLogos((prev) => ({ ...prev, [logoSrc]: true }));
+  };
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 font-sans min-h-screen sticky top-0 self-start">
-        <div className="h-16 flex items-center px-6 border-b border-gray-200 flex-shrink-0">
-          <Link href="/" className="block">
-            <img src="/logo-vivant.png" alt="Vivant" className="h-10" />
-          </Link>
+        <div
+          ref={contextMenuRef}
+          className="h-16 flex items-center px-4 border-b border-gray-200 flex-shrink-0 relative"
+        >
+          <button
+            type="button"
+            onClick={() => setContextMenuOpen((v) => !v)}
+            className={cn(
+              "w-full flex items-center justify-between rounded-md px-2 py-1.5 transition-colors",
+              activeArea.key === "vivantcare"
+                ? "border border-emerald-300 bg-emerald-50/60 hover:bg-emerald-50"
+                : "hover:bg-gray-50"
+            )}
+            aria-label="Selecionar sidebar"
+          >
+            {!hiddenLogos[activeArea.logoSrc] ? (
+              <img
+                src={activeArea.logoSrc}
+                alt={activeArea.label}
+                className={cn(
+                  "mx-auto object-contain object-center",
+                  activeArea.key === "vivant" ? "h-[1.85rem] w-[162px]" : "h-10 w-[190px]"
+                )}
+                onError={() => onLogoError(activeArea.logoSrc)}
+              />
+            ) : (
+              <div className="text-sm font-semibold text-vivant-navy uppercase tracking-wide">
+                {activeArea.label}
+              </div>
+            )}
+            <ChevronDown className={cn("h-4 w-4 text-gray-500 transition-transform", contextMenuOpen && "rotate-180")} />
+          </button>
+          {contextMenuOpen && (
+            <div className="absolute top-16 left-4 right-4 z-20 rounded-xl border border-gray-200 bg-white shadow-lg p-2.5 space-y-2">
+              {PANEL_AREAS.map((area) => {
+                const active = area.key === activeArea.key;
+                const isDisabled = area.key === "partners" || area.key === "capital";
+                return (
+                  isDisabled ? (
+                    <button
+                      key={area.key}
+                      type="button"
+                      disabled
+                      className={cn(
+                        "flex min-h-[52px] w-full items-center justify-center rounded-lg border px-2 py-2 transition-colors cursor-not-allowed opacity-55",
+                        "border-gray-200 bg-gray-50"
+                      )}
+                      title="Em breve"
+                    >
+                      {!hiddenLogos[area.logoSrc] ? (
+                        <img
+                          src={area.logoSrc}
+                          alt={area.label}
+                          className={cn(
+                            "mx-auto object-contain object-center",
+                            area.key === "vivant" ? "h-[1.85rem] w-[162px]" : "h-10 w-[190px]"
+                          )}
+                          onError={() => onLogoError(area.logoSrc)}
+                        />
+                      ) : (
+                        <span className="text-center text-xs font-semibold uppercase tracking-wide text-vivant-navy">
+                          {area.label}
+                        </span>
+                      )}
+                    </button>
+                  ) : (
+                    <Link
+                      key={area.key}
+                      href={area.href}
+                      onClick={() => {
+                        setSidebarMode(area.key === "vivantcare" ? "vivantcare" : "vivant");
+                        setContextMenuOpen(false);
+                      }}
+                      className={cn(
+                        "flex min-h-[52px] items-center justify-center rounded-lg border px-2 py-2 transition-colors",
+                        active
+                          ? area.key === "vivantcare"
+                            ? "border-emerald-300 bg-emerald-50/60 shadow-sm"
+                            : "border-vivant-navy bg-vivant-navy/5 shadow-sm"
+                          : "border-gray-200 hover:bg-gray-50"
+                      )}
+                    >
+                      {!hiddenLogos[area.logoSrc] ? (
+                        <img
+                          src={area.logoSrc}
+                          alt={area.label}
+                          className={cn(
+                            "mx-auto object-contain object-center",
+                            area.key === "vivant" ? "h-[1.85rem] w-[162px]" : "h-10 w-[190px]"
+                          )}
+                          onError={() => onLogoError(area.logoSrc)}
+                        />
+                      ) : (
+                        <span className="text-center text-xs font-semibold uppercase tracking-wide text-vivant-navy">
+                          {area.label}
+                        </span>
+                      )}
+                    </Link>
+                  )
+                );
+              })}
+            </div>
+          )}
         </div>
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
           <Accordion
             type="multiple"
             value={openSections}
-            onValueChange={setOpenSections}
+            onValueChange={(value) => {
+              if (sidebarMode === "vivantcare") {
+                setOpenSections(["vivantcare"]);
+                return;
+              }
+              setOpenSections(value);
+            }}
             className="space-y-0"
           >
-            {SECTION_ORDER.map((sectionKey) => {
+            {visibleSections.map((sectionKey) => {
               const items = sectionKey ? bySection.get(sectionKey) : undefined;
               if (!items?.length) return null;
               const sectionTitle = sectionKey ? SECTION_TITLES[sectionKey] : null;
+              const hideSectionTitle = sidebarMode === "vivantcare" && sectionKey === "vivantcare";
               return (
                 <AccordionItem
                   key={sectionKey ?? "__none"}
                   value={sectionKey!}
                   className="border-0 first:mt-0 mt-1"
                 >
-                  <AccordionTrigger
-                    className={cn(
-                      "px-3 py-2.5 rounded-lg text-sm font-medium uppercase tracking-wider text-vivant-navy",
-                      "hover:bg-vivant-navy/10 hover:text-vivant-navy hover:no-underline",
-                      "data-[state=open]:bg-vivant-navy/5 data-[state=open]:text-vivant-navy",
-                      sectionKey === "vivantcare" &&
-                        "bg-emerald-500 text-white shadow-md shadow-emerald-500/25 hover:bg-emerald-600 hover:text-white data-[state=open]:bg-emerald-600 data-[state=open]:text-white"
-                    )}
-                  >
-                    {sectionTitle}
-                  </AccordionTrigger>
+                  {!hideSectionTitle ? (
+                    <AccordionTrigger
+                      className={cn(
+                        "px-3 py-2.5 rounded-lg text-sm font-medium uppercase tracking-wider text-vivant-navy",
+                        "hover:bg-vivant-navy/10 hover:text-vivant-navy hover:no-underline",
+                        "data-[state=open]:bg-vivant-navy/5 data-[state=open]:text-vivant-navy",
+                        sectionKey === "vivantcare" &&
+                          "bg-emerald-500 text-white shadow-md shadow-emerald-500/25 hover:bg-emerald-600 hover:text-white data-[state=open]:bg-emerald-600 data-[state=open]:text-white"
+                      )}
+                    >
+                      {sectionTitle}
+                    </AccordionTrigger>
+                  ) : null}
                   <AccordionContent className="overflow-hidden pb-1 pt-0">
                     <div
                       className={cn(
-                        "pl-1",
+                        hideSectionTitle ? "pt-1" : "pl-1",
                         sectionKey === "vivantcare" ? "space-y-2" : "space-y-0.5"
                       )}
                     >
@@ -333,7 +532,7 @@ export function AppShell({
               );
             })}
           </Accordion>
-          {bySection.get("__none")?.length ? (
+          {sidebarMode !== "vivantcare" && bySection.get("__none")?.length ? (
             <div className="mt-4 pt-2 border-t border-gray-100">
               <div className="space-y-0.5">
                 {bySection.get("__none")!.map((item) => {

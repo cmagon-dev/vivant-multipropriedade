@@ -10,7 +10,32 @@ import { closeLeadSlaTasks } from "@/lib/crm/closeLeadSlaTasks";
 const canManageCrm = (s: { user?: { id?: string }; permissions?: string[]; roleKey?: string }) =>
   (s.user as { roleKey?: string })?.roleKey === "OWNER" ||
   (s.user as { roleKey?: string })?.roleKey === "SUPER_ADMIN" ||
+  (s.user as { roleKey?: string })?.roleKey === "ADMIN" ||
   (s.user as { permissions?: string[] })?.permissions?.includes("crm.manage");
+
+async function getAllowedResponsibleIds() {
+  const commercialRole = await prisma.role.findUnique({ where: { key: "COMMERCIAL" } });
+  const ownerRole = await prisma.role.findUnique({ where: { key: "OWNER" } });
+  const superAdminRole = await prisma.role.findUnique({ where: { key: "SUPER_ADMIN" } });
+  const adminRole = await prisma.role.findUnique({ where: { key: "ADMIN" } });
+  const roleIds = [commercialRole?.id, ownerRole?.id, superAdminRole?.id, adminRole?.id].filter(Boolean) as string[];
+
+  const users = await prisma.user.findMany({
+    where: {
+      active: true,
+      OR: [
+        { userRoleAssignments: { some: { roleId: { in: roleIds } } } },
+        {
+          userPermissions: {
+            some: { permission: { key: "comercial.view" }, granted: true },
+          },
+        },
+      ],
+    },
+    select: { id: true },
+  });
+  return new Set(users.map((u) => u.id));
+}
 
 /** GET — lista leads (comercial: só próprios; OWNER: todos). Filtros: type, stage, status */
 export async function GET(request: NextRequest) {
@@ -24,6 +49,7 @@ export async function GET(request: NextRequest) {
   const stageId = searchParams.get("stageId") ?? undefined;
   const status = searchParams.get("status") ?? undefined;
   const mine = searchParams.get("mine") === "true";
+  const responsibleUserId = searchParams.get("responsibleUserId");
   const limitParam = searchParams.get("limit");
   const limit = limitParam ? Math.min(Math.max(1, parseInt(limitParam, 10)), 50) : undefined;
   const sort = searchParams.get("sort") === "createdAt" ? "createdAt" : "updatedAt";
@@ -31,6 +57,8 @@ export async function GET(request: NextRequest) {
   const isOwner = canManageCrm(session as any);
   const where: Record<string, unknown> = {};
   if (!isOwner || mine) where.ownerUserId = session.user!.id;
+  if (isOwner && responsibleUserId === "__unassigned__") where.ownerUserId = null;
+  if (isOwner && responsibleUserId && responsibleUserId !== "__unassigned__") where.ownerUserId = responsibleUserId;
   if (leadTypeId) where.leadTypeId = leadTypeId;
   if (stageId) where.stageId = stageId;
   if (status) where.status = status;
@@ -89,13 +117,14 @@ export async function POST(request: NextRequest) {
   if (!hasPermission(session as any, "comercial.view")) return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
 
   const body = await request.json();
-  const { leadTypeId, name, phone, email, source, notes } = body as {
+  const { leadTypeId, name, phone, email, source, notes, ownerUserId } = body as {
     leadTypeId: string;
     name: string;
     phone: string;
     email?: string;
     source?: string;
     notes?: string;
+    ownerUserId?: string | null;
   };
   if (!leadTypeId || !name?.trim() || !phone?.trim())
     return NextResponse.json({ error: "leadTypeId, name e phone obrigatórios" }, { status: 400 });
@@ -120,11 +149,24 @@ export async function POST(request: NextRequest) {
   const stageEnteredAt = now;
   const stageDueAt = firstStageSla ? new Date(now.getTime() + (firstStage.slaHours ?? 0) * 60 * 60 * 1000) : null;
 
+  let assignedOwnerUserId: string | null = session.user!.id;
+  if (canManageCrm(session as any)) {
+    if (ownerUserId === null || ownerUserId === "__unassigned__") {
+      assignedOwnerUserId = null;
+    } else if (typeof ownerUserId === "string" && ownerUserId.trim()) {
+      const allowedIds = await getAllowedResponsibleIds();
+      if (!allowedIds.has(ownerUserId)) {
+        return NextResponse.json({ error: "Responsável inválido." }, { status: 400 });
+      }
+      assignedOwnerUserId = ownerUserId;
+    }
+  }
+
   const lead = await prisma.lead.create({
     data: {
       leadTypeId,
       stageId: firstStage.id,
-      ownerUserId: session.user!.id,
+      ownerUserId: assignedOwnerUserId,
       name: name.trim(),
       phone: phone.trim(),
       email: (email?.trim() ?? "").length ? email!.trim() : "sem-email@vivant.local",
@@ -148,12 +190,12 @@ export async function POST(request: NextRequest) {
     entityId: lead.id,
     productKey: leadType.key,
     message: `Lead criado: ${lead.name} (${lead.leadType.name})`,
-    meta: { leadTypeKey: leadType.key, stageId: firstStage.id, stageName: firstStage.name, ownerUserId: lead.ownerUserId },
+    meta: { leadTypeKey: leadType.key, stageId: firstStage.id, stageName: firstStage.name, ownerUserId: lead.ownerUserId ?? null },
   });
 
   await closeLeadSlaTasks(lead.id, "CANCELED");
 
-  if (firstStage.slaHours != null && firstStage.slaHours > 0) {
+  if (firstStage.slaHours != null && firstStage.slaHours > 0 && lead.ownerUserId) {
     const dueAt = new Date();
     dueAt.setHours(dueAt.getHours() + firstStage.slaHours);
     await createTask({

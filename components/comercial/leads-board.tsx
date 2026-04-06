@@ -45,7 +45,7 @@ type Lead = {
   leadTypeId: string;
   stageId: string;
   ownerUserId?: string;
-  owner: { id: string; name: string; email: string };
+  owner: { id: string; name: string; email: string } | null;
   stage: {
     id: string;
     name: string;
@@ -79,6 +79,16 @@ export function LeadsBoard() {
   const [detailLeadId, setDetailLeadId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filterOwner, setFilterOwner] = useState<"all" | "mine">("all");
+  const [responsibleFilter, setResponsibleFilter] = useState<string>("all");
+  const [canEditInlineResponsible, setCanEditInlineResponsible] = useState(false);
+  const [savingResponsibleLeadId, setSavingResponsibleLeadId] = useState<string | null>(null);
+  const [responsibleOptions, setResponsibleOptions] = useState<
+    { id: string; name: string; email: string }[]
+  >([]);
+  const [responsibleUsers, setResponsibleUsers] = useState<
+    { id: string; name: string; email: string }[]
+  >([]);
+  const [canFilterByResponsible, setCanFilterByResponsible] = useState(false);
   const kanbanRef = useRef<HTMLDivElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartXRef = useRef(0);
@@ -108,19 +118,58 @@ export function LeadsBoard() {
     const params = new URLSearchParams();
     if (selectedTypeId) params.set("leadTypeId", selectedTypeId);
     if (filterOwner === "mine") params.set("mine", "true");
+    if (canFilterByResponsible && responsibleFilter !== "all") {
+      params.set("responsibleUserId", responsibleFilter);
+    }
     return fetch(`/api/crm/leads?${params}`)
       .then((r) => r.json())
       .then(setLeads)
       .catch(() => toast.error("Erro ao carregar leads"));
   };
 
+  const fetchResponsibleUsers = () =>
+    fetch("/api/crm/assignments")
+      .then(async (r) => {
+        if (!r.ok) {
+          setCanFilterByResponsible(false);
+          setResponsibleUsers([]);
+          return;
+        }
+        const data = await r.json();
+        const users = Array.isArray(data?.commercialUsers) ? data.commercialUsers : [];
+        setResponsibleUsers(users);
+        setCanFilterByResponsible(true);
+      })
+      .catch(() => {
+        setCanFilterByResponsible(false);
+        setResponsibleUsers([]);
+      });
+
+  const fetchResponsibleContext = () =>
+    fetch("/api/crm/leads/responsibles")
+      .then((r) => r.json())
+      .then((data: unknown) => {
+        const d = data as {
+          canEditInlineResponsible?: boolean;
+          users?: { id: string; name: string; email: string }[];
+        };
+        setCanEditInlineResponsible(!!d?.canEditInlineResponsible);
+        setResponsibleOptions(Array.isArray(d?.users) ? d.users : []);
+      })
+      .catch(() => {
+        setCanEditInlineResponsible(false);
+        setResponsibleOptions([]);
+      });
+
   useEffect(() => {
-    Promise.all([fetchTypes(), fetchLeads()]).finally(() => setLoading(false));
+    Promise.all([fetchTypes(), fetchResponsibleUsers(), fetchResponsibleContext(), fetchLeads()]).finally(() =>
+      setLoading(false)
+    );
   }, []);
 
   useEffect(() => {
     if (selectedTypeId) fetchLeads();
-  }, [selectedTypeId, filterOwner]);
+  }, [selectedTypeId, filterOwner, responsibleFilter, canFilterByResponsible]);
 
   const currentType = types.find((t) => t.id === selectedTypeId);
   const stages = currentType?.stages ?? [];
@@ -144,6 +193,48 @@ export function LeadsBoard() {
   const refreshLeads = () => {
     fetchLeads();
     if (detailLeadId) setDetailLeadId(null);
+  };
+
+  const updateLeadResponsibleInline = async (
+    leadId: string,
+    nextResponsible: string
+  ) => {
+    setSavingResponsibleLeadId(leadId);
+    try {
+      const payload =
+        nextResponsible === "__unassigned__"
+          ? { responsibleUserId: null }
+          : { responsibleUserId: nextResponsible };
+      const res = await fetch(`/api/crm/leads/${leadId}/responsible`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error ?? "Não foi possível atualizar responsável.");
+        return;
+      }
+      const updated = (await res.json()) as {
+        id: string;
+        ownerUserId: string | null;
+        owner: { id: string; name: string; email: string } | null;
+      };
+      setLeads((prev) =>
+        prev.map((l) =>
+          l.id === updated.id
+            ? {
+                ...l,
+                ownerUserId: updated.ownerUserId ?? undefined,
+                owner: updated.owner as Lead["owner"],
+              }
+            : l
+        )
+      );
+      toast.success("Responsável atualizado.");
+    } finally {
+      setSavingResponsibleLeadId(null);
+    }
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -340,6 +431,27 @@ export function LeadsBoard() {
                   </button>
                 </div>
               </div>
+              {canFilterByResponsible && (
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-medium text-gray-600 uppercase">
+                    Responsável
+                  </p>
+                  <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
+                    <SelectTrigger className="w-56">
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="__unassigned__">Não distribuído</SelectItem>
+                      {responsibleUsers.map((u) => (
+                        <SelectItem key={u.id} value={u.id}>
+                          {u.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -360,6 +472,7 @@ export function LeadsBoard() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b bg-gray-50">
+                          <th className="text-left p-3">Produto</th>
                           <th className="text-left p-3">Nome</th>
                           <th className="text-left p-3">Responsável</th>
                           <th className="text-left p-3">Telefone</th>
@@ -371,8 +484,36 @@ export function LeadsBoard() {
                       <tbody>
                         {filteredLeads.map((lead) => (
                           <tr key={lead.id} className="border-b hover:bg-gray-50">
+                            <td className="p-3 text-gray-700">{lead.leadType?.name ?? "-"}</td>
                             <td className="p-3 font-medium">{lead.name}</td>
-                            <td className="p-3 text-sm text-gray-600">{lead.owner?.name ?? "Não atribuído"}</td>
+                            <td className="p-3 text-sm text-gray-600">
+                              {canEditInlineResponsible ? (
+                                <div className="flex items-center gap-2">
+                                  <Select
+                                    value={lead.owner?.id ?? "__unassigned__"}
+                                    onValueChange={(value) => void updateLeadResponsibleInline(lead.id, value)}
+                                    disabled={savingResponsibleLeadId === lead.id}
+                                  >
+                                    <SelectTrigger className="w-56 bg-white">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="__unassigned__">Não distribuído</SelectItem>
+                                      {responsibleOptions.map((u) => (
+                                        <SelectItem key={u.id} value={u.id}>
+                                          {u.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  {savingResponsibleLeadId === lead.id && (
+                                    <span className="text-xs text-gray-500">Salvando...</span>
+                                  )}
+                                </div>
+                              ) : (
+                                (lead.owner?.name ?? "Não distribuído")
+                              )}
+                            </td>
                             <td className="p-3">{lead.phone}</td>
                             <td className="p-3">{lead.stage.name}</td>
                             <td className="p-3 text-gray-500">

@@ -26,6 +26,10 @@ export type PublicMarketingShellProps = {
   rightCardSubtitle: string;
   /** Conteúdo do card (form, wizard, etc.) */
   children: React.ReactNode;
+  /** Variante de fundo da página */
+  backgroundVariant?: "default" | "green";
+  /** Variante do cabeçalho do card de login */
+  cardHeaderVariant?: "dark" | "light";
 };
 
 /**
@@ -41,9 +45,23 @@ export function PublicMarketingShell({
   rightCardTitle,
   rightCardSubtitle,
   children,
+  backgroundVariant = "default",
+  cardHeaderVariant = "dark",
 }: PublicMarketingShellProps) {
+  const backgroundClass =
+    backgroundVariant === "green"
+      ? "min-h-screen bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900"
+      : "min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-vivant-navy";
+
+  const cardHeaderClass =
+    cardHeaderVariant === "light"
+      ? "bg-white border-b border-gray-200 p-8 text-center"
+      : "bg-gradient-to-br from-vivant-navy to-slate-800 p-8 text-center";
+  const cardHeaderTitleClass = cardHeaderVariant === "light" ? "text-gray-900" : "text-white";
+  const cardHeaderSubtitleClass = cardHeaderVariant === "light" ? "text-gray-600" : "text-white/90";
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-vivant-navy">
+    <div className={backgroundClass}>
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16 lg:h-20">
@@ -93,14 +111,14 @@ export function PublicMarketingShell({
 
             <div className="order-1 md:order-2 w-full">
               <Card className="border-none shadow-2xl bg-white overflow-hidden w-full">
-                <div className="bg-gradient-to-br from-vivant-navy to-slate-800 p-8 text-center">
+                <div className={cardHeaderClass}>
                   <div className="inline-flex justify-center w-16 h-16 bg-vivant-gold/20 backdrop-blur-sm rounded-full mb-4">
                     <RightCardIcon className="w-8 h-8 text-vivant-gold" />
                   </div>
-                  <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white mb-2">
+                  <h2 className={`text-2xl sm:text-3xl font-serif font-bold mb-2 ${cardHeaderTitleClass}`}>
                     {rightCardTitle}
                   </h2>
-                  <p className="text-white/90 text-sm">{rightCardSubtitle}</p>
+                  <p className={`text-sm ${cardHeaderSubtitleClass}`}>{rightCardSubtitle}</p>
                 </div>
                 <CardContent className="p-6 sm:p-8">{children}</CardContent>
               </Card>

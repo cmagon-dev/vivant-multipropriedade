@@ -112,10 +112,10 @@ export function Footer(): JSX.Element {
               </li>
               <li>
                 <a
-                  href="tel:+5544988097007"
+                  href="tel:+5544999691196"
                   className="hover:text-white transition-colors"
                 >
-                  (44) 98809-7007
+                  (44) 99969-1196
                 </a>
               </li>
               <li>Maringá, PR - Brasil</li>

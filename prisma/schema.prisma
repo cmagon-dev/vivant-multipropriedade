@@ -325,8 +325,8 @@ model Lead {
   leadType         LeadType      @relation(fields: [leadTypeId], references: [id], onDelete: Restrict)
   stageId          String
   stage            LeadStage     @relation(fields: [stageId], references: [id], onDelete: Restrict)
-  ownerUserId      String
-  owner            User          @relation(fields: [ownerUserId], references: [id], onDelete: Restrict)
+  ownerUserId      String?
+  owner            User?         @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
   name             String
   phone            String
   email            String
@@ -456,6 +456,10 @@ model Property {
   notificacoes    Notificacao[]
   // Vivant Capital: camada de investimento sobre o imóvel (sem duplicar dados)
   capitalAssetConfigs CapitalAssetConfig[]
+  // Imobilizado da casa (gestão admin, visualização cotista)
+  assets          PropertyAsset[]
+  checkinReports  CheckinCheckoutReport[]
+  checkoutOccurrences CheckoutOccurrence[]
 
   @@index([destinoId])
   @@index([published])
@@ -489,6 +493,7 @@ model Destination {
   order           Int      @default(0)
   
   properties      Property[]
+  targetedMensagens Mensagem[]          @relation("MensagemTargetDestino")
   
   createdById     String
   createdBy       User     @relation(fields: [createdById], references: [id])
@@ -546,7 +551,9 @@ model Cotista {
   weekPeerInterests WeekExchangePeerInterest[]
   votosAssembleia   VotoAssembleia[]
   mensagens         Mensagem[]
+  targetedMensagens Mensagem[]           @relation("MensagemTargetCotista")
   notificacoes      Notificacao[]
+  checkinReports    CheckinCheckoutReport[]
   
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
@@ -615,12 +622,101 @@ model Reserva {
   
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
+  checkinReports    CheckinCheckoutReport[]
   
   @@unique([cotaId, ano, numeroSemana])
   @@index([cotistaId])
   @@index([status])
   @@index([ano, numeroSemana])
   @@map("reservas")
+}
+
+enum PropertyAssetCategory {
+  MOVEIS
+  ELETRODOMESTICOS
+  ELETRONICOS
+  UTENSILIOS
+  DECORACAO
+  CAMA_MESA_BANHO
+  AREA_EXTERNA
+  OUTROS
+}
+
+enum CheckoutOccurrenceType {
+  QUEBRADO
+  DANIFICADO
+  AUSENTE
+  PRECISA_MANUTENCAO
+  MAU_FUNCIONAMENTO
+  OUTRO
+}
+
+model PropertyAsset {
+  id         String               @id @default(cuid())
+  propertyId String
+  property   Property             @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  name       String
+  category   PropertyAssetCategory @default(OUTROS)
+  unitValue  Decimal              @db.Decimal(12,2)
+  quantity   Int                  @default(1)
+  totalValue Decimal              @db.Decimal(12,2)
+  notes      String?              @db.Text
+  active     Boolean              @default(true)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  occurrences CheckoutOccurrence[]
+
+  @@index([propertyId])
+  @@index([category])
+  @@map("property_assets")
+}
+
+model CheckinCheckoutReport {
+  id                  String    @id @default(cuid())
+  propertyId          String
+  property            Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  cotistaId           String
+  cotista             Cotista   @relation(fields: [cotistaId], references: [id], onDelete: Cascade)
+  reservaId           String?
+  reserva             Reserva?  @relation(fields: [reservaId], references: [id], onDelete: SetNull)
+  expectedCheckinDate DateTime?
+  expectedCheckinTime String?
+  expectedCheckoutDate DateTime?
+  expectedCheckoutTime String?
+  hadBrokenItem       Boolean   @default(false)
+  hadMaintenance      Boolean   @default(false)
+  description         String?   @db.Text
+  observations        String?   @db.Text
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  occurrences         CheckoutOccurrence[]
+
+  @@index([propertyId])
+  @@index([cotistaId])
+  @@index([reservaId])
+  @@map("checkin_checkout_reports")
+}
+
+model CheckoutOccurrence {
+  id             String                @id @default(cuid())
+  reportId       String
+  report         CheckinCheckoutReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  propertyId     String
+  property       Property              @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  assetId        String?
+  asset          PropertyAsset?        @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  category       PropertyAssetCategory @default(OUTROS)
+  occurrenceType CheckoutOccurrenceType
+  description    String                @db.Text
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([reportId])
+  @@index([propertyId])
+  @@index([assetId])
+  @@map("checkout_occurrences")
 }
 
 enum StatusReserva {
@@ -836,8 +932,14 @@ enum TipoVoto {
 
 model Mensagem {
   id                String              @id @default(cuid())
-  propertyId        String
-  property          Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId        String?
+  property          Property?           @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  targetType        MensagemTargetType  @default(CASA)
+  targetCotistaId   String?
+  targetCotista     Cotista?            @relation("MensagemTargetCotista", fields: [targetCotistaId], references: [id], onDelete: SetNull)
+  targetCondominio  String?
+  targetDestinoId   String?
+  targetDestino     Destination?        @relation("MensagemTargetDestino", fields: [targetDestinoId], references: [id], onDelete: SetNull)
   
   autorId           String?
   autor             Cotista?            @relation(fields: [autorId], references: [id], onDelete: SetNull)
@@ -878,6 +980,13 @@ enum TipoMensagem {
   MANUTENCAO
   EVENTO
   LEMBRETE
+}
+
+enum MensagemTargetType {
+  CASA
+  COTISTA
+  CONDOMINIO
+  DESTINO
 }
 
 enum PrioridadeMensagem {

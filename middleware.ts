@@ -44,12 +44,12 @@ export async function middleware(request: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET,
   });
 
-  // Redirecionar /portal-cotista para login único
+  // Redirecionar /portal-cotista para login do cotista
   if (pathname === "/portal-cotista") {
     if (token?.userType === "cotista") {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
-    const url = new URL("/login", request.url);
+    const url = new URL("/login-cotista", request.url);
     url.searchParams.set("callbackUrl", "/dashboard");
     return NextResponse.redirect(url);
   }
@@ -59,8 +59,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Login único: se já autenticado, redirecionar
+  // Login admin: se já autenticado, redirecionar
   if (pathname === "/login") {
+    if (token) {
+      const redirectUrl = getPostLoginRedirectFromToken(token);
+      return NextResponse.redirect(new URL(redirectUrl, request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // Login cotista: se já autenticado, redirecionar
+  if (pathname === "/login-cotista") {
     if (token) {
       const redirectUrl = getPostLoginRedirectFromToken(token);
       return NextResponse.redirect(new URL(redirectUrl, request.url));
@@ -234,7 +243,7 @@ export async function middleware(request: NextRequest) {
   // Proteção /dashboard (portal cotista): cotista ou comercial/dashboard.view (comercial já tratado acima)
   if (pathname.startsWith("/dashboard")) {
     if (!token) {
-      const url = new URL("/login", request.url);
+      const url = new URL("/login-cotista", request.url);
       url.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(url);
     }
@@ -252,7 +261,7 @@ export async function middleware(request: NextRequest) {
   // Proteção /cotista: apenas cotista
   if (pathname.startsWith("/cotista")) {
     if (!token || token.userType !== "cotista") {
-      const url = new URL("/login", request.url);
+      const url = new URL("/login-cotista", request.url);
       url.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(url);
     }

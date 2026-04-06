@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const isProd = process.env.NODE_ENV === "production";
+
 const nextConfig = {
   reactStrictMode: true,
   
@@ -37,13 +39,16 @@ const nextConfig = {
           },
         ],
       },
-      // Headers específicos para assets estáticos (CSS, JS, fontes)
+      // Em desenvolvimento, evitar cache agressivo dos chunks do Next
+      // para não precisar de Ctrl+F5 após alterações.
       {
         source: '/_next/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: isProd
+              ? 'public, max-age=31536000, immutable'
+              : 'no-store, no-cache, must-revalidate, max-age=0',
           },
           {
             key: 'Access-Control-Allow-Origin',
@@ -52,6 +57,16 @@ const nextConfig = {
         ],
       },
     ];
+  },
+
+  webpack: (config, { dev }) => {
+    // Em ambiente de desenvolvimento local (Windows + OneDrive),
+    // o cache de filesystem do webpack pode corromper vendor-chunks
+    // e causar erros intermitentes ao navegar (ex.: logout -> login).
+    if (dev) {
+      config.cache = false;
+    }
+    return config;
   },
 };
 

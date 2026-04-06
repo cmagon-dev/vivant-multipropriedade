@@ -61,7 +61,7 @@ Senha: cotista123
 ```
 Email: cmagon@glocon.com.br
 CPF: 079.461.789-13
-Telefone: (44) 98809-7007
+Telefone: (44) 99969-1196
 Senha: cotista123
 ```
 

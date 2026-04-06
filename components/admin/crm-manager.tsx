@@ -92,6 +92,7 @@ export function CrmManager() {
   const [deletingTypeId, setDeletingTypeId] = useState<string | null>(null);
   const [deleteStageId, setDeleteStageId] = useState<string | null>(null);
   const [deletingStageId, setDeletingStageId] = useState<string | null>(null);
+  const [draggingStageId, setDraggingStageId] = useState<string | null>(null);
 
   const fetchTypes = () =>
     fetch("/api/crm/lead-types?all=true")
@@ -253,6 +254,48 @@ export function CrmManager() {
       setEditingStageId(null);
     } catch {
       toast.error("Erro ao atualizar etapa.");
+    }
+  };
+
+  const reorderStages = async (leadTypeId: string, draggedStageId: string, targetStageId: string) => {
+    const type = types.find((t) => t.id === leadTypeId);
+    if (!type) return;
+    const currentStages = [...(type.stages ?? [])].sort((a, b) => a.order - b.order);
+    const fromIndex = currentStages.findIndex((s) => s.id === draggedStageId);
+    const toIndex = currentStages.findIndex((s) => s.id === targetStageId);
+    if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
+
+    const reordered = [...currentStages];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+
+    const withNewOrder = reordered.map((stage, idx) => ({ ...stage, order: idx + 1 }));
+
+    // Otimista: já reordena na UI para feedback imediato.
+    setTypes((prev) =>
+      prev.map((t) =>
+        t.id === leadTypeId
+          ? {
+              ...t,
+              stages: withNewOrder,
+            }
+          : t
+      )
+    );
+
+    try {
+      const movedOrder = toIndex + 1;
+      const res = await fetch(`/api/crm/lead-stages/${draggedStageId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order: movedOrder }),
+      });
+      if (!res.ok) throw new Error("Erro ao salvar ordem");
+      toast.success("Ordem das etapas atualizada.");
+      fetchTypes();
+    } catch {
+      toast.error("Não foi possível salvar a nova ordem das etapas.");
+      fetchTypes();
     }
   };
 
@@ -471,7 +514,23 @@ export function CrmManager() {
               </div>
               <ul className="space-y-2">
                 {(t.stages ?? []).map((s) => (
-                  <li key={s.id} className="flex items-center gap-4 py-2 border-b last:border-0">
+                  <li
+                    key={s.id}
+                    className="flex items-center gap-4 py-2 border-b last:border-0"
+                    draggable={editingStageId !== s.id}
+                    onDragStart={() => setDraggingStageId(s.id)}
+                    onDragOver={(e) => {
+                      if (!draggingStageId || draggingStageId === s.id) return;
+                      e.preventDefault();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (!draggingStageId || draggingStageId === s.id) return;
+                      void reorderStages(t.id, draggingStageId, s.id);
+                      setDraggingStageId(null);
+                    }}
+                    onDragEnd={() => setDraggingStageId(null)}
+                  >
                     {editingStageId === s.id ? (
                       <div className="col-span-full space-y-3 py-2">
                         <div className="flex flex-wrap items-center gap-2">
@@ -569,6 +628,7 @@ export function CrmManager() {
                       </div>
                     ) : (
                       <>
+                        <span className="text-gray-400 cursor-grab select-none" title="Arraste para reordenar">⋮⋮</span>
                         <span className="w-6 text-gray-500">{s.order}</span>
                         <span className="font-medium">{s.name}</span>
                         {s.slaHours != null && <span className="text-sm text-gray-500">ALERTA: {s.slaHours}h</span>}

@@ -8,6 +8,7 @@ import { Building2, ArrowLeft, Loader2, Vote, FileText } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 const STATUS_LABEL: Record<string, string> = {
   AGENDADA: "Agendada",
@@ -32,14 +33,42 @@ export default function AssembleiaDetalheCotistaPage() {
   const id = params.id as string;
   const [a, setA] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [votandoPautaId, setVotandoPautaId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const carregar = () => {
+    setLoading(true);
     fetch("/api/cotistas/me/assembleias/" + id)
       .then((res) => (res.ok ? res.json() : null))
       .then(setA)
       .catch(() => setA(null))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    carregar();
   }, [id]);
+
+  const votar = async (pautaId: string, voto: "FAVOR" | "CONTRA" | "ABSTENCAO") => {
+    setVotandoPautaId(pautaId);
+    try {
+      const res = await fetch("/api/cotistas/me/assembleias/" + id, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pautaId, voto }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error || "Não foi possível registrar seu voto.");
+        return;
+      }
+      toast.success("Voto registrado com sucesso.");
+      carregar();
+    } catch {
+      toast.error("Erro ao registrar voto.");
+    } finally {
+      setVotandoPautaId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -97,6 +126,12 @@ export default function AssembleiaDetalheCotistaPage() {
               Acessar ata
             </a>
           )}
+          {a.participacao && (
+            <p className="text-sm text-[#1A2F4B]/70 mt-4">
+              Participação atual: {a.participacao.cotistasQueVotaram}/{a.participacao.totalCotistasElegiveis} cotistas
+              {" "}({a.participacao.percentual}%)
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -116,6 +151,48 @@ export default function AssembleiaDetalheCotistaPage() {
                   <p className="text-sm text-[#1A2F4B]/70 mt-1">{p.descricao}</p>
                   <span className="text-xs text-[#1A2F4B]/50">{TIPO_PAUTA[p.tipo] ?? p.tipo}</span>
                   {p._count?.votos != null && <span className="text-xs text-[#1A2F4B]/50 ml-2">· {p._count.votos} voto(s)</span>}
+                  {p.requererVotacao ? (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs text-[#1A2F4B]/60">
+                        Meu voto: <strong>{p.meuVoto ? p.meuVoto : "não registrado"}</strong>
+                      </p>
+                      <p className="text-xs text-[#1A2F4B]/50">
+                        Resultado parcial: {p.resumoVotos?.favor ?? 0} favor · {p.resumoVotos?.contra ?? 0} contra · {p.resumoVotos?.abstencao ?? 0} abstenção
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={p.meuVoto === "FAVOR" ? "default" : "outline"}
+                          disabled={!p.votacaoAberta || votandoPautaId === p.id}
+                          onClick={() => votar(p.id, "FAVOR")}
+                        >
+                          Favor
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={p.meuVoto === "CONTRA" ? "default" : "outline"}
+                          disabled={!p.votacaoAberta || votandoPautaId === p.id}
+                          onClick={() => votar(p.id, "CONTRA")}
+                        >
+                          Contra
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={p.meuVoto === "ABSTENCAO" ? "default" : "outline"}
+                          disabled={!p.votacaoAberta || votandoPautaId === p.id}
+                          onClick={() => votar(p.id, "ABSTENCAO")}
+                        >
+                          Abstenção
+                        </Button>
+                        {!p.votacaoAberta ? (
+                          <span className="text-xs text-amber-700 self-center">Votação encerrada para esta pauta</span>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
                 </li>
               ))}
             </ul>

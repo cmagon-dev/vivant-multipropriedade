@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Calendar,
   CalendarDays,
+  ClipboardCheck,
   DollarSign,
   Users,
   FileText,
@@ -38,6 +39,7 @@ export const COTISTA_NAV_ITEMS: CotistaNavItem[] = [
     ],
   },
   { href: "/dashboard/documentos", label: "Documentos", icon: FileText },
+  { href: "/dashboard/check-in-check-out", label: "Check-in e Check-out", icon: ClipboardCheck },
   { href: "/dashboard/avisos", label: "Avisos", icon: Bell },
   { href: "/dashboard/perfil", label: "Meu Perfil", icon: User },
 ];

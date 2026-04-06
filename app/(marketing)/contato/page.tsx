@@ -29,10 +29,10 @@ export default function ContatoPage() {
               <div className="flex items-center gap-2">
                 <Phone className="w-5 h-5 text-vivant-gold" />
                 <a
-                  href="tel:+5544988097007"
+                  href="tel:+5544999691196"
                   className="hover:text-vivant-gold transition-colors"
                 >
-                  (44) 98809-7007
+                  (44) 99969-1196
                 </a>
               </div>
               <div className="flex items-center gap-2">

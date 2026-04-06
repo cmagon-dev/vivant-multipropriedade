@@ -16,10 +16,20 @@ export default async function EditarAvisoVivantCarePage(props: { params: { id: s
   if (!session) redirect("/login");
   if (!hasPermission(session as any, "vivantCare.avisos.manage")) redirect("/403");
 
-  const [aviso, properties] = await Promise.all([
+  const [aviso, properties, cotistas, destinos] = await Promise.all([
     prisma.mensagem.findUnique({ where: { id: params.id } }),
-    prisma.property.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    prisma.property.findMany({ select: { id: true, name: true, condominio: true }, orderBy: { name: "asc" } }),
+    prisma.cotista.findMany({
+      where: { active: true },
+      select: { id: true, name: true, email: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.destination.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
+  const condominios = Array.from(new Set(properties.map((property) => property.condominio).filter(Boolean)));
 
   if (!aviso) notFound();
 
@@ -43,6 +53,10 @@ export default async function EditarAvisoVivantCarePage(props: { params: { id: s
           aviso={{
             id: aviso.id,
             propertyId: aviso.propertyId,
+            targetType: aviso.targetType,
+            targetCotistaId: aviso.targetCotistaId,
+            targetCondominio: aviso.targetCondominio,
+            targetDestinoId: aviso.targetDestinoId,
             titulo: aviso.titulo,
             conteudo: aviso.conteudo,
             tipo: aviso.tipo,
@@ -50,7 +64,10 @@ export default async function EditarAvisoVivantCarePage(props: { params: { id: s
             fixada: aviso.fixada,
             ativa: aviso.ativa,
           }}
-          properties={properties}
+          properties={properties.map((property) => ({ id: property.id, name: property.name }))}
+          cotistas={cotistas}
+          destinos={destinos}
+          condominios={condominios as string[]}
           redirectPath="/admin/vivant-care/avisos"
         />
       </div>

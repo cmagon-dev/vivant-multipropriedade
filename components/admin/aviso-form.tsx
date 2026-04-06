@@ -29,7 +29,11 @@ const PRIORIDADES = [
 interface AvisoFormProps {
   aviso?: {
     id: string;
-    propertyId: string;
+    propertyId: string | null;
+    targetType?: "CASA" | "COTISTA" | "CONDOMINIO" | "DESTINO";
+    targetCotistaId?: string | null;
+    targetCondominio?: string | null;
+    targetDestinoId?: string | null;
     titulo: string;
     conteudo: string;
     tipo: string;
@@ -38,14 +42,28 @@ interface AvisoFormProps {
     ativa: boolean;
   };
   properties: Array<{ id: string; name: string }>;
+  cotistas: Array<{ id: string; name: string; email: string }>;
+  destinos: Array<{ id: string; name: string }>;
+  condominios: string[];
   redirectPath: string;
 }
 
-export function AvisoForm({ aviso, properties, redirectPath }: AvisoFormProps) {
+const TARGET_TYPES = [
+  { value: "CASA", label: "Casa" },
+  { value: "COTISTA", label: "Cotista" },
+  { value: "CONDOMINIO", label: "Condomínio" },
+  { value: "DESTINO", label: "Destino" },
+];
+
+export function AvisoForm({ aviso, properties, cotistas, destinos, condominios, redirectPath }: AvisoFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
+    targetType: aviso?.targetType ?? "CASA",
     propertyId: aviso?.propertyId ?? "",
+    targetCotistaId: aviso?.targetCotistaId ?? "",
+    targetCondominio: aviso?.targetCondominio ?? "",
+    targetDestinoId: aviso?.targetDestinoId ?? "",
     titulo: aviso?.titulo ?? "",
     conteudo: aviso?.conteudo ?? "",
     tipo: aviso?.tipo ?? "AVISO",
@@ -56,18 +74,47 @@ export function AvisoForm({ aviso, properties, redirectPath }: AvisoFormProps) {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.propertyId || !form.titulo || !form.conteudo) {
-      toast.error("Preencha propriedade, título e conteúdo");
+    if (!form.titulo || !form.conteudo) {
+      toast.error("Preencha título e conteúdo");
+      return;
+    }
+    if (form.targetType === "CASA" && !form.propertyId) {
+      toast.error("Selecione a casa.");
+      return;
+    }
+    if (form.targetType === "COTISTA" && !form.targetCotistaId) {
+      toast.error("Selecione o cotista.");
+      return;
+    }
+    if (form.targetType === "CONDOMINIO" && !form.targetCondominio) {
+      toast.error("Selecione o condomínio.");
+      return;
+    }
+    if (form.targetType === "DESTINO" && !form.targetDestinoId) {
+      toast.error("Selecione o destino.");
       return;
     }
     setLoading(true);
     try {
       const url = aviso ? `/api/admin/avisos/${aviso.id}` : "/api/admin/avisos";
       const method = aviso ? "PUT" : "POST";
+      const payload = {
+        targetType: form.targetType,
+        propertyId: form.targetType === "CASA" ? form.propertyId : null,
+        targetCotistaId: form.targetType === "COTISTA" ? form.targetCotistaId : null,
+        targetCondominio: form.targetType === "CONDOMINIO" ? form.targetCondominio : null,
+        targetDestinoId: form.targetType === "DESTINO" ? form.targetDestinoId : null,
+        titulo: form.titulo,
+        conteudo: form.conteudo,
+        tipo: form.tipo,
+        prioridade: form.prioridade,
+        fixada: form.fixada,
+        ativa: form.ativa,
+      };
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         toast.success(aviso ? "Aviso atualizado." : "Aviso criado.");
@@ -86,24 +133,113 @@ export function AvisoForm({ aviso, properties, redirectPath }: AvisoFormProps) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label>Propriedade *</Label>
+        <Label>Tipo de segmentação *</Label>
         <Select
-          value={form.propertyId}
-          onValueChange={(v) => setForm({ ...form, propertyId: v })}
-          disabled={!!aviso}
+          value={form.targetType}
+          onValueChange={(v) =>
+            setForm((prev) => ({
+              ...prev,
+              targetType: v as "CASA" | "COTISTA" | "CONDOMINIO" | "DESTINO",
+            }))
+          }
+          disabled={loading}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Selecione a propriedade" />
+            <SelectValue placeholder="Selecione a segmentação" />
           </SelectTrigger>
           <SelectContent>
-            {properties.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.name}
+            {TARGET_TYPES.map((target) => (
+              <SelectItem key={target.value} value={target.value}>
+                {target.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
+      {form.targetType === "CASA" ? (
+        <div className="space-y-2">
+          <Label>Casa *</Label>
+          <Select
+            value={form.propertyId}
+            onValueChange={(v) => setForm({ ...form, propertyId: v })}
+            disabled={false}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a casa" />
+            </SelectTrigger>
+            <SelectContent>
+              {properties.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+      {form.targetType === "COTISTA" ? (
+        <div className="space-y-2">
+          <Label>Cotista *</Label>
+          <Select
+            value={form.targetCotistaId}
+            onValueChange={(v) => setForm({ ...form, targetCotistaId: v })}
+            disabled={loading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o cotista" />
+            </SelectTrigger>
+            <SelectContent>
+              {cotistas.map((cotista) => (
+                <SelectItem key={cotista.id} value={cotista.id}>
+                  {cotista.name} ({cotista.email})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+      {form.targetType === "CONDOMINIO" ? (
+        <div className="space-y-2">
+          <Label>Condomínio *</Label>
+          <Select
+            value={form.targetCondominio}
+            onValueChange={(v) => setForm({ ...form, targetCondominio: v })}
+            disabled={loading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o condomínio" />
+            </SelectTrigger>
+            <SelectContent>
+              {condominios.map((condominio) => (
+                <SelectItem key={condominio} value={condominio}>
+                  {condominio}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+      {form.targetType === "DESTINO" ? (
+        <div className="space-y-2">
+          <Label>Destino *</Label>
+          <Select
+            value={form.targetDestinoId}
+            onValueChange={(v) => setForm({ ...form, targetDestinoId: v })}
+            disabled={loading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o destino" />
+            </SelectTrigger>
+            <SelectContent>
+              {destinos.map((destino) => (
+                <SelectItem key={destino.id} value={destino.id}>
+                  {destino.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
       <div className="space-y-2">
         <Label>Título *</Label>
         <Input

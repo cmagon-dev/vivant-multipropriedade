@@ -42,20 +42,20 @@ export default function PlanejamentoSemanasPage() {
     load();
   }, [load]);
 
-  const gerarSabado = async () => {
+  const gerarQuinta = async () => {
     setGenerating(true);
     try {
       const res = await fetch(`/api/admin/propriedades/${id}/weeks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          generate: { year, pattern: "SAT_TO_SAT", weightDefault: 1 },
+          generate: { year, pattern: "THU_TO_WED", weightDefault: 1 },
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         toast.success(
-          `${data.count ?? 0} semanas geradas (sábado a sábado). Edite nomes e temporadas no calendário.`
+          `${data.count ?? 0} semanas geradas (quinta a quarta). Edite nomes e temporadas no calendário.`
         );
         setWeeks((data.weeks as AdminCalendarWeek[]) ?? []);
         router.refresh();
@@ -112,12 +112,12 @@ export default function PlanejamentoSemanasPage() {
             type="button"
             className="bg-vivant-green hover:bg-vivant-green/90"
             disabled={generating}
-            onClick={() => void gerarSabado()}
+            onClick={() => void gerarQuinta()}
           >
             {generating ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : null}
-            Gerar semanas (sábado → sábado)
+            Gerar semanas (quinta → quarta)
           </Button>
           <p className="text-sm text-gray-600">
             Semanas cadastradas: <strong>{loading ? "…" : weeks.length}</strong>
@@ -140,7 +140,7 @@ export default function PlanejamentoSemanasPage() {
             </div>
           ) : weeks.length === 0 ? (
             <p className="text-center text-gray-600">
-              Nenhuma semana para {year}. Gere o grid sábado–sábado ou importe via API.
+              Nenhuma semana para {year}. Gere o grid quinta–quarta ou importe via API.
             </p>
           ) : (
             <PropertyYearCalendar

@@ -14,10 +14,22 @@ export default async function NovoAvisoVivantCarePage() {
   if (!session) redirect("/login");
   if (!hasPermission(session as any, "vivantCare.avisos.manage")) redirect("/403");
 
-  const properties = await prisma.property.findMany({
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
-  });
+  const [properties, cotistas, destinos] = await Promise.all([
+    prisma.property.findMany({
+      select: { id: true, name: true, condominio: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.cotista.findMany({
+      where: { active: true },
+      select: { id: true, name: true, email: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.destination.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
+  const condominios = Array.from(new Set(properties.map((property) => property.condominio).filter(Boolean)));
 
   return (
     <div className="space-y-6">
@@ -33,7 +45,13 @@ export default async function NovoAvisoVivantCarePage() {
         <p className="text-gray-600">Crie um comunicado para os cotistas</p>
       </div>
       <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <AvisoForm properties={properties} redirectPath="/admin/vivant-care/avisos" />
+        <AvisoForm
+          properties={properties.map((property) => ({ id: property.id, name: property.name }))}
+          cotistas={cotistas}
+          destinos={destinos}
+          condominios={condominios as string[]}
+          redirectPath="/admin/vivant-care/avisos"
+        />
       </div>
     </div>
   );

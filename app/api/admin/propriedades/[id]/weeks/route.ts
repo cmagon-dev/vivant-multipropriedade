@@ -81,16 +81,18 @@ export async function POST(
       }>;
       generate?: {
         year: number;
-        pattern: "SAT_TO_SAT";
+        pattern: "SAT_TO_SAT" | "THU_TO_WED";
         weightDefault?: number;
       };
     };
 
-    if (generate?.year && generate.pattern === "SAT_TO_SAT") {
+    if (generate?.year && (generate.pattern === "SAT_TO_SAT" || generate.pattern === "THU_TO_WED")) {
       const y = generate.year;
       const weight = generate.weightDefault ?? 1;
       let d = new Date(y, 0, 1);
-      while (d.getDay() !== 6) {
+      // Novo padrão oficial: quinta (4) até quarta (3).
+      // Mantemos compatibilidade aceitando SAT_TO_SAT no payload.
+      while (d.getDay() !== 4) {
         d.setDate(d.getDate() + 1);
       }
       let idx = 1;

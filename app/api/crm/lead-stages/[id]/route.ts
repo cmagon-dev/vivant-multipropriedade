@@ -68,28 +68,74 @@ export async function PUT(
     }
   }
 
+  const normalizedOrder =
+    order !== undefined && Number.isFinite(Number(order)) ? Math.max(1, Math.round(Number(order))) : undefined;
+
+  const patchData = {
+    ...(name !== undefined && { name }),
+    ...(isFinal !== undefined && { isFinal }),
+    ...(finalStatus !== undefined && { finalStatus: finalStatus ?? null }),
+    ...(slaEnabled !== undefined && { slaEnabled }),
+    ...(slaHours !== undefined && { slaHours: slaHours ?? null }),
+    ...(slaThresholds !== undefined && {
+      slaThresholds: Array.isArray(slaThresholds)
+        ? (slaThresholds
+            .filter((t) => t && (t.color === "YELLOW" || t.color === "ORANGE") && typeof t.hoursLeft === "number")
+            .sort((a, b) => (a as { hoursLeft: number }).hoursLeft - (b as { hoursLeft: number }).hoursLeft) as unknown as Prisma.InputJsonValue)
+        : Prisma.JsonNull,
+    }),
+    ...(isActive !== undefined && { isActive }),
+    ...(whatsTemplate !== undefined && { whatsTemplate: whatsTemplate?.trim() || null }),
+    ...(playbookChecklist !== undefined && { playbookChecklist: Array.isArray(playbookChecklist) ? playbookChecklist : Prisma.JsonNull }),
+    ...(helpText !== undefined && { helpText: helpText?.trim() || null }),
+    ...(nextActionType !== undefined && { nextActionType: nextActionType?.trim() || null }),
+  };
+
+  // Reordenação segura: evita colisão de UNIQUE(leadTypeId, order) durante drag-and-drop.
+  if (normalizedOrder !== undefined) {
+    const updated = await prisma.$transaction(async (tx) => {
+      const current = await tx.leadStage.findUnique({
+        where: { id },
+        select: { id: true, leadTypeId: true },
+      });
+      if (!current) throw new Error("Etapa não encontrada");
+
+      const siblings = await tx.leadStage.findMany({
+        where: { leadTypeId: current.leadTypeId },
+        orderBy: { order: "asc" },
+      });
+
+      const withoutCurrent = siblings.filter((s) => s.id !== id);
+      const targetIndex = Math.min(Math.max(normalizedOrder - 1, 0), withoutCurrent.length);
+      const reordered = [...withoutCurrent];
+      const currentStage = siblings.find((s) => s.id === id)!;
+      reordered.splice(targetIndex, 0, currentStage);
+
+      // Primeiro joga para faixa temporária para não colidir.
+      for (let i = 0; i < reordered.length; i += 1) {
+        await tx.leadStage.update({
+          where: { id: reordered[i].id },
+          data: { order: 1000 + i },
+        });
+      }
+
+      // Depois aplica a ordem final + patch no item atual.
+      for (let i = 0; i < reordered.length; i += 1) {
+        const stage = reordered[i];
+        await tx.leadStage.update({
+          where: { id: stage.id },
+          data: stage.id === id ? { order: i + 1, ...patchData } : { order: i + 1 },
+        });
+      }
+
+      return tx.leadStage.findUnique({ where: { id } });
+    });
+    return NextResponse.json(updated);
+  }
+
   const updated = await prisma.leadStage.update({
     where: { id },
-    data: {
-      ...(name !== undefined && { name }),
-      ...(order !== undefined && { order }),
-      ...(isFinal !== undefined && { isFinal }),
-      ...(finalStatus !== undefined && { finalStatus: finalStatus ?? null }),
-      ...(slaEnabled !== undefined && { slaEnabled }),
-      ...(slaHours !== undefined && { slaHours: slaHours ?? null }),
-      ...(slaThresholds !== undefined && {
-        slaThresholds: Array.isArray(slaThresholds)
-          ? (slaThresholds
-              .filter((t) => t && (t.color === "YELLOW" || t.color === "ORANGE") && typeof t.hoursLeft === "number")
-              .sort((a, b) => (a as { hoursLeft: number }).hoursLeft - (b as { hoursLeft: number }).hoursLeft) as unknown as Prisma.InputJsonValue)
-          : Prisma.JsonNull,
-      }),
-      ...(isActive !== undefined && { isActive }),
-      ...(whatsTemplate !== undefined && { whatsTemplate: whatsTemplate?.trim() || null }),
-      ...(playbookChecklist !== undefined && { playbookChecklist: Array.isArray(playbookChecklist) ? playbookChecklist : Prisma.JsonNull }),
-      ...(helpText !== undefined && { helpText: helpText?.trim() || null }),
-      ...(nextActionType !== undefined && { nextActionType: nextActionType?.trim() || null }),
-    },
+    data: patchData,
   });
   return NextResponse.json(updated);
 }

@@ -103,6 +103,11 @@ export default function AssembleiaDetalhePage() {
           <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
             <span>Quórum mínimo: {Number(a.quorumMinimo)}%</span>
             {a.quorumAlcancado != null && <span>Quórum alcançado: {Number(a.quorumAlcancado)}%</span>}
+            {a.participacao && (
+              <span>
+                Participação: {a.participacao.cotistasQueVotaram}/{a.participacao.totalCotistasElegiveis} cotistas ({a.participacao.percentual}%)
+              </span>
+            )}
             {a.ataUrl && (
               <a href={a.ataUrl} target="_blank" rel="noopener noreferrer" className="text-vivant-navy hover:underline inline-flex items-center gap-1">
                 <FileText className="w-4 h-4" />
@@ -135,6 +140,11 @@ export default function AssembleiaDetalhePage() {
                   </div>
                   <p className="text-sm text-gray-600 mt-1 line-clamp-2">{p.descricao}</p>
                   {p._count?.votos != null && <p className="text-xs text-gray-500 mt-1">{p._count.votos} voto(s)</p>}
+                  {p.resumoVotos ? (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Favor: {p.resumoVotos.favor} · Contra: {p.resumoVotos.contra} · Abstenção: {p.resumoVotos.abstencao}
+                    </p>
+                  ) : null}
                 </li>
               ))}
             </ul>

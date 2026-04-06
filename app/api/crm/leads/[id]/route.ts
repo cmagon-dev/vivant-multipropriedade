@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 const canManageCrm = (s: { user?: { id?: string }; permissions?: string[]; roleKey?: string }) =>
   (s.user as { roleKey?: string })?.roleKey === "OWNER" ||
   (s.user as { roleKey?: string })?.roleKey === "SUPER_ADMIN" ||
+  (s.user as { roleKey?: string })?.roleKey === "ADMIN" ||
   (s.user as { permissions?: string[] })?.permissions?.includes("crm.manage");
 
 async function canAccessLead(session: { user?: { id?: string } }, leadId: string) {
@@ -15,6 +16,29 @@ async function canAccessLead(session: { user?: { id?: string } }, leadId: string
   const isOwner = canManageCrm(session as any);
   if (isOwner || lead.ownerUserId === session?.user?.id) return { ok: true as const, lead };
   return { ok: false as const, status: 403 };
+}
+
+async function getResponsibleCandidates() {
+  const commercialRole = await prisma.role.findUnique({ where: { key: "COMMERCIAL" } });
+  const ownerRole = await prisma.role.findUnique({ where: { key: "OWNER" } });
+  const superAdminRole = await prisma.role.findUnique({ where: { key: "SUPER_ADMIN" } });
+  const adminRole = await prisma.role.findUnique({ where: { key: "ADMIN" } });
+  const roleIds = [commercialRole?.id, ownerRole?.id, superAdminRole?.id, adminRole?.id].filter(Boolean) as string[];
+  return prisma.user.findMany({
+    where: {
+      active: true,
+      OR: [
+        { userRoleAssignments: { some: { roleId: { in: roleIds } } } },
+        {
+          userPermissions: {
+            some: { permission: { key: "comercial.view" }, granted: true },
+          },
+        },
+      ],
+    },
+    select: { id: true, name: true, email: true },
+    orderBy: { name: "asc" },
+  });
 }
 
 /** GET — um lead (respeitar ownership) */
@@ -45,7 +69,9 @@ export async function GET(
     },
   });
   if (!lead) return NextResponse.json({ error: "Lead não encontrado" }, { status: 404 });
-  return NextResponse.json(lead);
+  const canRedistribute = canManageCrm(session as any);
+  const responsibleCandidates = canRedistribute ? await getResponsibleCandidates() : [];
+  return NextResponse.json({ ...lead, canRedistribute, responsibleCandidates });
 }
 
 /** PUT — atualizar dados básicos (respeitar ownership) */
@@ -64,7 +90,28 @@ export async function PUT(
   if (!access.ok) return NextResponse.json({ error: access.status === 404 ? "Lead não encontrado" : "Acesso negado" }, { status: access.status });
 
   const body = await request.json();
-  const { name, phone, email, source, notes } = body as { name?: string; phone?: string; email?: string; source?: string; notes?: string };
+  const { name, phone, email, source, notes, ownerUserId } = body as {
+    name?: string;
+    phone?: string;
+    email?: string;
+    source?: string;
+    notes?: string;
+    ownerUserId?: string | null;
+  };
+
+  let normalizedOwnerUserId: string | null | undefined = undefined;
+  if (ownerUserId !== undefined) {
+    if (!canManageCrm(session as any)) {
+      return NextResponse.json({ error: "Sem permissão para redistribuir lead" }, { status: 403 });
+    }
+    normalizedOwnerUserId = ownerUserId === "__unassigned__" ? null : ownerUserId;
+    if (normalizedOwnerUserId) {
+      const candidates = await getResponsibleCandidates();
+      if (!candidates.some((u) => u.id === normalizedOwnerUserId)) {
+        return NextResponse.json({ error: "Responsável inválido" }, { status: 400 });
+      }
+    }
+  }
 
   const updated = await prisma.lead.update({
     where: { id },
@@ -74,6 +121,7 @@ export async function PUT(
       ...(email !== undefined && { email: email?.trim() ?? "" }),
       ...(source !== undefined && { source: source?.trim() ?? null }),
       ...(notes !== undefined && { notes: notes?.trim() ?? null }),
+      ...(normalizedOwnerUserId !== undefined && { ownerUserId: normalizedOwnerUserId }),
     },
     include: {
       leadType: true,
