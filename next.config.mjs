@@ -7,9 +7,14 @@ const nextConfig = {
   // Otimizações para produção
   swcMinify: true,
   
-  // Configuração de imagens (quando necessário)
+  // Configuração de imagens (remotePatterns substitui domains depreciado no Next)
   images: {
-    domains: ['vivantcapital.com.br', 'vivantresidences.com.br', 'vivantcare.com.br', 'localhost'],
+    remotePatterns: [
+      { protocol: "https", hostname: "vivantcapital.com.br", pathname: "/**" },
+      { protocol: "https", hostname: "vivantresidences.com.br", pathname: "/**" },
+      { protocol: "https", hostname: "vivantcare.com.br", pathname: "/**" },
+      { protocol: "http", hostname: "localhost", pathname: "/**" },
+    ],
   },
   
   // Garantir que assets estáticos sejam servidos corretamente

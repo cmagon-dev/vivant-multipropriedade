@@ -297,9 +297,9 @@ export function generateInvestmentProposal(
     const vendaCardsStartX = (pageWidth - totalVendaCardsWidth) / 2;
 
     const vendaCards = [
-      { label: "Valor de Venda", value: liquidezResult.totalFluxoFuturo, color: [59, 130, 246] },
+      { label: "Total de Recebíveis Futuros", value: liquidezResult.totalFluxoFuturo, color: [59, 130, 246] },
       { label: "Desconto", value: "-" + liquidezResult.descontoAplicado, color: [249, 115, 22] },
-      { label: "Líquido à Vista", value: liquidezResult.valorVendaVista, color: [16, 185, 129] },
+      { label: "Valor Antecipado Líquido", value: liquidezResult.valorVendaVista, color: [16, 185, 129] },
     ];
 
     vendaCards.forEach((card, index) => {
@@ -387,8 +387,8 @@ export function generateInvestmentProposal(
     doc.setFont("helvetica", "normal");
     doc.setTextColor(COLORS.text);
     doc.setFontSize(7);
-    doc.text(`Já recebido: ${liquidezResult.recebidoAteOMomento}`, 20, yPosition + 7);
-    doc.text(`+ Venda à vista: ${liquidezResult.valorVendaVista}`, 20, yPosition + 11);
+    doc.text(`Recebido até o mês da simulação: ${liquidezResult.recebidoAteOMomento}`, 20, yPosition + 7);
+    doc.text(`+ Valor antecipado líquido: ${liquidezResult.valorVendaVista}`, 20, yPosition + 11);
     
     doc.setFont("helvetica", "bold");
     doc.setTextColor(16, 185, 129);

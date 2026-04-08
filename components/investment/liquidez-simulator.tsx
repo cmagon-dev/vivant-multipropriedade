@@ -308,13 +308,13 @@ export function LiquidezSimulator({ analysis, onLiquidezCalculated }: LiquidezSi
                   </h4>
 
                   <div className="grid md:grid-cols-3 gap-4">
-                    {/* Valor de Venda */}
+                    {/* Total de Recebíveis Futuros */}
                     <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
                       <CardContent className="pt-6">
                         <div className="flex items-center gap-2 mb-2">
                           <DollarSign className="w-5 h-5 text-blue-600" />
                           <span className="text-sm font-medium text-slate-700">
-                            Valor de Venda
+                            Total de Recebíveis Futuros
                           </span>
                         </div>
                         <div className="text-3xl font-bold text-blue-600">
@@ -344,13 +344,13 @@ export function LiquidezSimulator({ analysis, onLiquidezCalculated }: LiquidezSi
                       </CardContent>
                     </Card>
 
-                    {/* Recebimento Líquido */}
+                    {/* Valor Antecipado Líquido */}
                     <Card className="border-2 border-vivant-green bg-gradient-to-br from-vivant-green/10 to-emerald-50">
                       <CardContent className="pt-6">
                         <div className="flex items-center gap-2 mb-2">
                           <CheckCircle2 className="w-5 h-5 text-vivant-green" />
                           <span className="text-sm font-medium text-slate-700">
-                            Recebimento Líquido
+                            Valor Antecipado Líquido
                           </span>
                         </div>
                         <div className="text-3xl font-bold text-vivant-green">
@@ -370,7 +370,7 @@ export function LiquidezSimulator({ analysis, onLiquidezCalculated }: LiquidezSi
                     📊 Resultado Total com Venda Antecipada
                   </h4>
                   <p className="text-sm text-slate-600 mb-4">
-                    Análise completa considerando o que já recebeu + valor da venda à vista
+                    Recebido até o mês da simulação (parcelas + balões) + valor antecipado líquido
                   </p>
                   
                   <div className="grid md:grid-cols-4 gap-4">
@@ -380,7 +380,7 @@ export function LiquidezSimulator({ analysis, onLiquidezCalculated }: LiquidezSi
                         <p className="text-xl font-bold text-vivant-green mt-1">
                           {result.totalRecebidoComVenda}
                         </p>
-                        <span className="text-xs text-slate-500">Recebido + Venda</span>
+                        <span className="text-xs text-slate-500">Até o mês + antecipado</span>
                       </CardContent>
                     </Card>
 
@@ -434,7 +434,7 @@ export function LiquidezSimulator({ analysis, onLiquidezCalculated }: LiquidezSi
                       <span className="font-semibold text-vivant-navy">{result.recebidoAteOMomento}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b-2 border-slate-300">
-                      <span className="text-slate-600">➕ Venda à vista dos recebíveis:</span>
+                      <span className="text-slate-600">➕ Valor antecipado líquido:</span>
                       <span className="font-semibold text-vivant-green">{result.valorVendaVista}</span>
                     </div>
                     <div className="flex justify-between items-center py-3 bg-emerald-50 -mx-5 px-5 mt-2">

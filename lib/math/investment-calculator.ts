@@ -334,6 +334,30 @@ export function calculateInvestmentAnalysis(
 }
 
 /**
+ * Soma parcelas mensais + balões anuais recebidos até o fim do mês informado (1–60).
+ * Alinha com o fluxo de `calculateInvestmentAnalysis` (balão no fim de cada ano civil do cronograma).
+ */
+function sumRecebidoAteMesInclusive(
+  analysis: InvestmentAnalysis,
+  mesAtual: number
+): number {
+  let total = 0;
+  const ate = Math.min(
+    Math.max(0, mesAtual),
+    analysis.carteirasMensais.length
+  );
+  for (let i = 0; i < ate; i++) {
+    total += analysis.carteirasMensais[i].parcela;
+    const mesNum = i + 1;
+    if (mesNum % 12 === 0) {
+      const ano = mesNum / 12;
+      total += analysis.carteirasAnuais[ano - 1].totalBalao;
+    }
+  }
+  return total;
+}
+
+/**
  * Simula a liquidez antecipada (venda de recebíveis)
  */
 export function simulateLiquidez(
@@ -376,16 +400,34 @@ export function simulateLiquidez(
   
   const descontoAplicado = totalFluxoFuturo - valorPresente;
 
-  // Recebido até o mês atual (parcelas já pagas)
-  let recebidoAteOMomento = 0;
-  for (let i = 0; i < mesAtual && i < analysis.carteirasMensais.length; i++) {
-    recebidoAteOMomento += analysis.carteirasMensais[i].parcela;
-  }
+  // Recebido até o mês da simulação: parcelas + balões (ex.: meses 12, 24, …)
+  const recebidoAteOMomento = sumRecebidoAteMesInclusive(analysis, mesAtual);
   const totalRecebidoNum = recebidoAteOMomento + valorPresente;
+
   const valorInvestidoNum = parseCurrencyPtBr(analysis.valorInvestido);
   const lucroTotal = valorInvestidoNum > 0 ? totalRecebidoNum - valorInvestidoNum : 0;
   const roiTotal = valorInvestidoNum > 0 ? (lucroTotal / valorInvestidoNum) * 100 : 0;
   const percentualConcluido = Math.round((mesAtual / 60) * 100);
+
+  // TIR do cenário com saída antecipada (não reutilizar a TIR do investimento até o mês 60)
+  const cashFlowsLiquidez: number[] = [-valorInvestidoNum];
+  for (let m = 1; m <= mesAtual; m++) {
+    let fluxoMes = analysis.carteirasMensais[m - 1].parcela;
+    if (m % 12 === 0) {
+      fluxoMes += analysis.carteirasAnuais[m / 12 - 1].totalBalao;
+    }
+    if (m === mesAtual) {
+      fluxoMes += valorPresente;
+    }
+    cashFlowsLiquidez.push(fluxoMes);
+  }
+  let tirTotalComVendaStr = "—";
+  const tirMensalLiquidez = calculateIRR(cashFlowsLiquidez);
+  if (Number.isFinite(tirMensalLiquidez)) {
+    const tirAnualLiquidez = Math.pow(1 + tirMensalLiquidez, 12) - 1;
+    tirTotalComVendaStr = `${(tirAnualLiquidez * 100).toFixed(2)}% a.a.`;
+  }
+
   return {
     valorVendaVista: formatCurrency(valorPresente),
     descontoAplicado: formatCurrency(descontoAplicado),
@@ -396,9 +438,9 @@ export function simulateLiquidez(
     recebidoAteOMomento: formatCurrency(recebidoAteOMomento),
     totalRecebidoComVenda: formatCurrency(totalRecebidoNum),
     lucroTotalComVenda: formatCurrency(lucroTotal),
-    roiTotalComVenda: `${roiTotal.toFixed(1)}%`,
-    tirTotalComVenda: analysis.tir ?? "—",
-    rentabilidadeTotalComVenda: `${roiTotal.toFixed(1)}%`,
+    roiTotalComVenda: `${roiTotal.toFixed(2)}%`,
+    tirTotalComVenda: tirTotalComVendaStr,
+    rentabilidadeTotalComVenda: `${roiTotal.toFixed(2)}%`,
   };
 }
 
