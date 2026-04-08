@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Navbar } from "@/components/marketing/navbar";
 import { Footer } from "@/components/marketing/footer";
+import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 import { ValidationTimeline } from "@/components/marketing/validation-timeline";
 import { PartnerLeadForm } from "@/components/marketing/partner-lead-form";
 import { Building2, TrendingUp, Shield, Zap, XCircle, CheckCircle2, ArrowRight, DollarSign } from "lucide-react";
@@ -48,7 +49,7 @@ export function ParceirosStepsClient(): JSX.Element {
           </div>
         </div>
         <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-2 sm:pt-4">
-          <div className="max-w-4xl mx-auto">
+          <ScrollReveal className="max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-vivant-gold/20 backdrop-blur-sm border border-vivant-gold/40 rounded-full px-4 sm:px-6 py-2 sm:py-3 mb-6 sm:mb-8">
               <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-vivant-gold" />
               <span className="text-vivant-gold text-base sm:text-xl font-semibold">Vivant Partners</span>
@@ -56,7 +57,7 @@ export function ParceirosStepsClient(): JSX.Element {
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
               Transforme sua Casa de Férias em um Ativo Líquido
             </h1>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-8 sm:mb-12 max-w-3xl mx-auto font-light px-2">
+            <p className="text-sm sm:text-base md:text-lg text-white/90 mb-8 sm:mb-12 max-w-3xl mx-auto font-light px-2">
               Teste de mercado sem risco. Zero custos iniciais. Validação em 60 dias.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
@@ -68,7 +69,7 @@ export function ParceirosStepsClient(): JSX.Element {
                 Como Funciona
               </Button>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 

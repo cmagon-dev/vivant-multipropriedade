@@ -168,7 +168,7 @@ export function DestinosClient({ destinations }: DestinosClientProps) {
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
               Nossos Destinos
             </h1>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-8 sm:mb-12 lg:mb-16 max-w-3xl mx-auto font-light px-2">
+            <p className="text-sm sm:text-base md:text-lg text-white/90 mb-8 sm:mb-12 lg:mb-16 max-w-3xl mx-auto font-light px-2">
               Conheça os paraísos selecionados pela Vivant. Múltiplas experiências, um único investimento.
             </p>
             

@@ -288,10 +288,10 @@ export function CasasClient({ properties }: CasasClientProps) {
 
         {/* Hero Content */}
         <ScrollReveal className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-2 sm:pt-4">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold text-white mb-6">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-6 leading-tight px-2">
             Nossas Casas
           </h1>
-          <p className="text-xl text-white/90 max-w-2xl mx-auto mb-8">
+          <p className="text-sm sm:text-base md:text-lg text-white/90 max-w-2xl mx-auto mb-8 font-light px-2">
             Descubra propriedades exclusivas em destinos paradisíacos.
             Multipropriedade inteligente com valorização garantida.
           </p>

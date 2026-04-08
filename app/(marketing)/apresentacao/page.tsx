@@ -33,6 +33,7 @@ import {
 import type { Metadata } from "next";
 import "./print-styles.css";
 import { PrintButton } from "@/components/marketing/print-button";
+import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 
 export const metadata: Metadata = {
   title: "Apresentação Vivant - Modelo de Negócio",
@@ -81,19 +82,19 @@ export default function ApresentacaoPage() {
         </div>
 
         <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center py-20">
-          <div className="max-w-5xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-8">
-              <Sparkles className="w-5 h-5 text-white" />
-              <span className="text-white text-xl font-light italic">
-                "A arte de viver bem"
+          <ScrollReveal className="max-w-5xl mx-auto">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 sm:px-6 py-2 sm:py-3 mb-6 sm:mb-8">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              <span className="text-white text-base sm:text-xl font-light italic">
+                &quot;A arte de viver bem&quot;
               </span>
             </div>
 
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-serif font-bold text-white mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-6 leading-tight px-2">
               Vivant Multipropriedade
             </h1>
 
-            <p className="text-2xl sm:text-3xl text-white/95 mb-8 font-light">
+            <p className="text-sm sm:text-base md:text-lg text-white/95 mb-8 font-light px-2">
               O Futuro do Investimento Imobiliário de Lazer
             </p>
 
@@ -102,7 +103,7 @@ export default function ApresentacaoPage() {
                 Apresentação completa do modelo de negócio para <strong>imobiliárias</strong> e <strong>fundos de investimento</strong>
               </p>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 

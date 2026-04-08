@@ -21,6 +21,7 @@ import {
   Settings,
   ArrowDownRight,
 } from "lucide-react";
+import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 
 const TOTAL_STEPS = 6;
 
@@ -58,7 +59,7 @@ export function SobreCapitalStepsClient(): JSX.Element {
         </div>
 
         <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-2 sm:pt-4">
-          <div className="max-w-4xl mx-auto">
+          <ScrollReveal className="max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-[#1A2F4B]/20 backdrop-blur-sm border border-[#1A2F4B]/40 rounded-full px-4 sm:px-6 py-2 sm:py-3 mb-4 sm:mb-6">
               <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               <span className="text-white text-base sm:text-xl font-semibold">Vivant Capital</span>
@@ -68,11 +69,11 @@ export function SobreCapitalStepsClient(): JSX.Element {
               Invista em Multipropriedade de Alto Padrão
             </h1>
 
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-2 sm:mb-3 max-w-3xl mx-auto font-light px-2">
+            <p className="text-sm sm:text-base md:text-lg text-white/90 mb-2 sm:mb-3 max-w-3xl mx-auto font-light px-2">
               Oportunidades exclusivas de investimento em imóveis fracionados com alta rentabilidade e segurança jurídica
             </p>
 
-            <p className="text-lg sm:text-xl md:text-2xl text-white font-semibold mb-6 sm:mb-8 max-w-3xl mx-auto px-2">
+            <p className="text-sm sm:text-base md:text-lg text-white font-semibold mb-6 sm:mb-8 max-w-3xl mx-auto px-2">
               Faça uma simulação:
             </p>
 
@@ -80,12 +81,12 @@ export function SobreCapitalStepsClient(): JSX.Element {
               <Button
                 asChild
                 size="lg"
-                className="bg-white text-[#1A2F4B] hover:bg-white/95 shadow-xl shadow-black/25 ring-2 ring-white/30 text-base sm:text-lg md:text-xl min-h-[52px] sm:min-h-[56px] h-auto py-4 sm:py-5 px-8 sm:px-12 font-bold"
+                className="bg-white text-[#1A2F4B] hover:bg-white/95 shadow-xl shadow-black/25 ring-2 ring-white/30 text-base sm:text-lg min-h-[52px] sm:min-h-[56px] h-auto py-4 sm:py-5 px-8 sm:px-12 font-bold"
               >
                 <Link href="/simulador-investimentos">Simulador de Investimentos</Link>
               </Button>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 

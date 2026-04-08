@@ -16,6 +16,7 @@ import type { InvestmentInputFormData } from "@/lib/validations/investment";
 import { generateInvestmentProposal } from "@/lib/utils/pdf-generator";
 import { Button } from "@/components/ui/button";
 import { Download, Info, ArrowRight } from "lucide-react";
+import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 
 export default function SimuladorInvestimentosPage(): JSX.Element {
   const [analysis, setAnalysis] = useState<InvestmentAnalysis | null>(null);
@@ -156,17 +157,17 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
         </div>
 
         <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white mb-4 sm:mb-6 leading-tight">
+          <ScrollReveal className="max-w-4xl mx-auto">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
               Simulador de Investimentos
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-white/90 mb-3 sm:mb-4 max-w-3xl mx-auto">
+            <p className="text-sm sm:text-base md:text-lg text-white/90 mb-3 sm:mb-4 max-w-3xl mx-auto font-light px-2">
               Ferramenta Profissional de Análise de Viabilidade Financeira
             </p>
-            <p className="text-sm sm:text-base text-white/70 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base md:text-lg text-white/70 max-w-2xl mx-auto px-2">
               Calcule TIR, ROI e fluxo de caixa completo do seu investimento em multipropriedade de alto padrão
             </p>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 

@@ -21,6 +21,7 @@ import {
   BarChart3,
   ArrowRight,
 } from "lucide-react";
+import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -55,7 +56,7 @@ export default function CarePage(): JSX.Element {
 
         {/* Hero Content */}
         <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8">
-          <div className="max-w-4xl mx-auto">
+          <ScrollReveal className="max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-vivant-green/20 backdrop-blur-sm border border-vivant-green/40 rounded-full px-4 sm:px-6 py-2 sm:py-3 mb-6 sm:mb-8">
               <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               <span className="text-white text-base sm:text-xl font-semibold">
@@ -67,7 +68,7 @@ export default function CarePage(): JSX.Element {
               Gestão Hoteleira de Excelência para Multipropriedades
             </h1>
 
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-8 sm:mb-12 max-w-3xl mx-auto font-light px-2">
+            <p className="text-sm sm:text-base md:text-lg text-white/90 mb-8 sm:mb-12 max-w-3xl mx-auto font-light px-2">
               Hospitalidade premium, manutenção preventiva e experiência inesquecível para cotistas Vivant
             </p>
 
@@ -118,7 +119,7 @@ export default function CarePage(): JSX.Element {
                 </p>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 
