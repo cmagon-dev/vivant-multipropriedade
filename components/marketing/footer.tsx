@@ -73,7 +73,7 @@ export function Footer(): JSX.Element {
               </li>
               <li>
                 <Link
-                  href="/sobre-capital"
+                  href="/capital"
                   className="text-white/60 hover:text-white transition-colors"
                 >
                   Vivant Capital

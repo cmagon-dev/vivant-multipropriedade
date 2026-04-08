@@ -124,7 +124,7 @@ export function DestinosClient({ destinations }: DestinosClientProps) {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36 pb-10 sm:pb-12 lg:pb-16">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 sm:pt-20">
         {/* Background Image Carousel with Overlay */}
         <div className="absolute inset-0 z-0">
           {heroImages.length > 0 ? (
@@ -163,7 +163,7 @@ export function DestinosClient({ destinations }: DestinosClientProps) {
         </div>
 
         {/* Hero Content */}
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-2 sm:pt-4">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
           <ScrollReveal className="max-w-4xl mx-auto">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
               Nossos Destinos

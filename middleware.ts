@@ -15,7 +15,6 @@ function isPublicPath(pathname: string): boolean {
     pathname === "/care" ||
     pathname === "/simulador-investimentos" ||
     pathname === "/apresentacao" ||
-    pathname === "/sobre-capital" ||
     pathname === "/403"
   ) {
     return true;

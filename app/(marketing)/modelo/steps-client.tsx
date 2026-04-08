@@ -69,7 +69,7 @@ export function ModeloStepsClient(): JSX.Element {
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col">
       <Navbar />
 
-      <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36 pb-10 sm:pb-12 lg:pb-16">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 sm:pt-20">
         <div
           className="absolute inset-0 z-0"
           style={{
@@ -81,7 +81,7 @@ export function ModeloStepsClient(): JSX.Element {
         >
           <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/70 via-[#1A2F4B]/50 via-[#1A2F4B]/25 to-[#F8F9FA]/60" />
         </div>
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-2 sm:pt-4">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
           <ScrollReveal className="max-w-4xl mx-auto">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-6 sm:mb-8 leading-tight px-2">
               O Modelo Vivant

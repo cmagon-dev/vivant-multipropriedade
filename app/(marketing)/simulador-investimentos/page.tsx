@@ -142,7 +142,7 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
       />
 
       {/* Hero Section */}
-      <section className="relative min-h-[50vh] sm:min-h-[55vh] flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36">
+      <section className="relative min-h-[50vh] sm:min-h-[55vh] flex items-center justify-center overflow-hidden pt-16 sm:pt-20">
         {/* Background Image with Overlay */}
         <div
           className="absolute inset-0 z-0"
@@ -156,7 +156,7 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
           <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/85 via-[#1A2F4B]/75 to-[#F8F9FA]" />
         </div>
 
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
           <ScrollReveal className="max-w-4xl mx-auto">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
               Simulador de Investimentos

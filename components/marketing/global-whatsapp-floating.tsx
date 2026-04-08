@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { WhatsAppButton } from "@/components/marketing/whatsapp-button";
 
-const PANEL_PREFIXES = ["/admin", "/dashboard", "/admin-portal", "/capital", "/cotista"];
+const PANEL_PREFIXES = ["/admin", "/dashboard", "/admin-portal", "/capital/", "/cotista"];
 
 export function GlobalWhatsAppFloating(): JSX.Element | null {
   const pathname = usePathname() ?? "/";

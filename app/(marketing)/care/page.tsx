@@ -40,7 +40,7 @@ export default function CarePage(): JSX.Element {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-32 sm:pt-36 lg:pt-40">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 sm:pt-20">
         {/* Background Image com Overlay */}
         <div
           className="absolute inset-0 z-0"
@@ -55,7 +55,7 @@ export default function CarePage(): JSX.Element {
         </div>
 
         {/* Hero Content */}
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
           <ScrollReveal className="max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-vivant-green/20 backdrop-blur-sm border border-vivant-green/40 rounded-full px-4 sm:px-6 py-2 sm:py-3 mb-6 sm:mb-8">
               <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-white" />

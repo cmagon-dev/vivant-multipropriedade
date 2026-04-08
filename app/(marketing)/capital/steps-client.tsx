@@ -67,7 +67,7 @@ export function SobreCapitalStepsClient(): JSX.Element {
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col">
       <Navbar />
 
-      <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36 pb-10 sm:pb-12 lg:pb-16">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 sm:pt-20">
         <div className="absolute inset-0 z-0 overflow-hidden">
           <div
             className="absolute -inset-[2.5%] z-0"
@@ -82,7 +82,7 @@ export function SobreCapitalStepsClient(): JSX.Element {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-2 sm:pt-4">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
           <ScrollReveal className="max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-[#1A2F4B]/20 backdrop-blur-sm border border-[#1A2F4B]/40 rounded-full px-4 sm:px-6 py-2 sm:py-3 mb-4 sm:mb-6">
               <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />

@@ -272,7 +272,7 @@ export function CasasClient({ properties }: CasasClientProps) {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36 pb-10 sm:pb-12 lg:pb-16">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 sm:pt-20">
         {/* Background Image with Overlay */}
         <div
           className="absolute inset-0 z-0"
@@ -287,7 +287,7 @@ export function CasasClient({ properties }: CasasClientProps) {
         </div>
 
         {/* Hero Content */}
-        <ScrollReveal className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-2 sm:pt-4">
+        <ScrollReveal className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-6 leading-tight px-2">
             Nossas Casas
           </h1>
@@ -296,7 +296,7 @@ export function CasasClient({ properties }: CasasClientProps) {
             Multipropriedade inteligente com valorização garantida.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 mt-12 sm:mt-16">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
             <Button
               asChild
               size="lg"
