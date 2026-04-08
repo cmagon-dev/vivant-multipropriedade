@@ -52,7 +52,7 @@ export default async function HomePage() {
       <WhatsAppButton />
 
       {/* Hero Section */}
-      <section className="relative min-h-[50vh] sm:min-h-[55vh] flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36">
+      <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36 pb-10 sm:pb-12 lg:pb-16">
         <div className="absolute inset-0 z-0">
           <Image
             src="/images/home-banner-vivant.png"
@@ -62,9 +62,9 @@ export default async function HomePage() {
             quality={100}
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/60 via-[#1A2F4B]/40 via-[#1A2F4B]/20 to-[#F8F9FA]/60" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/70 via-[#1A2F4B]/50 via-[#1A2F4B]/25 to-[#F8F9FA]/60" />
         </div>
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-2 sm:pt-4">
           <ScrollReveal className="max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 sm:px-6 py-2 sm:py-3 mb-6 sm:mb-8">
               <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white flex-shrink-0" />

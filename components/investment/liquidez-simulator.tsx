@@ -281,7 +281,7 @@ export function LiquidezSimulator({ analysis, onLiquidezCalculated }: LiquidezSi
               className="w-full bg-vivant-gold-muted hover:bg-vivant-gold-muted/90 text-white font-semibold"
             >
               <Zap className="w-5 h-5 mr-2" />
-              Calcular Valor de Venda à Vista
+              Calcular Valor de Antecipação dos Recebíveis
             </Button>
 
             {/* Resultado */}

@@ -44,19 +44,19 @@ export function ModeloStepsClient(): JSX.Element {
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col">
       <Navbar />
 
-      <section className="relative min-h-[50vh] sm:min-h-[55vh] flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36">
+      <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36 pb-10 sm:pb-12 lg:pb-16">
         <div
           className="absolute inset-0 z-0"
           style={{
             backgroundImage:
               "url('/images/modelo-vivant-banner.png')",
             backgroundSize: "cover",
-            backgroundPosition: "center 72%",
+            backgroundPosition: "center",
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/65 via-[#1A2F4B]/45 via-[#1A2F4B]/20 to-[#F8F9FA]/60" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/70 via-[#1A2F4B]/50 via-[#1A2F4B]/25 to-[#F8F9FA]/60" />
         </div>
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8 sm:pt-12">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-2 sm:pt-5">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold text-white mb-6 px-2">
             O Modelo Vivant
           </h1>

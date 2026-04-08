@@ -14,7 +14,6 @@ import {
   Target,
   BarChart3,
   Calculator,
-  ArrowRight,
   CheckCircle2,
   Building2,
   Wallet,
@@ -43,50 +42,47 @@ export function SobreCapitalStepsClient(): JSX.Element {
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col">
       <Navbar />
 
-      <section className="relative min-h-[50vh] sm:min-h-[55vh] flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36">
-        <div
-          className="absolute inset-0 z-0"
-          style={{
-            backgroundImage: "url('/images/sobre-capital-banner.png')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/80 via-[#1A2F4B]/70 to-[#F8F9FA]" />
+      <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36 pb-10 sm:pb-12 lg:pb-16">
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <div
+            className="absolute -inset-[2.5%] z-0"
+            style={{
+              backgroundImage: "url('/images/sobre-capital-banner.png')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/70 via-[#1A2F4B]/50 via-[#1A2F4B]/25 to-[#F8F9FA]/60" />
+          </div>
         </div>
 
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-2 sm:pt-4">
           <div className="max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-[#1A2F4B]/20 backdrop-blur-sm border border-[#1A2F4B]/40 rounded-full px-4 sm:px-6 py-2 sm:py-3 mb-6 sm:mb-8">
+            <div className="inline-flex items-center gap-2 bg-[#1A2F4B]/20 backdrop-blur-sm border border-[#1A2F4B]/40 rounded-full px-4 sm:px-6 py-2 sm:py-3 mb-4 sm:mb-6">
               <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               <span className="text-white text-base sm:text-xl font-semibold">Vivant Capital</span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-3 sm:mb-4 leading-tight px-2">
               Invista em Multipropriedade de Alto Padrão
             </h1>
 
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-8 sm:mb-12 max-w-3xl mx-auto font-light px-2">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-2 sm:mb-3 max-w-3xl mx-auto font-light px-2">
               Oportunidades exclusivas de investimento em imóveis fracionados com alta rentabilidade e segurança jurídica
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
-              <Button
-                size="lg"
-                className="bg-white text-[#1A2F4B] hover:bg-white/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
-                onClick={() => setStep(1)}
-              >
-                Como Funciona
-                <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
-              </Button>
+            <p className="text-lg sm:text-xl md:text-2xl text-white font-semibold mb-6 sm:mb-8 max-w-3xl mx-auto px-2">
+              Faça uma simulação:
+            </p>
 
+            <div className="flex justify-center px-4">
               <Button
                 asChild
                 size="lg"
-                variant="outline"
-                className="bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-[#1A2F4B] text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold"
+                className="bg-white text-[#1A2F4B] hover:bg-white/95 shadow-xl shadow-black/25 ring-2 ring-white/30 text-base sm:text-lg md:text-xl min-h-[52px] sm:min-h-[56px] h-auto py-4 sm:py-5 px-8 sm:px-12 font-bold"
               >
-                <Link href="/simulador-investimentos">Ver Simulador</Link>
+                <Link href="/simulador-investimentos">Simulador de Investimentos</Link>
               </Button>
             </div>
           </div>

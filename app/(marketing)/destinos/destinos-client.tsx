@@ -124,14 +124,16 @@ export function DestinosClient({ destinations }: DestinosClientProps) {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative min-h-[50vh] sm:min-h-[55vh] flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36">
+      <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36 pb-10 sm:pb-12 lg:pb-16">
         {/* Background Image Carousel with Overlay */}
         <div className="absolute inset-0 z-0">
           {heroImages.length > 0 ? (
             <div
-              className="absolute inset-0 bg-cover bg-center transition-all duration-1000"
+              className="absolute inset-0 transition-all duration-1000"
               style={{
                 backgroundImage: `url('${heroImages[heroImageIndex]?.image}')`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
               }}
             />
           ) : (
@@ -161,12 +163,12 @@ export function DestinosClient({ destinations }: DestinosClientProps) {
         </div>
 
         {/* Hero Content */}
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-2 sm:pt-4">
           <ScrollReveal className="max-w-4xl mx-auto">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
               Nossos Destinos
             </h1>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-16 sm:mb-24 lg:mb-32 max-w-3xl mx-auto font-light px-2">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-8 sm:mb-12 lg:mb-16 max-w-3xl mx-auto font-light px-2">
               Conheça os paraísos selecionados pela Vivant. Múltiplas experiências, um único investimento.
             </p>
             

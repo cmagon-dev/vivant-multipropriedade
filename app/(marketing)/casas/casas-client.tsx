@@ -272,7 +272,7 @@ export function CasasClient({ properties }: CasasClientProps) {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative min-h-[50vh] sm:min-h-[55vh] flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36">
+      <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-28 sm:pt-32 lg:pt-36 pb-10 sm:pb-12 lg:pb-16">
         {/* Background Image with Overlay */}
         <div
           className="absolute inset-0 z-0"
@@ -283,11 +283,11 @@ export function CasasClient({ properties }: CasasClientProps) {
             backgroundPosition: "center",
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/60 via-[#1A2F4B]/40 via-[#1A2F4B]/20 to-[#F8F9FA]/60" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/70 via-[#1A2F4B]/50 via-[#1A2F4B]/25 to-[#F8F9FA]/60" />
         </div>
 
         {/* Hero Content */}
-        <ScrollReveal className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-8">
+        <ScrollReveal className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-2 sm:pt-4">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold text-white mb-6">
             Nossas Casas
           </h1>
@@ -296,7 +296,7 @@ export function CasasClient({ properties }: CasasClientProps) {
             Multipropriedade inteligente com valorização garantida.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 mt-24 sm:mt-32">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 mt-12 sm:mt-16">
             <Button
               asChild
               size="lg"
