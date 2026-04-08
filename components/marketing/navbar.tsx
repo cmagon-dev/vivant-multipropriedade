@@ -75,6 +75,12 @@ export function Navbar(): JSX.Element {
             >
               Nossas Casas
             </Link>
+            <Link
+              href="/contato"
+              className="text-[#1A2F4B]/90 hover:text-[#1A2F4B] transition-colors font-semibold text-xs lg:text-sm text-center whitespace-nowrap uppercase tracking-[0.12em]"
+            >
+              Contato
+            </Link>
           </div>
 
           {/* Área da Direita: Ecossistema */}
@@ -168,6 +174,13 @@ export function Navbar(): JSX.Element {
                   onClick={handleLinkClick}
                 >
                   Nossas Casas
+                </Link>
+                <Link
+                  href="/contato"
+                  className="w-full text-center text-[#1A2F4B]/90 hover:bg-[#1A2F4B]/10 transition-colors font-semibold text-base py-3 px-4 rounded-lg uppercase tracking-[0.12em]"
+                  onClick={handleLinkClick}
+                >
+                  Contato
                 </Link>
               </nav>
 

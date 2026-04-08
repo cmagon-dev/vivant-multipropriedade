@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Navbar } from "@/components/marketing/navbar";
 import { Footer } from "@/components/marketing/footer";
 import { Mail, Phone, MapPin } from "lucide-react";
@@ -12,8 +13,21 @@ export default function ContatoPage() {
 
       <section className="pt-28 sm:pt-32 lg:pt-36 pb-10 bg-[#F8F9FA]">
         <div className="container mx-auto px-4 sm:px-6">
-          <ScrollReveal className="text-center mb-6">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-3">
+          <ScrollReveal className="text-center mb-10">
+            <Link
+              href="/captar"
+              className="inline-block bg-[#1A2F4B] text-white font-semibold text-sm sm:text-base uppercase tracking-widest px-8 py-4 rounded-lg shadow-md hover:bg-[#1A2F4B]/80 transition-all duration-300"
+            >
+              Entramos em Contato com Você
+            </Link>
+
+            <div className="flex items-center justify-center gap-4 my-6">
+              <div className="h-px w-16 bg-[#1A2F4B]/20" />
+              <span className="text-[#1A2F4B]/40 text-sm font-medium uppercase tracking-widest">ou</span>
+              <div className="h-px w-16 bg-[#1A2F4B]/20" />
+            </div>
+
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-[#1A2F4B]/60 mb-3">
               Conecte-se Conosco
             </h2>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-[#1A2F4B]/80 text-base sm:text-lg">
@@ -43,6 +57,7 @@ export default function ContatoPage() {
           </ScrollReveal>
 
           <div className="-mx-4 sm:-mx-6">
+
             <div className="relative w-full h-[72vh] min-h-[560px]">
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d29582.096789434486!2d-51.95827604999999!3d-23.425269599999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ecd0a40bc00f43%3A0x8cb91a5b371bd7b4!2zTWFyaW5nw6EsIFBSLCBCcmFzaWw!5e0!3m2!1sen!2sus!4v1676543210123!5m2!1sen!2sus"

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/marketing/navbar";
 import { Footer } from "@/components/marketing/footer";
+import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 
 const TOTAL_STEPS = 6;
 
@@ -56,24 +57,26 @@ export function ModeloStepsClient(): JSX.Element {
         >
           <div className="absolute inset-0 bg-gradient-to-b from-[#1A2F4B]/70 via-[#1A2F4B]/50 via-[#1A2F4B]/25 to-[#F8F9FA]/60" />
         </div>
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-2 sm:pt-5">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold text-white mb-6 px-2">
-            O Modelo Vivant
-          </h1>
-          <p className="text-lg sm:text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto mb-12 px-4">
-            Invista de forma inteligente e tenha acesso a múltiplas casas de veraneio em destinos exclusivos
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
-            <Button asChild size="lg" className="bg-white text-[#1A2F4B] hover:bg-white/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold">
-              <Link href="/captar">
-                Quero investir assim
-                <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" className="bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-[#1A2F4B] text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold">
-              <Link href="/casas">Ver Casas Disponíveis</Link>
-            </Button>
-          </div>
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center pt-2 sm:pt-4">
+          <ScrollReveal className="max-w-4xl mx-auto">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-6 sm:mb-8 leading-tight px-2">
+              O Modelo Vivant
+            </h1>
+            <p className="text-sm sm:text-base md:text-lg text-white/90 max-w-3xl mx-auto mb-8 sm:mb-12 px-4 font-light">
+              Invista de forma inteligente e tenha acesso a múltiplas casas de veraneio em destinos exclusivos
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+              <Button asChild size="lg" className="bg-white text-[#1A2F4B] hover:bg-white/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold">
+                <Link href="/captar">
+                  Quero investir assim
+                  <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" className="bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-[#1A2F4B] text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold">
+                <Link href="/casas">Ver Casas Disponíveis</Link>
+              </Button>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
@@ -468,6 +471,28 @@ export function ModeloStepsClient(): JSX.Element {
           </footer>
         </div>
       </div>
+
+      {/* CTA Final */}
+      <section className="py-16 lg:py-20 bg-gradient-to-br from-[#1A2F4B] to-[#2A4F6B]">
+        <ScrollReveal className="container mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-6 px-2">
+            O Modelo Vivant foi feito para você.
+          </h2>
+          <p className="text-base sm:text-lg text-white/85 mb-10 max-w-2xl mx-auto px-4">
+            Tenha sua casa de lazer em destinos exclusivos com custo inteligente, gestão profissional e segurança jurídica total. Fale com um de nossos especialistas.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Button asChild size="lg" className="bg-white text-[#1A2F4B] hover:bg-white/90 text-base sm:text-lg min-h-[52px] py-4 px-10 font-semibold">
+              <Link href="/captar">
+                Fale Conosco
+              </Link>
+            </Button>
+            <Button asChild size="lg" className="bg-transparent border-2 border-white text-white hover:bg-white/10 text-base sm:text-lg min-h-[52px] py-4 px-10 font-semibold">
+              <Link href="/casas">Ver Casas Disponíveis</Link>
+            </Button>
+          </div>
+        </ScrollReveal>
+      </section>
 
       <Footer />
     </div>
