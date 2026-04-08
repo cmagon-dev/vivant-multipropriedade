@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -13,17 +13,45 @@ import { ValidationTimeline } from "@/components/marketing/validation-timeline";
 import { PartnerLeadForm } from "@/components/marketing/partner-lead-form";
 import { Building2, TrendingUp, Shield, Zap, XCircle, CheckCircle2, ArrowRight, DollarSign } from "lucide-react";
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 5;
 
 export function ParceirosStepsClient(): JSX.Element {
   const [step, setStep] = useState(0);
   const router = useRouter();
   const progress = useMemo(() => ((step + 1) / TOTAL_STEPS) * 100, [step]);
+  const stepsSectionRef = useRef<HTMLDivElement>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
+  const shouldScroll = useRef(false);
+
+  useEffect(() => {
+    if (!shouldScroll.current) return;
+    shouldScroll.current = false;
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+    if (!stepsSectionRef.current) return;
+    const navbarHeight = window.innerWidth >= 640 ? 80 : 64;
+    const top = stepsSectionRef.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
+    window.scrollTo({ top, behavior: "smooth" });
+  }, [step]);
+
+  const goNext = () => {
+    shouldScroll.current = true;
+    setStep((s) => Math.min(TOTAL_STEPS - 1, s + 1));
+  };
+  const goPrev = () => {
+    shouldScroll.current = true;
+    setStep((s) => Math.max(0, s - 1));
+  };
+  const goToStep = (n: number) => {
+    shouldScroll.current = true;
+    setStep(n);
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") setStep((s) => Math.min(TOTAL_STEPS - 1, s + 1));
-      if (e.key === "ArrowLeft") setStep((s) => Math.max(0, s - 1));
+      if (e.key === "ArrowRight") goNext();
+      if (e.key === "ArrowLeft") goPrev();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -61,11 +89,11 @@ export function ParceirosStepsClient(): JSX.Element {
               Teste de mercado sem risco. Zero custos iniciais. Validação em 60 dias.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
-              <Button size="lg" className="bg-vivant-gold text-vivant-navy hover:bg-vivant-gold/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold" onClick={() => setStep(4)}>
+              <Button size="lg" className="bg-vivant-gold text-vivant-navy hover:bg-vivant-gold/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold" onClick={() => goToStep(4)}>
                 Avaliar meu Imóvel Agora
                 <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
-              <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-[#1A2F4B] text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold" onClick={() => setStep(1)}>
+              <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-[#1A2F4B] text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold" onClick={() => goToStep(1)}>
                 Como Funciona
               </Button>
             </div>
@@ -73,7 +101,7 @@ export function ParceirosStepsClient(): JSX.Element {
         </div>
       </section>
 
-      <div className="flex-1 overflow-hidden pt-6 sm:pt-8 lg:pt-10">
+      <div ref={stepsSectionRef} className="flex-1 overflow-hidden pt-6 sm:pt-8 lg:pt-10">
         <div className="h-full max-w-6xl mx-auto px-4 sm:px-6 pb-6 flex flex-col">
           <header className="shrink-0 border-b border-[#1A2F4B]/10 bg-white/90 rounded-t-xl">
             <div className="px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
@@ -91,7 +119,7 @@ export function ParceirosStepsClient(): JSX.Element {
           </header>
 
           <main className="flex-1 overflow-hidden bg-white">
-            <div className="h-full overflow-y-auto px-4 sm:px-6 py-8 sm:py-10">
+            <div ref={mainContentRef} className="h-full overflow-y-auto px-4 sm:px-6 py-8 sm:py-10">
               {step === 0 && (
                 <section className="py-2">
                   <div className="text-center mb-10 sm:mb-12">
@@ -399,39 +427,19 @@ export function ParceirosStepsClient(): JSX.Element {
                 </section>
               )}
 
-              {step === 5 && (
-                <section className="py-2 space-y-8">
-                  <div className="text-center mb-8">
-                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-4">Avalie seu Imóvel Gratuitamente</h2>
-                    <p className="text-lg sm:text-xl text-[#1A2F4B]/70 max-w-3xl mx-auto">Preencha o formulário e receba uma proposta personalizada em até 48 horas</p>
-                  </div>
-                  <PartnerLeadForm />
-
-                  <div className="py-10 lg:py-12 bg-gradient-to-br from-[#1A2F4B] to-[#2A4F6B] rounded-2xl">
-                    <div className="container mx-auto px-4 sm:px-6 text-center">
-                      <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-6 px-2">Conheça nossas propriedades disponíveis</h2>
-                      <p className="text-base sm:text-lg text-white/90 mb-8 max-w-2xl mx-auto px-4">Explore nossos destinos exclusivos e encontre a casa de férias ideal para você</p>
-                      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                        <Button asChild size="lg" className="bg-white text-[#1A2F4B] hover:bg-white/90 text-base sm:text-lg min-h-[48px] py-4 px-8 font-semibold"><Link href="/casas">Ver Casas Disponíveis</Link></Button>
-                        <Button asChild size="lg" variant="outline" className="bg-transparent border-2 border-white text-white hover:bg-white/10 text-base sm:text-lg min-h-[48px] py-4 px-8 font-semibold"><Link href="/contato">Fale Conosco</Link></Button>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              )}
             </div>
           </main>
 
           <footer className="shrink-0 border-t border-[#1A2F4B]/10 bg-white rounded-b-xl">
             <div className="px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-              <Button variant="outline" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0} className="min-h-[48px] px-6">Voltar</Button>
+              <Button variant="outline" onClick={goPrev} disabled={step === 0} className="min-h-[48px] px-6">Voltar</Button>
               <Button
                 onClick={() => {
                   if (step === TOTAL_STEPS - 1) {
                     router.push("/");
                     return;
                   }
-                  setStep((s) => Math.min(TOTAL_STEPS - 1, s + 1));
+                  goNext();
                 }}
                 className="min-h-[48px] px-8 bg-[#1A2F4B] hover:bg-[#1A2F4B]/90"
               >
@@ -441,6 +449,27 @@ export function ParceirosStepsClient(): JSX.Element {
           </footer>
         </div>
       </div>
+
+      <section className="py-16 lg:py-20 bg-[#F8F9FA]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#1A2F4B] mb-4">Avalie seu Imóvel Gratuitamente</h2>
+            <p className="text-lg sm:text-xl text-[#1A2F4B]/70 max-w-3xl mx-auto">Preencha o formulário e receba uma proposta personalizada em até 48 horas</p>
+          </div>
+          <PartnerLeadForm />
+        </div>
+      </section>
+
+      <section className="py-16 lg:py-20 bg-gradient-to-br from-[#1A2F4B] to-[#2A4F6B]">
+        <ScrollReveal className="container mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-6 px-2">Conheça nossas propriedades disponíveis</h2>
+          <p className="text-base sm:text-lg text-white/90 mb-8 max-w-2xl mx-auto px-4">Explore nossos destinos exclusivos e encontre a casa de férias ideal para você</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Button asChild size="lg" className="bg-white text-[#1A2F4B] hover:bg-white/90 text-base sm:text-lg min-h-[48px] py-4 px-8 font-semibold"><Link href="/casas">Ver Casas Disponíveis</Link></Button>
+            <Button asChild size="lg" variant="outline" className="bg-transparent border-2 border-white text-white hover:bg-white/10 text-base sm:text-lg min-h-[48px] py-4 px-8 font-semibold"><Link href="/contato">Fale Conosco</Link></Button>
+          </div>
+        </ScrollReveal>
+      </section>
 
       <Footer />
     </div>

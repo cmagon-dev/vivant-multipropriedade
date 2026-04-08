@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -29,11 +29,35 @@ export function SobreCapitalStepsClient(): JSX.Element {
   const [step, setStep] = useState(0);
   const router = useRouter();
   const progress = useMemo(() => ((step + 1) / TOTAL_STEPS) * 100, [step]);
+  const stepsSectionRef = useRef<HTMLDivElement>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
+  const shouldScroll = useRef(false);
+
+  useEffect(() => {
+    if (!shouldScroll.current) return;
+    shouldScroll.current = false;
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+    if (!stepsSectionRef.current) return;
+    const navbarHeight = window.innerWidth >= 640 ? 80 : 64;
+    const top = stepsSectionRef.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
+    window.scrollTo({ top, behavior: "smooth" });
+  }, [step]);
+
+  const goNext = () => {
+    shouldScroll.current = true;
+    setStep((s) => Math.min(TOTAL_STEPS - 1, s + 1));
+  };
+  const goPrev = () => {
+    shouldScroll.current = true;
+    setStep((s) => Math.max(0, s - 1));
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") setStep((s) => Math.min(TOTAL_STEPS - 1, s + 1));
-      if (e.key === "ArrowLeft") setStep((s) => Math.max(0, s - 1));
+      if (e.key === "ArrowRight") goNext();
+      if (e.key === "ArrowLeft") goPrev();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -90,7 +114,7 @@ export function SobreCapitalStepsClient(): JSX.Element {
         </div>
       </section>
 
-      <div className="flex-1 overflow-hidden pt-6 sm:pt-8 lg:pt-10">
+      <div ref={stepsSectionRef} className="flex-1 overflow-hidden pt-6 sm:pt-8 lg:pt-10">
         <div className="h-full max-w-6xl mx-auto px-4 sm:px-6 pb-6 flex flex-col">
           <header className="shrink-0 border-b border-[#1A2F4B]/10 bg-white/90 rounded-t-xl">
             <div className="px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
@@ -110,7 +134,7 @@ export function SobreCapitalStepsClient(): JSX.Element {
           </header>
 
           <main className="flex-1 overflow-hidden bg-white">
-            <div className="h-full overflow-y-auto px-4 sm:px-6 py-8 sm:py-10">
+            <div ref={mainContentRef} className="h-full overflow-y-auto px-4 sm:px-6 py-8 sm:py-10">
               {step === 0 && (
                 <section className="py-2">
                   <div className="text-center mb-10 sm:mb-12">
@@ -383,7 +407,7 @@ export function SobreCapitalStepsClient(): JSX.Element {
                           <p className="text-sm font-semibold text-[#1A2F4B]">
                             Rentabilidade para investidores:
                           </p>
-                          <p className="text-4xl font-bold text-vivant-green mt-1">
+                          <p className="text-2xl font-bold text-vivant-green mt-1">
                             IPCA + 12% a.a.
                           </p>
                           <p className="text-xs text-[#1A2F4B]/60 mt-1">
@@ -464,7 +488,7 @@ export function SobreCapitalStepsClient(): JSX.Element {
 
           <footer className="shrink-0 border-t border-[#1A2F4B]/10 bg-white rounded-b-xl">
             <div className="px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-              <Button variant="outline" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0} className="min-h-[48px] px-6">
+              <Button variant="outline" onClick={goPrev} disabled={step === 0} className="min-h-[48px] px-6">
                 Voltar
               </Button>
               <Button
@@ -473,7 +497,7 @@ export function SobreCapitalStepsClient(): JSX.Element {
                     router.push("/");
                     return;
                   }
-                  setStep((s) => Math.min(TOTAL_STEPS - 1, s + 1));
+                  goNext();
                 }}
                 className="min-h-[48px] px-8 bg-[#1A2F4B] hover:bg-[#1A2F4B]/90"
               >

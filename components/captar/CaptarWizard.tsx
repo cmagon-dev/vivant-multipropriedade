@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +58,21 @@ export function CaptarWizard({
   };
 
   const [step, setStep] = useState(presetType ? 2 : 1);
+  const wizardRef = useRef<HTMLDivElement>(null);
+  const shouldScroll = useRef(false);
+
+  useEffect(() => {
+    if (!shouldScroll.current) return;
+    shouldScroll.current = false;
+    if (!wizardRef.current) return;
+    const top = wizardRef.current.getBoundingClientRect().top + window.scrollY - 16;
+    window.scrollTo({ top, behavior: "smooth" });
+  }, [step]);
+
+  const goToStep = (n: number) => {
+    shouldScroll.current = true;
+    setStep(n);
+  };
   const [leadTypeKey, setLeadTypeKey] = useState<"IMOVEL" | "INVESTIDOR" | "COTISTA" | "MODELO" | null>(presetType ?? null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -146,44 +161,44 @@ export function CaptarWizard({
   }
 
   const wizardContent = (
-    <div className="w-full max-w-lg mx-auto">
-        <div className="mb-8">
-          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+    <div ref={wizardRef} className="w-full max-w-lg mx-auto">
+        <div className="mb-4">
+          <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
             <div
               className="h-full bg-vivant-navy transition-all duration-300"
               style={{ width: `${(step / 3) * 100}%` }}
             />
           </div>
-          <p className="text-sm text-gray-500 mt-2 text-center">
+          <p className="text-xs text-gray-500 mt-1 text-center">
             Etapa {step} de 3
           </p>
         </div>
 
         {step === 1 && (
-          <div className="space-y-6">
-            <h1 className="text-xl font-bold text-center text-gray-900">Como podemos te ajudar?</h1>
-            <p className="text-center text-gray-600 text-sm">Escolha uma opção para continuar.</p>
-            <div className="grid gap-3">
+          <div className="space-y-3">
+            <h1 className="text-lg font-bold text-center text-gray-900">Como podemos te ajudar?</h1>
+            <p className="text-center text-gray-600 text-xs">Escolha uma opção para continuar.</p>
+            <div className="grid gap-2">
               {TIPOS.map((t) => (
                 <button
                   key={t.key}
                   type="button"
                   onClick={() => setLeadTypeKey(t.key)}
-                  className={`flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all ${
+                  className={`flex items-center gap-3 p-2.5 rounded-xl border-2 text-left transition-all ${
                     leadTypeKey === t.key
                       ? "border-vivant-navy bg-vivant-navy/5"
                       : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
-                  <t.icon className="w-8 h-8 text-vivant-navy flex-shrink-0" />
-                  <span className="font-medium text-gray-900">{t.label}</span>
+                  <t.icon className="w-6 h-6 text-vivant-navy flex-shrink-0" />
+                  <span className="font-medium text-gray-900 text-sm">{t.label}</span>
                 </button>
               ))}
             </div>
             <Button
-              className="w-full h-12 text-base"
+              className="w-full h-10 text-sm"
               disabled={!leadTypeKey}
-              onClick={() => setStep(2)}
+              onClick={() => goToStep(2)}
             >
               Continuar
             </Button>
@@ -191,57 +206,57 @@ export function CaptarWizard({
         )}
 
         {step === 2 && (
-          <div className="space-y-4">
-            <h1 className="text-xl font-bold text-gray-900">Seus dados</h1>
+          <div className="space-y-3">
+            <h1 className="text-lg font-bold text-gray-900">Seus dados</h1>
             <div>
-              <Label htmlFor="name">Nome *</Label>
+              <Label className="text-xs" htmlFor="name">Nome *</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Seu nome completo"
-                className="mt-1 h-11"
+                className="mt-1 h-9 text-sm"
               />
-              {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
+              {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name}</p>}
             </div>
             <div>
-              <Label htmlFor="phone">WhatsApp *</Label>
+              <Label className="text-xs" htmlFor="phone">WhatsApp *</Label>
               <Input
                 id="phone"
                 value={phone}
                 onChange={(e) => setPhone(maskPhone(e.target.value))}
                 placeholder="(11) 99999-9999"
-                className="mt-1 h-11"
+                className="mt-1 h-9 text-sm"
               />
-              {errors.phone && <p className="text-sm text-red-600 mt-1">{errors.phone}</p>}
+              {errors.phone && <p className="text-xs text-red-600 mt-1">{errors.phone}</p>}
             </div>
             <div>
-              <Label htmlFor="email">E-mail *</Label>
+              <Label className="text-xs" htmlFor="email">E-mail *</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                className="mt-1 h-11"
+                className="mt-1 h-9 text-sm"
               />
-              {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
+              {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
             </div>
             <div>
-              <Label htmlFor="city">Cidade *</Label>
+              <Label className="text-xs" htmlFor="city">Cidade *</Label>
               <Input
                 id="city"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="Sua cidade"
-                className="mt-1 h-11"
+                className="mt-1 h-9 text-sm"
               />
-              {errors.city && <p className="text-sm text-red-600 mt-1">{errors.city}</p>}
+              {errors.city && <p className="text-xs text-red-600 mt-1">{errors.city}</p>}
             </div>
             <div>
-              <Label>Como conheceu a Vivant?</Label>
+              <Label className="text-xs">Como conheceu a Vivant?</Label>
               <Select value={origin || "_"} onValueChange={(v) => setOrigin(v === "_" ? "" : v)}>
-                <SelectTrigger className="mt-1 h-11">
+                <SelectTrigger className="mt-1 h-9 text-sm">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
@@ -253,14 +268,14 @@ export function CaptarWizard({
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex gap-3 pt-2">
-              <Button variant="outline" className="flex-1 h-12" onClick={() => setStep(1)}>
+            <div className="flex gap-3 pt-1">
+              <Button variant="outline" className="flex-1 h-9 text-sm" onClick={() => goToStep(1)}>
                 Voltar
               </Button>
               <Button
-                className="flex-1 h-12"
+                className="flex-1 h-9 text-sm"
                 onClick={() => {
-                  if (validateStep2()) setStep(3);
+                  if (validateStep2()) goToStep(3);
                 }}
               >
                 Continuar
@@ -270,36 +285,35 @@ export function CaptarWizard({
         )}
 
         {step === 3 && (
-          <div className="space-y-4">
-            <h1 className="text-xl font-bold text-gray-900">Conte um pouco mais</h1>
+          <div className="space-y-3">
+            <h1 className="text-lg font-bold text-gray-900">Conte um pouco mais</h1>
             <div>
-              <Label htmlFor="message">O que você precisa? *</Label>
+              <Label className="text-xs" htmlFor="message">O que você precisa? *</Label>
               <Textarea
                 id="message"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder={currentType ? PLACEHOLDERS[currentType] : "Descreva brevemente..."
-                }
-                className="mt-1 min-h-[120px]"
+                placeholder={currentType ? PLACEHOLDERS[currentType] : "Descreva brevemente..."}
+                className="mt-1 min-h-[100px] text-sm"
                 maxLength={500}
               />
               <p className="text-xs text-gray-500 mt-1">{message.length}/500</p>
-              {errors.message && <p className="text-sm text-red-600 mt-1">{errors.message}</p>}
+              {errors.message && <p className="text-xs text-red-600 mt-1">{errors.message}</p>}
             </div>
             <label className="flex items-start gap-3 cursor-pointer">
-              <Checkbox checked={lgpd} onCheckedChange={(c) => setLgpd(!!c)} className="mt-1" />
-              <span className="text-sm text-gray-700">
+              <Checkbox checked={lgpd} onCheckedChange={(c) => setLgpd(!!c)} className="mt-0.5" />
+              <span className="text-xs text-gray-700">
                 Concordo em receber contato da Vivant pelo WhatsApp e e-mail. *
               </span>
             </label>
-            {errors.lgpd && <p className="text-sm text-red-600">{errors.lgpd}</p>}
-            {errors.submit && <p className="text-sm text-red-600">{errors.submit}</p>}
-            <div className="flex gap-3 pt-2">
-              <Button variant="outline" className="flex-1 h-12" onClick={() => setStep(2)}>
+            {errors.lgpd && <p className="text-xs text-red-600">{errors.lgpd}</p>}
+            {errors.submit && <p className="text-xs text-red-600">{errors.submit}</p>}
+            <div className="flex gap-3 pt-1">
+              <Button variant="outline" className="flex-1 h-9 text-sm" onClick={() => goToStep(2)}>
                 Voltar
               </Button>
               <Button
-                className="flex-1 h-12 text-base"
+                className="flex-1 h-9 text-sm"
                 disabled={loading}
                 onClick={handleSubmit}
               >

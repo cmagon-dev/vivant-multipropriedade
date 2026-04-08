@@ -65,7 +65,7 @@ export default function CarePage(): JSX.Element {
             </div>
 
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
-              Gestão Hoteleira de Excelência para Multipropriedades
+              Serviços de Excelência para Clientes Vivant
             </h1>
 
             <p className="text-sm sm:text-base md:text-lg text-white/90 mb-8 sm:mb-12 max-w-3xl mx-auto font-light px-2">

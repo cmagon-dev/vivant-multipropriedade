@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Card,
   CardContent,
@@ -29,11 +29,35 @@ const TOTAL_STEPS = 6;
 
 export function ModeloStepsClient(): JSX.Element {
   const [step, setStep] = useState(0);
+  const stepsSectionRef = useRef<HTMLDivElement>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
+  const shouldScroll = useRef(false);
+
+  useEffect(() => {
+    if (!shouldScroll.current) return;
+    shouldScroll.current = false;
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+    if (!stepsSectionRef.current) return;
+    const navbarHeight = window.innerWidth >= 640 ? 80 : 64;
+    const top = stepsSectionRef.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
+    window.scrollTo({ top, behavior: "smooth" });
+  }, [step]);
+
+  const goNext = () => {
+    shouldScroll.current = true;
+    setStep((s) => Math.min(TOTAL_STEPS - 1, s + 1));
+  };
+  const goPrev = () => {
+    shouldScroll.current = true;
+    setStep((s) => Math.max(0, s - 1));
+  };
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "ArrowRight") setStep((s) => Math.min(TOTAL_STEPS - 1, s + 1));
-      if (event.key === "ArrowLeft") setStep((s) => Math.max(0, s - 1));
+      if (event.key === "ArrowRight") goNext();
+      if (event.key === "ArrowLeft") goPrev();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -80,7 +104,7 @@ export function ModeloStepsClient(): JSX.Element {
         </div>
       </section>
 
-      <div className="flex-1 overflow-hidden pt-6 sm:pt-8 lg:pt-10">
+      <div ref={stepsSectionRef} className="flex-1 overflow-hidden pt-6 sm:pt-8 lg:pt-10">
         <div className="h-full max-w-6xl mx-auto px-4 sm:px-6 pb-6 flex flex-col">
           <header className="shrink-0 border-b border-[#1A2F4B]/10 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80 rounded-t-xl">
             <div className="px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
@@ -100,7 +124,7 @@ export function ModeloStepsClient(): JSX.Element {
           </header>
 
           <main className="flex-1 overflow-hidden bg-white">
-            <div className="h-full overflow-y-auto">
+            <div ref={mainContentRef} className="h-full overflow-y-auto">
               <div className="px-4 sm:px-6 py-8 sm:py-10">
             {step === 0 && (
               <div className="space-y-10">
@@ -461,10 +485,10 @@ export function ModeloStepsClient(): JSX.Element {
 
           <footer className="shrink-0 border-t border-[#1A2F4B]/10 bg-white rounded-b-xl">
             <div className="px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-              <Button variant="outline" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0} className="min-h-[48px] px-6">
+              <Button variant="outline" onClick={goPrev} disabled={step === 0} className="min-h-[48px] px-6">
                 Voltar
               </Button>
-              <Button onClick={() => setStep((s) => Math.min(TOTAL_STEPS - 1, s + 1))} disabled={step === TOTAL_STEPS - 1} className="min-h-[48px] px-8 bg-[#1A2F4B] hover:bg-[#1A2F4B]/90">
+              <Button onClick={goNext} disabled={step === TOTAL_STEPS - 1} className="min-h-[48px] px-8 bg-[#1A2F4B] hover:bg-[#1A2F4B]/90">
                 Continuar
               </Button>
             </div>
