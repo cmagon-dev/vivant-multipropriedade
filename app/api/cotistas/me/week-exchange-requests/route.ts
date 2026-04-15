@@ -43,8 +43,8 @@ export async function POST(request: NextRequest) {
     const {
       propertyId,
       cotaId,
-      ownedPropertyWeekId,
-      desiredPropertyWeekId,
+      ownedCalendarWeekId,
+      desiredCalendarWeekId,
       desiredPeriodStart,
       desiredPeriodEnd,
       acceptsAlternatives,
@@ -53,16 +53,24 @@ export async function POST(request: NextRequest) {
       expiresAt,
     } = body as Record<string, unknown>;
 
+    const ownedId =
+      (ownedCalendarWeekId as string) ||
+      (body as { ownedPropertyWeekId?: string }).ownedPropertyWeekId;
+
+    const desiredId =
+      (desiredCalendarWeekId as string | undefined) ||
+      (body as { desiredPropertyWeekId?: string }).desiredPropertyWeekId;
+
     if (
       !propertyId ||
       typeof propertyId !== "string" ||
       !cotaId ||
       typeof cotaId !== "string" ||
-      !ownedPropertyWeekId ||
-      typeof ownedPropertyWeekId !== "string"
+      !ownedId ||
+      typeof ownedId !== "string"
     ) {
       return NextResponse.json(
-        { error: "propertyId, cotaId e ownedPropertyWeekId são obrigatórios" },
+        { error: "propertyId, cotaId e ownedCalendarWeekId são obrigatórios" },
         { status: 400 }
       );
     }
@@ -82,17 +90,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const owned = await prisma.propertyWeek.findFirst({
-      where: { id: ownedPropertyWeekId, propertyId },
+    const owned = await prisma.propertyCalendarWeek.findFirst({
+      where: {
+        id: ownedId,
+        calendarYear: { propertyId, status: "PUBLISHED" },
+      },
     });
     if (!owned) {
       return NextResponse.json(
-        { error: "Semana de origem não encontrada nesta propriedade" },
+        { error: "Semana de origem não encontrada ou calendário não publicado" },
         { status: 400 }
       );
     }
 
-    if (owned.isBlocked || !owned.isExchangeAllowed) {
+    if (owned.isBlocked || !owned.exchangeAllowed) {
       return NextResponse.json(
         { error: "Esta semana não está disponível para troca" },
         { status: 400 }
@@ -100,9 +111,12 @@ export async function POST(request: NextRequest) {
     }
 
     let desired: { id: string } | null = null;
-    if (desiredPropertyWeekId && typeof desiredPropertyWeekId === "string") {
-      desired = await prisma.propertyWeek.findFirst({
-        where: { id: desiredPropertyWeekId, propertyId },
+    if (desiredId && typeof desiredId === "string") {
+      desired = await prisma.propertyCalendarWeek.findFirst({
+        where: {
+          id: desiredId,
+          calendarYear: { propertyId },
+        },
         select: { id: true },
       });
       if (!desired) {
@@ -113,12 +127,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const cyclesCount = await prisma.propertyAllocationCycle.count({
-      where: { propertyId },
+    const slotsCount = await prisma.calendarDistributionSlot.count({
+      where: { calendarYear: { propertyId } },
     });
-    if (cyclesCount > 0) {
-      const hasAlloc = await prisma.propertyWeekAllocation.findFirst({
-        where: { cotaId, propertyWeekId: ownedPropertyWeekId },
+    if (slotsCount > 0) {
+      const hasAlloc = await prisma.propertyWeekAssignment.findFirst({
+        where: { cotaId, propertyCalendarWeekId: ownedId },
       });
       if (!hasAlloc) {
         return NextResponse.json(
@@ -141,8 +155,8 @@ export async function POST(request: NextRequest) {
         propertyId,
         cotistaId: auth.cotistaId,
         cotaId,
-        ownedPropertyWeekId,
-        desiredPropertyWeekId: desired?.id ?? null,
+        ownedCalendarWeekId: ownedId,
+        desiredCalendarWeekId: desired?.id ?? null,
         desiredPeriodStart:
           desiredPeriodStart && typeof desiredPeriodStart === "string"
             ? new Date(desiredPeriodStart)
@@ -181,7 +195,7 @@ export async function POST(request: NextRequest) {
         propertyId,
         tipo: "TROCA_SOLICITACAO",
         titulo: "Solicitação de troca registrada",
-        mensagem: `Sua solicitação para a semana ${owned.label ?? owned.weekIndex} foi recebida e será analisada pela administração. Nenhuma troca é automática.`,
+        mensagem: `Sua solicitação para a semana ${owned.description ?? owned.weekIndex} foi recebida e será analisada pela administração. Nenhuma troca é automática.`,
         url: "/dashboard/solicitacoes-trocas",
       },
     });

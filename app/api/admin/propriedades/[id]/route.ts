@@ -36,7 +36,7 @@ export async function GET(
             },
             _count: {
               select: {
-                reservas: true,
+                weekReservations: true,
                 cobrancas: true,
               },
             },

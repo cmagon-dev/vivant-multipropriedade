@@ -39,9 +39,14 @@ export async function GET(
             cotista: {
               select: { id: true, name: true, email: true },
             },
-            reservas: {
-              where: { ano },
-              orderBy: { numeroSemana: "asc" },
+            weekReservations: {
+              where: {
+                calendarWeek: {
+                  calendarYear: { year: ano },
+                },
+              },
+              include: { calendarWeek: true },
+              orderBy: { createdAt: "asc" },
             },
           },
         },
@@ -55,16 +60,20 @@ export async function GET(
       );
     }
 
-    const [propertyWeeks, cycle] = await Promise.all([
-      prisma.propertyWeek.findMany({
-        where: { propertyId, year: ano },
-        orderBy: { weekIndex: "asc" },
-      }),
-      prisma.propertyAllocationCycle.findFirst({
-        where: { propertyId, yearRef: ano },
+    const calYear = await prisma.propertyCalendarYear.findUnique({
+      where: { propertyId_year: { propertyId, year: ano } },
+      include: {
+        weeks: { orderBy: { weekIndex: "asc" } },
+      },
+    });
+
+    const slot =
+      calYear &&
+      (await prisma.calendarDistributionSlot.findFirst({
+        where: { propertyCalendarYearId: calYear.id },
         orderBy: { createdAt: "desc" },
         include: {
-          allocations: {
+          assignments: {
             include: {
               cota: {
                 include: {
@@ -74,24 +83,19 @@ export async function GET(
             },
           },
         },
-      }),
-    ]);
+      }));
 
     const allocByWeekId = new Map(
-      (cycle?.allocations ?? []).map((a) => [a.propertyWeekId, a])
+      (slot?.assignments ?? []).map((a) => [a.propertyCalendarWeekId, a])
     );
 
-    const cotasComDireitoLegacy = (semana: number) => {
-      return propriedade.cotas.filter((cota) => {
-        const config = cota.semanasConfig as { weeks?: number[] } | null;
-        if (config && Array.isArray(config.weeks)) {
-          return config.weeks.includes(semana);
-        }
-        return false;
-      });
-    };
+    const propertyWeeks = calYear?.weeks ?? [];
 
-    const buildSlot = (semana: number, pw: (typeof propertyWeeks)[0] | null) => {
+    const buildSlot = (
+      pw: (typeof propertyWeeks)[0] | null
+    ) => {
+      if (!pw) return null;
+
       let reservaInfo: {
         id: string;
         status: string;
@@ -106,14 +110,16 @@ export async function GET(
       } | null = null;
 
       for (const cota of propriedade.cotas) {
-        const reserva = cota.reservas.find((r) => r.numeroSemana === semana);
-        if (reserva) {
+        const res = cota.weekReservations.find(
+          (r) => r.propertyCalendarWeekId === pw.id
+        );
+        if (res) {
           reservaInfo = {
-            id: reserva.id,
-            status: reserva.status,
-            dataInicio: reserva.dataInicio.toISOString(),
-            dataFim: reserva.dataFim.toISOString(),
-            confirmadoEm: reserva.confirmadoEm?.toISOString() ?? null,
+            id: res.id,
+            status: res.status,
+            dataInicio: res.calendarWeek.startDate.toISOString(),
+            dataFim: res.calendarWeek.endDate.toISOString(),
+            confirmadoEm: res.confirmadoEm?.toISOString() ?? null,
           };
           cotaReserva = {
             id: cota.id,
@@ -124,7 +130,7 @@ export async function GET(
         }
       }
 
-      const alloc = pw ? allocByWeekId.get(pw.id) : undefined;
+      const alloc = allocByWeekId.get(pw.id);
       const cotaAlocacao = alloc
         ? {
             id: alloc.cota.id,
@@ -140,42 +146,30 @@ export async function GET(
           ? "ALOCACAO"
           : null;
 
-      const direito = cotasComDireitoLegacy(semana);
-
       return {
-        semana,
-        propertyWeek: pw
-          ? {
-              id: pw.id,
-              label: pw.label,
-              weekIndex: pw.weekIndex,
-              startDate: pw.startDate.toISOString(),
-              endDate: pw.endDate.toISOString(),
-              isBlocked: pw.isBlocked,
-              seasonType: pw.seasonType,
-            }
-          : null,
+        semana: pw.weekIndex,
+        propertyWeek: {
+          id: pw.id,
+          description: pw.description,
+          weekIndex: pw.weekIndex,
+          startDate: pw.startDate.toISOString(),
+          endDate: pw.endDate.toISOString(),
+          isBlocked: pw.isBlocked,
+          officialWeekType: pw.officialWeekType,
+          tier: pw.tier,
+          isExtra: pw.isExtra,
+        },
         reserva: reservaInfo,
         cota: cotaExibicao,
         origemCota,
         disponivel: !reservaInfo && !cotaAlocacao,
-        cotasComDireito: direito.map((c) => ({
-          id: c.id,
-          numeroCota: c.numeroCota,
-          cotista: c.cotista,
-        })),
       };
     };
 
-    let calendario: ReturnType<typeof buildSlot>[];
+    let calendario: NonNullable<ReturnType<typeof buildSlot>>[] = [];
 
     if (propertyWeeks.length > 0) {
-      calendario = propertyWeeks.map((pw) => buildSlot(pw.weekIndex, pw));
-    } else {
-      calendario = [];
-      for (let semana = 1; semana <= 52; semana++) {
-        calendario.push(buildSlot(semana, null));
-      }
+      calendario = propertyWeeks.map((pw) => buildSlot(pw)!);
     }
 
     return NextResponse.json({

@@ -10,6 +10,7 @@ import {
   Bell,
   User,
   Building2,
+  Store,
 } from "lucide-react";
 
 export type CotistaNavItem = {
@@ -26,6 +27,12 @@ export const COTISTA_NAV_ITEMS: CotistaNavItem[] = [
   { href: "/dashboard/propriedades", label: "Minhas propriedades", icon: Building2 },
   { href: "/dashboard/calendario", label: "Calendário", icon: Calendar },
   { href: "/dashboard/financeiro", label: "Financeiro", icon: DollarSign },
+  {
+    href: "/dashboard/marketplace/oportunidades",
+    label: "Marketplace",
+    icon: Store,
+    activeWhenPathStartsWith: ["/dashboard/marketplace"],
+  },
   { href: "/dashboard/assembleias", label: "Assembleias", icon: Users },
   {
     href: "/dashboard/minhas-semanas",

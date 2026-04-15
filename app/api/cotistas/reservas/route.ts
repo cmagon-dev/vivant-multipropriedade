@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { requirePortalCotista } from "@/lib/auth/cotistaPortalSession";
 import { prisma } from "@/lib/prisma";
-import { getWeekInfo } from "@/lib/calendar-rotation";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,14 +12,25 @@ export async function POST(request: NextRequest) {
     const cotistaId = auth.cotistaId;
 
     const body = await request.json();
-    const { cotaId, ano, numeroSemana, observacoes } = body;
+    const { cotaId, propertyCalendarWeekId, observacoes } = body as {
+      cotaId?: string;
+      propertyCalendarWeekId?: string;
+      observacoes?: string;
+    };
+
+    if (!cotaId || !propertyCalendarWeekId) {
+      return NextResponse.json(
+        { error: "cotaId e propertyCalendarWeekId são obrigatórios" },
+        { status: 400 }
+      );
+    }
 
     const cota = await prisma.cotaPropriedade.findFirst({
       where: {
         id: cotaId,
         cotistaId,
-        ativo: true
-      }
+        ativo: true,
+      },
     });
 
     if (!cota) {
@@ -30,56 +40,86 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existingReserva = await prisma.reserva.findUnique({
+    const week = await prisma.propertyCalendarWeek.findFirst({
       where: {
-        cotaId_ano_numeroSemana: {
-          cotaId,
-          ano,
-          numeroSemana
-        }
-      }
+        id: propertyCalendarWeekId,
+        calendarYear: {
+          propertyId: cota.propertyId,
+          status: "PUBLISHED",
+        },
+      },
+      include: { calendarYear: true },
     });
 
-    if (existingReserva && existingReserva.status === "CONFIRMADA") {
+    if (!week) {
+      return NextResponse.json(
+        { error: "Semana oficial não encontrada ou calendário não publicado" },
+        { status: 404 }
+      );
+    }
+
+    const assigned = await prisma.propertyWeekAssignment.findFirst({
+      where: {
+        cotaId,
+        propertyCalendarWeekId,
+        distributionSlot: {
+          propertyCalendarYearId: week.propertyCalendarYearId,
+        },
+      },
+    });
+
+    if (!assigned) {
+      return NextResponse.json(
+        {
+          error:
+            "Esta semana não está atribuída à sua cota. Verifique o planejamento com a administração.",
+        },
+        { status: 403 }
+      );
+    }
+
+    const existing = await prisma.weekReservation.findUnique({
+      where: {
+        cotaId_propertyCalendarWeekId: {
+          cotaId,
+          propertyCalendarWeekId,
+        },
+      },
+    });
+
+    if (existing && existing.status === "CONFIRMADA") {
       return NextResponse.json(
         { error: "Esta semana já está confirmada" },
         { status: 400 }
       );
     }
 
-    const weekInfo = getWeekInfo(ano, numeroSemana);
-
-    const reserva = await prisma.reserva.upsert({
+    const reserva = await prisma.weekReservation.upsert({
       where: {
-        cotaId_ano_numeroSemana: {
+        cotaId_propertyCalendarWeekId: {
           cotaId,
-          ano,
-          numeroSemana
-        }
+          propertyCalendarWeekId,
+        },
       },
       update: {
         status: "CONFIRMADA",
         confirmadoEm: new Date(),
-        observacoes
+        observacoes,
       },
       create: {
         cotaId,
         cotistaId,
-        ano,
-        numeroSemana,
-        dataInicio: weekInfo.startDate,
-        dataFim: weekInfo.endDate,
+        propertyCalendarWeekId,
         status: "CONFIRMADA",
         confirmadoEm: new Date(),
-        observacoes
-      }
+        observacoes,
+      },
     });
 
     return NextResponse.json({
       success: true,
-      reserva
+      reserva,
     });
-
   } catch (error) {
     console.error("Erro ao criar reserva:", error);
     return NextResponse.json(

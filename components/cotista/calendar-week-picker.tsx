@@ -18,15 +18,22 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import {
+  weekDisplayName,
+  TIER_SHORT_PT,
+  officialWeekTypeLabel,
+} from "@/lib/vivant/week-ui-labels";
 
 export type CalendarWeekPickerWeek = {
   id: string;
   weekIndex: number;
-  label: string | null;
+  description: string | null;
   startDate: string;
   endDate: string;
-  seasonType: string;
+  tier: string;
+  officialWeekType: string;
   isBlocked: boolean;
+  exchangeAllowed: boolean;
 };
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -49,8 +56,23 @@ type DayVariant =
   | "blocked"
   | "mine"
   | "opportunity"
-  | "high"
+  | "tierGold"
+  | "tierSilver"
+  | "tierBlack"
   | "neutral";
+
+function tierDayVariant(w: CalendarWeekPickerWeek): "tierGold" | "tierSilver" | "tierBlack" | "neutral" {
+  switch (w.tier) {
+    case "GOLD":
+      return "tierGold";
+    case "SILVER":
+      return "tierSilver";
+    case "BLACK":
+      return "tierBlack";
+    default:
+      return "neutral";
+  }
+}
 
 function dayVariant(
   w: CalendarWeekPickerWeek | null,
@@ -61,8 +83,7 @@ function dayVariant(
   if (w.isBlocked) return "blocked";
   if (myIds.has(w.id)) return "mine";
   if (oppIds.has(w.id)) return "opportunity";
-  if (w.seasonType === "ALTA" || w.seasonType === "SUPER_ALTA") return "high";
-  return "neutral";
+  return tierDayVariant(w);
 }
 
 function variantClasses(v: DayVariant, selected: boolean): string {
@@ -90,10 +111,22 @@ function variantClasses(v: DayVariant, selected: boolean): string {
         "border-emerald-400 bg-emerald-50 text-emerald-950 cursor-pointer hover:bg-emerald-100",
         sel
       );
-    case "high":
+    case "tierGold":
       return cn(
         base,
-        "border-amber-300 bg-amber-50 text-amber-950 cursor-pointer hover:bg-amber-100",
+        "border-amber-400 bg-amber-50 text-amber-950 cursor-pointer hover:bg-amber-100",
+        sel
+      );
+    case "tierSilver":
+      return cn(
+        base,
+        "border-slate-300 bg-slate-50 text-slate-900 cursor-pointer hover:bg-slate-100",
+        sel
+      );
+    case "tierBlack":
+      return cn(
+        base,
+        "border-zinc-500 bg-zinc-100 text-zinc-900 cursor-pointer hover:bg-zinc-200",
         sel
       );
     case "neutral":
@@ -106,13 +139,6 @@ function variantClasses(v: DayVariant, selected: boolean): string {
       return base;
   }
 }
-
-const SEASON_LABEL: Record<string, string> = {
-  BAIXA: "Baixa temporada",
-  MEDIA: "Média temporada",
-  ALTA: "Alta temporada",
-  SUPER_ALTA: "Super alta temporada",
-};
 
 export type CalendarWeekPickerProps = {
   year: number;
@@ -227,19 +253,24 @@ export function CalendarWeekPicker({
         })}
       </div>
 
-      <div className="flex flex-wrap gap-3 text-xs text-[#1A2F4B]/80">
+      <div className="flex flex-wrap gap-2 text-xs text-[#1A2F4B]/80">
         <span className="inline-flex items-center gap-1.5">
           <span className="h-3 w-3 rounded border border-blue-400 bg-blue-50" /> Sua semana
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded border border-slate-200 bg-white" /> Outras / disponível
+          <span className="h-3 w-3 rounded border border-slate-200 bg-white" /> Demais semanas
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded border border-amber-300 bg-amber-50" /> Alta temporada
+          <span className="h-3 w-3 rounded border border-amber-400 bg-amber-50" /> Gold (alta)
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded border border-emerald-400 bg-emerald-50" />{" "}
-          Oportunidade de troca
+          <span className="h-3 w-3 rounded border border-slate-300 bg-slate-50" /> Silver (média)
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-3 w-3 rounded border border-zinc-500 bg-zinc-100" /> Black (baixa)
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-3 w-3 rounded border border-emerald-400 bg-emerald-50" /> Oportunidade de troca
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="h-3 w-3 rounded border border-red-300 bg-red-50" /> Bloqueada
@@ -248,27 +279,38 @@ export function CalendarWeekPicker({
 
       {selectedWeek ? (
         <Card className="border-vivant-green/30 bg-white shadow-md">
-          <CardContent className="space-y-1 p-4 text-sm">
+          <CardContent className="space-y-2 p-4 text-sm">
             <p className="text-xs font-medium uppercase tracking-wide text-vivant-green">
               {propertyName}
             </p>
             <p className="text-lg font-semibold text-[#1A2F4B]">
-              {selectedWeek.label ?? `Semana ${selectedWeek.weekIndex}`}
+              {weekDisplayName(selectedWeek.description, selectedWeek.weekIndex)}
             </p>
             <p className="text-[#1A2F4B]/80">
               {format(new Date(selectedWeek.startDate), "dd/MM/yyyy", { locale: ptBR })} —{" "}
               {format(new Date(selectedWeek.endDate), "dd/MM/yyyy", { locale: ptBR })}
             </p>
-            <p className="text-xs text-[#1A2F4B]/65">
-              {SEASON_LABEL[selectedWeek.seasonType] ?? selectedWeek.seasonType}
-              {mySet.has(selectedWeek.id) ? " · Sua alocação" : ""}
+            <p className="text-xs text-[#1A2F4B]/75">
+              <span className="font-medium">Classificação:</span>{" "}
+              {TIER_SHORT_PT[selectedWeek.tier] ?? selectedWeek.tier}
             </p>
+            <p className="text-xs text-[#1A2F4B]/75">
+              <span className="font-medium">Tipo:</span>{" "}
+              {officialWeekTypeLabel(selectedWeek.officialWeekType)}
+            </p>
+            <p className="text-xs text-[#1A2F4B]/75">
+              <span className="font-medium">Aceita troca:</span>{" "}
+              {selectedWeek.exchangeAllowed ? "sim" : "não"}
+            </p>
+            {mySet.has(selectedWeek.id) ? (
+              <p className="text-xs font-medium text-blue-800">· Sua alocação neste calendário</p>
+            ) : null}
           </CardContent>
         </Card>
       ) : (
         <p className="text-sm text-[#1A2F4B]/60">
-          Toque em um dia para ver o nome da semana e o intervalo completo (seleção sempre por semana
-          inteira, sem datas soltas).
+          Toque em um dia para ver a descrição da semana, período, classificação (Gold/Silver/Black) e
+          se aceita troca. A seleção é sempre a semana inteira (quinta a quarta), sem datas soltas.
         </p>
       )}
     </div>

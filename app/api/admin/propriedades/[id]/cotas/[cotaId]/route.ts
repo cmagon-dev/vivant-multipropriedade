@@ -20,7 +20,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { semanasConfig, percentualCota, semanasAno, ativo } = body;
+    const { percentualCota, semanasAno, ativo } = body;
 
     const cota = await prisma.cotaPropriedade.findUnique({
       where: { id: params.cotaId },
@@ -40,12 +40,8 @@ export async function PATCH(
       );
     }
 
-    const updateData: any = {};
-    
-    if (semanasConfig !== undefined) {
-      updateData.semanasConfig = semanasConfig;
-    }
-    
+    const updateData: Record<string, unknown> = {};
+
     if (percentualCota !== undefined) {
       updateData.percentualCota = percentualCota;
     }
@@ -110,8 +106,8 @@ export async function DELETE(
     const cota = await prisma.cotaPropriedade.findUnique({
       where: { id: params.cotaId },
       include: {
-        reservas: true,
-      }
+        weekReservations: true,
+      },
     });
 
     if (!cota) {
@@ -128,7 +124,7 @@ export async function DELETE(
       );
     }
 
-    if (cota.reservas.length > 0) {
+    if (cota.weekReservations.length > 0) {
       return NextResponse.json(
         { error: "Não é possível deletar cota com reservas existentes" },
         { status: 400 }

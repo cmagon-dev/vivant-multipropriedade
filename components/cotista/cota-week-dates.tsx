@@ -4,12 +4,20 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarRange } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  weekDisplayName,
+  TIER_SHORT_PT,
+  officialWeekTypeLabel,
+} from "@/lib/vivant/week-ui-labels";
 
 export type SemanaAlocadaItem = {
-  label: string | null;
+  description: string | null;
+  weekIndex: number;
   startDate: string;
   endDate: string;
-  weekIndex: number;
+  tier?: string;
+  officialWeekType?: string;
+  exchangeAllowed?: boolean;
 };
 
 type Props = {
@@ -53,18 +61,35 @@ export function CotaWeekDatesLines({
         <li className="mb-1 font-medium text-[#1A2F4B]/90">Semanas {anoReferencia}</li>
       )}
       {show.map((s) => (
-        <li key={`${s.startDate}-${s.endDate}`} className="flex gap-1 text-[#1A2F4B]/80">
-          {!compact && (
-            <CalendarRange className="mt-0.5 h-3 w-3 flex-shrink-0 text-vivant-green" />
-          )}
-          <span>
-            <span className="font-medium text-[#1A2F4B]">
-              {s.label ?? `Semana ${s.weekIndex}`}
+        <li key={`${s.startDate}-${s.endDate}`} className="flex flex-col gap-0.5 text-[#1A2F4B]/80">
+          <span className="flex gap-1">
+            {!compact && (
+              <CalendarRange className="mt-0.5 h-3 w-3 flex-shrink-0 text-vivant-green" />
+            )}
+            <span>
+              <span className="font-medium text-[#1A2F4B]">
+                {weekDisplayName(s.description, s.weekIndex)}
+              </span>
+              {" · "}
+              {format(parseISO(s.startDate), "dd/MM/yyyy", { locale: ptBR })} –{" "}
+              {format(parseISO(s.endDate), "dd/MM/yyyy", { locale: ptBR })}
             </span>
-            {" · "}
-            {format(parseISO(s.startDate), "dd/MM/yyyy", { locale: ptBR })} –{" "}
-            {format(parseISO(s.endDate), "dd/MM/yyyy", { locale: ptBR })}
           </span>
+          {!compact && (s.tier || s.officialWeekType != null || s.exchangeAllowed != null) && (
+            <span className={cn("pl-4 text-[#1A2F4B]/65", compact ? "text-[9px]" : "text-[11px]")}>
+              {s.tier ? (
+                <span className="mr-2">{TIER_SHORT_PT[s.tier] ?? s.tier}</span>
+              ) : null}
+              {s.officialWeekType ? (
+                <span className="mr-2">{officialWeekTypeLabel(s.officialWeekType)}</span>
+              ) : null}
+              {s.exchangeAllowed != null && (
+                <span className="text-vivant-green/90">
+                  Troca: {s.exchangeAllowed ? "sim" : "não"}
+                </span>
+              )}
+            </span>
+          )}
         </li>
       ))}
       {rest > 0 && (

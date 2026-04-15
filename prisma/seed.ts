@@ -684,10 +684,6 @@ async function main() {
     numeroCota: 'Cota 1 de 6',
     percentualCota: 16.67,
     semanasAno: 8,
-    semanasConfig: {
-      baseYear: currentYear,
-      weeks: [2, 10, 18, 26, 34, 42, 50, 52]
-    },
     ativo: true,
   };
   const cota1 = await prisma.cotaPropriedade.upsert({
@@ -698,7 +694,7 @@ async function main() {
         numeroCota: cota1Data.numeroCota,
       },
     },
-    update: { percentualCota: cota1Data.percentualCota, semanasAno: cota1Data.semanasAno, semanasConfig: cota1Data.semanasConfig as object, ativo: true },
+    update: { percentualCota: cota1Data.percentualCota, semanasAno: cota1Data.semanasAno, ativo: true },
     create: cota1Data,
   });
   console.log('✅ Cota 1 garantida:', cota1.numeroCota);
@@ -709,10 +705,6 @@ async function main() {
     numeroCota: 'Cota 1 de 8',
     percentualCota: 12.5,
     semanasAno: 6,
-    semanasConfig: {
-      baseYear: currentYear,
-      weeks: [5, 13, 21, 29, 37, 45]
-    },
     ativo: true,
   };
   const cota2 = await prisma.cotaPropriedade.upsert({
@@ -723,36 +715,12 @@ async function main() {
         numeroCota: cota2Data.numeroCota,
       },
     },
-    update: { percentualCota: cota2Data.percentualCota, semanasAno: cota2Data.semanasAno, semanasConfig: cota2Data.semanasConfig as object, ativo: true },
+    update: { percentualCota: cota2Data.percentualCota, semanasAno: cota2Data.semanasAno, ativo: true },
     create: cota2Data,
   });
   console.log('✅ Cota 2 garantida:', cota2.numeroCota);
 
-  // 6. Criar algumas reservas (idempotente)
-  console.log('\n📅 Criando reservas de exemplo...');
-  const weekStart = new Date(currentYear, 0, 8); // Semana 2
-  const weekEnd = new Date(currentYear, 0, 15);
-
-  let reserva1 = await prisma.reserva.findFirst({
-    where: { cotaId: cota1.id, ano: currentYear, numeroSemana: 2 },
-  });
-  if (reserva1) {
-    console.log('Reserva já existe, pulando: cotaId=' + reserva1.cotaId + ', ano=' + reserva1.ano + ', numeroSemana=' + reserva1.numeroSemana);
-  } else {
-    reserva1 = await prisma.reserva.create({
-      data: {
-        cotaId: cota1.id,
-        cotistaId: cotista1.id,
-        ano: currentYear,
-        numeroSemana: 2,
-        dataInicio: weekStart,
-        dataFim: weekEnd,
-        status: 'CONFIRMADA',
-        confirmadoEm: new Date(),
-      },
-    });
-    console.log('✅ Reserva criada: Semana', reserva1.numeroSemana);
-  }
+  // 6. Reservas de exemplo: use o calendário oficial no admin (publicar ano + distribuir + reservar).
 
   // 7. Criar cobranças
   console.log('\n💰 Criando cobranças...');

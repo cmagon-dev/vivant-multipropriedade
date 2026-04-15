@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  ctx: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,14 +14,15 @@ export async function PATCH(
     if (!auth.ok) return auth.response;
     const cotistaId = auth.cotistaId;
 
+    const { id } = await ctx.params;
     const body = await request.json();
     const { status, observacoes, limpezaSolicitada } = body;
 
-    const reserva = await prisma.reserva.findFirst({
+    const reserva = await prisma.weekReservation.findFirst({
       where: {
-        id: params.id,
-        cotistaId
-      }
+        id,
+        cotistaId,
+      },
     });
 
     if (!reserva) {
@@ -31,11 +32,11 @@ export async function PATCH(
       );
     }
 
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
 
     if (status) {
       updateData.status = status;
-      
+
       if (status === "EM_USO") {
         updateData.checkInEm = new Date();
       } else if (status === "FINALIZADA") {
@@ -51,16 +52,15 @@ export async function PATCH(
       updateData.limpezaSolicitada = limpezaSolicitada;
     }
 
-    const updatedReserva = await prisma.reserva.update({
-      where: { id: params.id },
-      data: updateData
+    const updatedReserva = await prisma.weekReservation.update({
+      where: { id },
+      data: updateData,
     });
 
     return NextResponse.json({
       success: true,
-      reserva: updatedReserva
+      reserva: updatedReserva,
     });
-
   } catch (error) {
     console.error("Erro ao atualizar reserva:", error);
     return NextResponse.json(
@@ -72,7 +72,7 @@ export async function PATCH(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  ctx: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -80,22 +80,25 @@ export async function GET(
     if (!auth.ok) return auth.response;
     const cotistaId = auth.cotistaId;
 
-    const reserva = await prisma.reserva.findFirst({
+    const { id } = await ctx.params;
+
+    const reserva = await prisma.weekReservation.findFirst({
       where: {
-        id: params.id,
-        cotistaId
+        id,
+        cotistaId,
       },
       include: {
+        calendarWeek: { include: { calendarYear: true } },
         cota: {
           include: {
             property: {
               include: {
-                destino: true
-              }
-            }
-          }
-        }
-      }
+                destino: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!reserva) {
@@ -106,7 +109,6 @@ export async function GET(
     }
 
     return NextResponse.json({ reserva });
-
   } catch (error) {
     console.error("Erro ao carregar reserva:", error);
     return NextResponse.json(

@@ -3,7 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
-import type { WeekSeasonType } from "@prisma/client";
+import { generateThuToWedWeeks } from "@/lib/vivant/official-calendar";
+import { toAdminWeekJson } from "@/lib/vivant/admin-week-visual";
+import type { OfficialWeekType, WeekTier } from "@prisma/client";
 
 function canManage(session: unknown) {
   const s = session as { user?: { userType?: string } } | null;
@@ -27,12 +29,33 @@ export async function GET(
     const yearParam = _req.nextUrl.searchParams.get("year");
     const year = yearParam ? parseInt(yearParam, 10) : new Date().getFullYear();
 
-    const weeks = await prisma.propertyWeek.findMany({
-      where: { propertyId, year },
-      orderBy: [{ weekIndex: "asc" }],
+    const calYear = await prisma.propertyCalendarYear.findUnique({
+      where: { propertyId_year: { propertyId, year } },
+      include: {
+        weeks: {
+          orderBy: { weekIndex: "asc" },
+          include: {
+            assignments: { select: { id: true } },
+            weekReservations: {
+              select: { status: true },
+              orderBy: { createdAt: "desc" },
+              take: 1,
+            },
+          },
+        },
+      },
     });
 
-    return NextResponse.json({ weeks, year });
+    const weeksJson =
+      calYear?.weeks.map((w) => toAdminWeekJson(w)) ?? [];
+
+    return NextResponse.json({
+      weeks: weeksJson,
+      calendarYear: calYear
+        ? { id: calYear.id, year: calYear.year, status: calYear.status, label: calYear.label }
+        : null,
+      year,
+    });
   } catch (e) {
     console.error(e);
     return NextResponse.json(
@@ -42,7 +65,7 @@ export async function GET(
   }
 }
 
-/** Cria ou atualiza semanas em lote (admin). */
+/** Cria ou atualiza semanas oficiais em lote (admin). */
 export async function POST(
   request: NextRequest,
   ctx: { params: Promise<{ id: string }> }
@@ -65,19 +88,17 @@ export async function POST(
     const body = await request.json();
     const { weeks, generate } = body as {
       weeks?: Array<{
-        year: number;
         weekIndex: number;
         startDate: string;
         endDate: string;
-        label?: string;
-        seasonType?: WeekSeasonType;
+        description?: string | null;
+        officialWeekType?: OfficialWeekType;
+        tier?: WeekTier;
+        isExtra?: boolean;
         weight?: number;
-        isHoliday?: boolean;
-        isSchoolVacation?: boolean;
         isBlocked?: boolean;
-        isExchangeAllowed?: boolean;
-        color?: string;
-        notes?: string;
+        exchangeAllowed?: boolean;
+        notes?: string | null;
       }>;
       generate?: {
         year: number;
@@ -87,56 +108,21 @@ export async function POST(
     };
 
     if (generate?.year && (generate.pattern === "SAT_TO_SAT" || generate.pattern === "THU_TO_WED")) {
-      const y = generate.year;
-      const weight = generate.weightDefault ?? 1;
-      let d = new Date(y, 0, 1);
-      // Novo padrão oficial: quinta (4) até quarta (3).
-      // Mantemos compatibilidade aceitando SAT_TO_SAT no payload.
-      while (d.getDay() !== 4) {
-        d.setDate(d.getDate() + 1);
-      }
-      let idx = 1;
-      while (d.getFullYear() === y && idx <= 53) {
-        const start = new Date(d);
-        const end = new Date(d);
-        end.setDate(end.getDate() + 6);
-        end.setHours(23, 59, 59, 999);
-        await prisma.propertyWeek.upsert({
-          where: {
-            propertyId_year_weekIndex: {
-              propertyId,
-              year: y,
-              weekIndex: idx,
-            },
-          },
-          create: {
-            propertyId,
-            year: y,
-            weekIndex: idx,
-            startDate: start,
-            endDate: end,
-            label: `Semana ${String(idx).padStart(2, "0")}`,
-            seasonType: "MEDIA",
-            weight,
-            isHoliday: false,
-            isSchoolVacation: false,
-            isBlocked: false,
-            isExchangeAllowed: true,
-          },
-          update: {
-            startDate: start,
-            endDate: end,
-            weight,
-          },
-        });
-        d.setDate(d.getDate() + 7);
-        idx += 1;
-      }
-      const created = await prisma.propertyWeek.findMany({
-        where: { propertyId, year: y },
-        orderBy: { weekIndex: "asc" },
+      const { calendarYear, weeks: created } = await generateThuToWedWeeks(
+        propertyId,
+        generate.year
+      );
+      const weeksWithStatus = created.map((w) => toAdminWeekJson(w));
+      return NextResponse.json({
+        ok: true,
+        count: created.length,
+        weeks: weeksWithStatus,
+        calendarYear: {
+          id: calendarYear.id,
+          status: calendarYear.status,
+          year: calendarYear.year,
+        },
       });
-      return NextResponse.json({ ok: true, count: created.length, weeks: created });
     }
 
     if (!weeks?.length) {
@@ -146,50 +132,53 @@ export async function POST(
       );
     }
 
+    const yearFromFirst = new Date(weeks[0].startDate).getFullYear();
+    const calYear = await prisma.propertyCalendarYear.upsert({
+      where: { propertyId_year: { propertyId, year: yearFromFirst } },
+      create: { propertyId, year: yearFromFirst, status: "DRAFT" },
+      update: {},
+    });
+
     let upserted = 0;
     for (const w of weeks) {
-      await prisma.propertyWeek.upsert({
+      await prisma.propertyCalendarWeek.upsert({
         where: {
-          propertyId_year_weekIndex: {
-            propertyId,
-            year: w.year,
+          propertyCalendarYearId_weekIndex: {
+            propertyCalendarYearId: calYear.id,
             weekIndex: w.weekIndex,
           },
         },
         create: {
-          propertyId,
-          year: w.year,
+          propertyCalendarYearId: calYear.id,
           weekIndex: w.weekIndex,
           startDate: new Date(w.startDate),
           endDate: new Date(w.endDate),
-          label: w.label ?? null,
-          seasonType: w.seasonType ?? "MEDIA",
+          description: w.description ?? null,
+          officialWeekType: w.officialWeekType ?? "TYPE_1",
+          tier: w.tier ?? "SILVER",
+          isExtra: !!w.isExtra,
           weight: w.weight ?? 1,
-          isHoliday: !!w.isHoliday,
-          isSchoolVacation: !!w.isSchoolVacation,
           isBlocked: !!w.isBlocked,
-          isExchangeAllowed: w.isExchangeAllowed !== false,
-          color: w.color ?? null,
+          exchangeAllowed: w.exchangeAllowed !== false,
           notes: w.notes ?? null,
         },
         update: {
           startDate: new Date(w.startDate),
           endDate: new Date(w.endDate),
-          label: w.label ?? null,
-          seasonType: w.seasonType ?? "MEDIA",
+          description: w.description ?? null,
+          officialWeekType: w.officialWeekType ?? "TYPE_1",
+          tier: w.tier ?? "SILVER",
+          isExtra: !!w.isExtra,
           weight: w.weight ?? 1,
-          isHoliday: !!w.isHoliday,
-          isSchoolVacation: !!w.isSchoolVacation,
           isBlocked: !!w.isBlocked,
-          isExchangeAllowed: w.isExchangeAllowed !== false,
-          color: w.color ?? null,
+          exchangeAllowed: w.exchangeAllowed !== false,
           notes: w.notes ?? null,
         },
       });
       upserted += 1;
     }
 
-    return NextResponse.json({ ok: true, upserted });
+    return NextResponse.json({ ok: true, upserted, calendarYearId: calYear.id });
   } catch (e) {
     console.error(e);
     return NextResponse.json(

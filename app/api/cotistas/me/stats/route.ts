@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
 
     const reservaWhereBase = {
       cotistaId,
-      dataInicio: { gte: now },
+      calendarWeek: { startDate: { gte: now } },
       status: { in: ["CONFIRMADA" as const, "PENDENTE" as const] },
       ...(propertyIdFilter ? { cota: { propertyId: propertyIdFilter } } : {}),
     };
@@ -71,13 +71,14 @@ export async function GET(request: NextRequest) {
         }, new Set<string>()).size;
 
     const [reservasProximas, pagamentosPendentes, proximaReserva] = await Promise.all([
-      prisma.reserva.count({ where: reservaWhereBase }),
+      prisma.weekReservation.count({ where: reservaWhereBase }),
 
       prisma.cobranca.count({ where: cobrancaWhereBase }),
 
-      prisma.reserva.findFirst({
+      prisma.weekReservation.findFirst({
         where: reservaWhereBase,
         include: {
+          calendarWeek: true,
           cota: {
             include: {
               property: true,
@@ -85,13 +86,13 @@ export async function GET(request: NextRequest) {
           },
         },
         orderBy: {
-          dataInicio: "asc",
+          calendarWeek: { startDate: "asc" },
         },
       }),
     ]);
 
     const proximaSemana = proximaReserva
-      ? `Semana ${proximaReserva.numeroSemana} em ${proximaReserva.cota.property.name} - ${format(new Date(proximaReserva.dataInicio), "dd 'de' MMMM", { locale: ptBR })}`
+      ? `Semana ${proximaReserva.calendarWeek.weekIndex} em ${proximaReserva.cota.property.name} - ${format(new Date(proximaReserva.calendarWeek.startDate), "dd 'de' MMMM", { locale: ptBR })}`
       : null;
 
     const statusFinanceiro = pagamentosPendentes > 0 ? "PENDENTE" : "EM_DIA";

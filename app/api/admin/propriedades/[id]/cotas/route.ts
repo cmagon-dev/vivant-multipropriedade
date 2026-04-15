@@ -101,10 +101,6 @@ export async function POST(
         numeroCota,
         percentualCota: percentualCota || 0,
         semanasAno: semanasAno || 0,
-        semanasConfig: {
-          baseYear: new Date().getFullYear(),
-          weeks: []
-        },
         ativo: true,
       },
       include: {

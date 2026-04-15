@@ -11,8 +11,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { WeekInfo } from "@/lib/calendar-rotation";
-import { Calendar, MapPin, CheckCircle2, X } from "lucide-react";
+import type {
+  CotistaOfficialWeek,
+  CotistaWeekReservation,
+} from "@/lib/vivant/cotista-calendar-types";
+import { CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -20,21 +23,26 @@ import { toast } from "sonner";
 interface ReservationModalProps {
   open: boolean;
   onClose: () => void;
-  week: WeekInfo;
+  week: CotistaOfficialWeek;
+  year: number;
   cotaId: string;
-  reservation?: any;
+  reservation?: CotistaWeekReservation;
 }
 
-export function ReservationModal({ 
-  open, 
-  onClose, 
-  week, 
-  cotaId, 
-  reservation 
+export function ReservationModal({
+  open,
+  onClose,
+  week,
+  year,
+  cotaId,
+  reservation,
 }: ReservationModalProps) {
   const [observacoes, setObservacoes] = useState("");
   const [confirmando, setConfirmando] = useState(false);
   const [cancelando, setCancelando] = useState(false);
+
+  const start = new Date(week.startDate);
+  const end = new Date(week.endDate);
 
   const handleConfirm = async () => {
     setConfirmando(true);
@@ -44,8 +52,7 @@ export function ReservationModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cotaId,
-          ano: week.year,
-          numeroSemana: week.number,
+          propertyCalendarWeekId: week.id,
           observacoes,
         }),
       });
@@ -58,7 +65,7 @@ export function ReservationModal({
         const data = await response.json();
         toast.error(data.error || "Erro ao confirmar reserva");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erro ao confirmar reserva");
     } finally {
       setConfirmando(false);
@@ -67,7 +74,7 @@ export function ReservationModal({
 
   const handleCancel = async () => {
     if (!reservation) return;
-    
+
     setCancelando(true);
     try {
       const response = await fetch(`/api/cotistas/reservas/${reservation.id}`, {
@@ -85,35 +92,41 @@ export function ReservationModal({
       } else {
         toast.error("Erro ao cancelar reserva");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erro ao cancelar reserva");
     } finally {
       setCancelando(false);
     }
   };
 
+  const hasReservation =
+    reservation &&
+    reservation.status !== "NAO_UTILIZADA" &&
+    reservation.status !== "CANCELADA";
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl font-serif text-[#1A2F4B]">
-            Semana {week.number} de {week.year}
+            Semana {week.weekIndex} · {year}
           </DialogTitle>
           <DialogDescription>
-            {format(week.startDate, "dd 'de' MMMM", { locale: ptBR })} - {format(week.endDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            {format(start, "dd 'de' MMMM", { locale: ptBR })} -{" "}
+            {format(end, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {reservation ? (
+          {hasReservation ? (
             <div className="space-y-4">
               <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle2 className="w-5 h-5 text-blue-600" />
-                  <span className="font-semibold text-blue-900">Reserva Confirmada</span>
+                  <span className="font-semibold text-blue-900">Reserva ativa</span>
                 </div>
                 <p className="text-sm text-blue-800">
-                  Esta semana já está reservada para você.
+                  Status: {reservation.status}
                 </p>
                 {reservation.observacoes && (
                   <div className="mt-3 pt-3 border-t border-blue-200">
@@ -127,15 +140,12 @@ export function ReservationModal({
                 <Button
                   variant="destructive"
                   className="flex-1"
-                  onClick={handleCancel}
+                  onClick={() => void handleCancel()}
                   disabled={cancelando}
                 >
                   {cancelando ? "Cancelando..." : "Não vou utilizar"}
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={onClose}
-                >
+                <Button variant="outline" onClick={onClose}>
                   Fechar
                 </Button>
               </div>
@@ -165,15 +175,12 @@ export function ReservationModal({
               <div className="flex gap-2">
                 <Button
                   className="flex-1 bg-vivant-green hover:bg-vivant-green/90"
-                  onClick={handleConfirm}
+                  onClick={() => void handleConfirm()}
                   disabled={confirmando}
                 >
                   {confirmando ? "Confirmando..." : "Confirmar Reserva"}
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={onClose}
-                >
+                <Button variant="outline" onClick={onClose}>
                   Cancelar
                 </Button>
               </div>

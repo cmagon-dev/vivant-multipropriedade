@@ -48,41 +48,55 @@ export async function GET(
       return NextResponse.json({ error: "Propriedade não encontrada" }, { status: 404 });
     }
 
-    const [cotas, weeks, cycles] = await Promise.all([
+    const calYear = await prisma.propertyCalendarYear.findUnique({
+      where: { propertyId_year: { propertyId, year } },
+    });
+
+    const [cotas, weeks, slots] = await Promise.all([
       prisma.cotaPropriedade.findMany({
         where: { propertyId, ativo: true },
         include: { cotista: { select: { id: true, name: true, email: true } } },
         orderBy: { numeroCota: "asc" },
       }),
-      prisma.propertyWeek.findMany({
-        where: { propertyId, year },
-        orderBy: { weekIndex: "asc" },
-      }),
-      prisma.propertyAllocationCycle.findMany({
-        where: { propertyId },
-        orderBy: { createdAt: "desc" },
-        include: {
-          allocations: {
+      calYear
+        ? prisma.propertyCalendarWeek.findMany({
+            where: { propertyCalendarYearId: calYear.id },
+            orderBy: { weekIndex: "asc" },
+          })
+        : Promise.resolve([]),
+      calYear
+        ? prisma.calendarDistributionSlot.findMany({
+            where: { propertyCalendarYearId: calYear.id },
+            orderBy: { createdAt: "desc" },
             include: {
-              cota: {
-                include: { cotista: { select: { name: true, email: true } } },
-              },
-              propertyWeek: {
-                select: {
-                  id: true,
-                  weekIndex: true,
-                  label: true,
-                  startDate: true,
-                  endDate: true,
+              assignments: {
+                include: {
+                  cota: {
+                    include: { cotista: { select: { name: true, email: true } } },
+                  },
+                  calendarWeek: {
+                    select: {
+                      id: true,
+                      weekIndex: true,
+                      description: true,
+                      startDate: true,
+                      endDate: true,
+                    },
+                  },
                 },
               },
             },
-          },
-        },
-      }),
+          })
+        : Promise.resolve([]),
     ]);
 
-    return NextResponse.json({ cotas, weeks, cycles, year });
+    return NextResponse.json({
+      cotas,
+      weeks,
+      distributionSlots: slots,
+      calendarYear: calYear,
+      year,
+    });
   } catch (e) {
     console.error(e);
     return NextResponse.json(
@@ -114,41 +128,52 @@ export async function POST(
       return NextResponse.json({ error: "Propriedade não encontrada" }, { status: 404 });
     }
 
-    if (action === "createCycle") {
-      const { label, yearRef } = body as { label?: string; yearRef?: number };
-      if (!label?.trim()) {
-        return NextResponse.json({ error: "Informe o nome do ciclo" }, { status: 400 });
+    if (action === "createSlot") {
+      const { label, propertyCalendarYearId } = body as {
+        label?: string;
+        propertyCalendarYearId?: string;
+      };
+      if (!label?.trim() || !propertyCalendarYearId) {
+        return NextResponse.json(
+          { error: "Informe label e propertyCalendarYearId" },
+          { status: 400 }
+        );
       }
-      const cycle = await prisma.propertyAllocationCycle.create({
+      const cy = await prisma.propertyCalendarYear.findFirst({
+        where: { id: propertyCalendarYearId, propertyId },
+      });
+      if (!cy) {
+        return NextResponse.json({ error: "Ano de calendário inválido" }, { status: 400 });
+      }
+      const slot = await prisma.calendarDistributionSlot.create({
         data: {
-          propertyId,
+          propertyCalendarYearId: cy.id,
           label: label.trim(),
-          yearRef: yearRef ?? null,
           status: "RASCUNHO",
         },
       });
-      return NextResponse.json({ cycle });
+      return NextResponse.json({ distributionSlot: slot });
     }
 
     if (action === "allocate") {
-      const { cycleId, cotaId, propertyWeekId, locked } = body as {
-        cycleId?: string;
+      const { distributionSlotId, cotaId, propertyCalendarWeekId, locked } = body as {
+        distributionSlotId?: string;
         cotaId?: string;
-        propertyWeekId?: string;
+        propertyCalendarWeekId?: string;
         locked?: boolean;
       };
-      if (!cycleId || !cotaId || !propertyWeekId) {
+      if (!distributionSlotId || !cotaId || !propertyCalendarWeekId) {
         return NextResponse.json(
-          { error: "cycleId, cotaId e propertyWeekId são obrigatórios" },
+          { error: "distributionSlotId, cotaId e propertyCalendarWeekId são obrigatórios" },
           { status: 400 }
         );
       }
 
-      const cycle = await prisma.propertyAllocationCycle.findFirst({
-        where: { id: cycleId, propertyId },
+      const slot = await prisma.calendarDistributionSlot.findFirst({
+        where: { id: distributionSlotId, calendarYear: { propertyId } },
       });
-      if (!cycle) {
-        return NextResponse.json({ error: "Ciclo inválido" }, { status: 400 });
+      if (!slot) {
+        return NextResponse.json({ error: "Slot inválido" }, { status: 400 });
       }
 
       const cota = await prisma.cotaPropriedade.findFirst({
@@ -158,23 +183,28 @@ export async function POST(
         return NextResponse.json({ error: "Cota inválida" }, { status: 400 });
       }
 
-      const week = await prisma.propertyWeek.findFirst({
-        where: { id: propertyWeekId, propertyId },
+      const week = await prisma.propertyCalendarWeek.findFirst({
+        where: {
+          id: propertyCalendarWeekId,
+          calendarYear: { propertyId },
+        },
       });
       if (!week) {
         return NextResponse.json({ error: "Semana inválida" }, { status: 400 });
       }
 
-      const row = await prisma.propertyWeekAllocation.upsert({
+      const row = await prisma.propertyWeekAssignment.upsert({
         where: {
-          cycleId_propertyWeekId: { cycleId, propertyWeekId },
+          distributionSlotId_propertyCalendarWeekId: {
+            distributionSlotId,
+            propertyCalendarWeekId,
+          },
         },
         create: {
-          cycleId,
+          distributionSlotId,
           cotaId,
-          propertyWeekId,
+          propertyCalendarWeekId,
           locked: !!locked,
-          simulationOnly: false,
         },
         update: {
           cotaId,
@@ -182,7 +212,7 @@ export async function POST(
         },
         include: {
           cota: { include: { cotista: true } },
-          propertyWeek: true,
+          calendarWeek: true,
         },
       });
 
@@ -194,41 +224,45 @@ export async function POST(
       if (!allocationId) {
         return NextResponse.json({ error: "allocationId obrigatório" }, { status: 400 });
       }
-      const row = await prisma.propertyWeekAllocation.findFirst({
-        where: { id: allocationId, cycle: { propertyId } },
+      const row = await prisma.propertyWeekAssignment.findFirst({
+        where: {
+          id: allocationId,
+          distributionSlot: { calendarYear: { propertyId } },
+        },
       });
       if (!row) {
         return NextResponse.json({ error: "Alocação não encontrada" }, { status: 404 });
       }
-      await prisma.propertyWeekAllocation.delete({ where: { id: allocationId } });
+      await prisma.propertyWeekAssignment.delete({ where: { id: allocationId } });
       return NextResponse.json({ ok: true });
     }
 
     if (action === "autoDistributePreview") {
-      const { cycleId, year: yearBody } = body as {
-        cycleId?: string;
+      const { distributionSlotId, year: yearBody } = body as {
+        distributionSlotId?: string;
         year?: number;
       };
-      if (!cycleId) {
-        return NextResponse.json({ error: "cycleId é obrigatório" }, { status: 400 });
+      if (!distributionSlotId) {
+        return NextResponse.json({ error: "distributionSlotId é obrigatório" }, { status: 400 });
       }
 
-      const cycle = await prisma.propertyAllocationCycle.findFirst({
-        where: { id: cycleId, propertyId },
+      const slot = await prisma.calendarDistributionSlot.findFirst({
+        where: { id: distributionSlotId, calendarYear: { propertyId } },
         include: {
-          allocations: {
-            select: { cotaId: true, propertyWeekId: true },
+          calendarYear: true,
+          assignments: {
+            select: { cotaId: true, propertyCalendarWeekId: true },
           },
         },
       });
-      if (!cycle) {
-        return NextResponse.json({ error: "Ciclo inválido" }, { status: 400 });
+      if (!slot) {
+        return NextResponse.json({ error: "Slot inválido" }, { status: 400 });
       }
 
       const year =
         typeof yearBody === "number"
           ? yearBody
-          : cycle.yearRef ?? new Date().getFullYear();
+          : slot.calendarYear.year;
 
       const [cotas, weeks] = await Promise.all([
         prisma.cotaPropriedade.findMany({
@@ -236,8 +270,8 @@ export async function POST(
           orderBy: { numeroCota: "asc" },
           select: { id: true },
         }),
-        prisma.propertyWeek.findMany({
-          where: { propertyId, year },
+        prisma.propertyCalendarWeek.findMany({
+          where: { propertyCalendarYearId: slot.propertyCalendarYearId },
           orderBy: { weekIndex: "asc" },
         }),
       ]);
@@ -250,8 +284,8 @@ export async function POST(
       }
 
       const existingMap = buildExistingMap(
-        cycle.allocations.map((a) => ({
-          propertyWeekId: a.propertyWeekId,
+        slot.assignments.map((a) => ({
+          propertyCalendarWeekId: a.propertyCalendarWeekId,
           cotaId: a.cotaId,
         }))
       );
@@ -273,9 +307,9 @@ export async function POST(
       );
 
       const combined = [
-        ...cycle.allocations.map((a) => ({
+        ...slot.assignments.map((a) => ({
           cotaId: a.cotaId,
-          propertyWeekId: a.propertyWeekId,
+          propertyCalendarWeekId: a.propertyCalendarWeekId,
         })),
         ...newAssignments,
       ];
@@ -291,30 +325,31 @@ export async function POST(
     }
 
     if (action === "autoDistributeApply") {
-      const { cycleId, year: yearBody } = body as {
-        cycleId?: string;
+      const { distributionSlotId, year: yearBody } = body as {
+        distributionSlotId?: string;
         year?: number;
       };
-      if (!cycleId) {
-        return NextResponse.json({ error: "cycleId é obrigatório" }, { status: 400 });
+      if (!distributionSlotId) {
+        return NextResponse.json({ error: "distributionSlotId é obrigatório" }, { status: 400 });
       }
 
-      const cycle = await prisma.propertyAllocationCycle.findFirst({
-        where: { id: cycleId, propertyId },
+      const slot = await prisma.calendarDistributionSlot.findFirst({
+        where: { id: distributionSlotId, calendarYear: { propertyId } },
         include: {
-          allocations: {
-            select: { cotaId: true, propertyWeekId: true },
+          calendarYear: true,
+          assignments: {
+            select: { cotaId: true, propertyCalendarWeekId: true },
           },
         },
       });
-      if (!cycle) {
-        return NextResponse.json({ error: "Ciclo inválido" }, { status: 400 });
+      if (!slot) {
+        return NextResponse.json({ error: "Slot inválido" }, { status: 400 });
       }
 
       const year =
         typeof yearBody === "number"
           ? yearBody
-          : cycle.yearRef ?? new Date().getFullYear();
+          : slot.calendarYear.year;
 
       const [cotas, weeks] = await Promise.all([
         prisma.cotaPropriedade.findMany({
@@ -322,8 +357,8 @@ export async function POST(
           orderBy: { numeroCota: "asc" },
           select: { id: true },
         }),
-        prisma.propertyWeek.findMany({
-          where: { propertyId, year },
+        prisma.propertyCalendarWeek.findMany({
+          where: { propertyCalendarYearId: slot.propertyCalendarYearId },
           orderBy: { weekIndex: "asc" },
         }),
       ]);
@@ -336,8 +371,8 @@ export async function POST(
       }
 
       const existingMap = buildExistingMap(
-        cycle.allocations.map((a) => ({
-          propertyWeekId: a.propertyWeekId,
+        slot.assignments.map((a) => ({
+          propertyCalendarWeekId: a.propertyCalendarWeekId,
           cotaId: a.cotaId,
         }))
       );
@@ -356,24 +391,22 @@ export async function POST(
 
       await prisma.$transaction(
         newAssignments.map((a) =>
-          prisma.propertyWeekAllocation.upsert({
+          prisma.propertyWeekAssignment.upsert({
             where: {
-              cycleId_propertyWeekId: {
-                cycleId,
-                propertyWeekId: a.propertyWeekId,
+              distributionSlotId_propertyCalendarWeekId: {
+                distributionSlotId,
+                propertyCalendarWeekId: a.propertyCalendarWeekId,
               },
             },
             create: {
-              cycleId,
+              distributionSlotId,
               cotaId: a.cotaId,
-              propertyWeekId: a.propertyWeekId,
+              propertyCalendarWeekId: a.propertyCalendarWeekId,
               locked: false,
-              simulationOnly: false,
             },
             update: {
               cotaId: a.cotaId,
               locked: false,
-              simulationOnly: false,
             },
           })
         )

@@ -2,6 +2,18 @@ import { execSync, spawn } from "node:child_process";
 import { existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
+/**
+ * Dev helper: libera a porta 3000 e opcionalmente limpa `.next`.
+ *
+ * IMPORTANTE: não apagar `.next` em todo `npm run dev` — isso faz o HTML referenciar
+ * chunks antigos enquanto o disco já tem outro build, gerando 404 em `/_next/static/*`
+ * e erro de MIME type (text/html em vez de CSS/JS).
+ *
+ * Limpeza explícita: `npm run dev:clean` ou `FORCE_CLEAN_NEXT=1 npm run dev`
+ */
+const shouldCleanNext =
+  process.argv.includes("--clean") || process.env.FORCE_CLEAN_NEXT === "1";
+
 function killPort3000Windows() {
   try {
     const output = execSync("netstat -ano", { encoding: "utf8" });
@@ -27,14 +39,28 @@ function killPort3000Windows() {
 function cleanupNextCache() {
   const nextPath = join(process.cwd(), ".next");
   if (existsSync(nextPath)) {
-    rmSync(nextPath, { recursive: true, force: true });
+    try {
+      rmSync(nextPath, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
+    } catch {
+      if (process.platform === "win32") {
+        try {
+          execSync('cmd.exe /d /s /c "rmdir /s /q .next"', { stdio: "ignore" });
+        } catch {
+          // Ignore cache cleanup failure; Next can still start and recreate .next.
+        }
+      }
+    }
   }
 }
 
 if (process.platform === "win32") {
   killPort3000Windows();
 }
-cleanupNextCache();
+
+if (shouldCleanNext) {
+  console.log("[dev-safe] Limpando pasta .next (--clean ou FORCE_CLEAN_NEXT=1)…");
+  cleanupNextCache();
+}
 
 const child =
   process.platform === "win32"

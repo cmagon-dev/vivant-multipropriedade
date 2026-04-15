@@ -21,7 +21,7 @@ export async function DELETE(
     const cota = await prisma.cotaPropriedade.findUnique({
       where: { id: params.id },
       include: {
-        reservas: true,
+        weekReservations: true,
         cobrancas: true,
       },
     });
@@ -34,7 +34,7 @@ export async function DELETE(
     }
 
     // Verificar se há reservas ou cobranças vinculadas
-    if (cota.reservas.length > 0 || cota.cobrancas.length > 0) {
+    if (cota.weekReservations.length > 0 || cota.cobrancas.length > 0) {
       return NextResponse.json(
         { error: "Não é possível remover uma cota com reservas ou cobranças vinculadas" },
         { status: 400 }

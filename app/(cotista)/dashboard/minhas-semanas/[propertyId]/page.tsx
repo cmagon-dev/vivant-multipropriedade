@@ -6,20 +6,33 @@ import { useParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ArrowLeft, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CalendarWeekPicker } from "@/components/cotista/calendar-week-picker";
+import {
+  CalendarWeekPicker,
+  type CalendarWeekPickerWeek,
+} from "@/components/cotista/calendar-week-picker";
 
-type Week = {
-  id: string;
-  weekIndex: number;
-  label: string | null;
-  startDate: string;
-  endDate: string;
-  seasonType: string;
-  weight: string;
-  isBlocked: boolean;
-  isExchangeAllowed: boolean;
-  color: string | null;
-};
+function normalizeWeeksForPicker(raw: unknown[]): CalendarWeekPickerWeek[] {
+  return raw.map((w) => {
+    const x = w as Record<string, unknown>;
+    return {
+      id: String(x.id),
+      weekIndex: Number(x.weekIndex),
+      description: (x.description as string | null) ?? null,
+      startDate:
+        typeof x.startDate === "string"
+          ? x.startDate
+          : String((x.startDate as { toString?: () => string })?.toString?.() ?? ""),
+      endDate:
+        typeof x.endDate === "string"
+          ? x.endDate
+          : String((x.endDate as { toString?: () => string })?.toString?.() ?? ""),
+      tier: typeof x.tier === "string" ? x.tier : "SILVER",
+      officialWeekType: typeof x.officialWeekType === "string" ? x.officialWeekType : "TYPE_1",
+      isBlocked: Boolean(x.isBlocked),
+      exchangeAllowed: x.exchangeAllowed !== false,
+    };
+  });
+}
 
 export default function MinhasSemanasPropertyPage() {
   const params = useParams();
@@ -27,7 +40,7 @@ export default function MinhasSemanasPropertyPage() {
   const year = new Date().getFullYear();
   const [loading, setLoading] = useState(true);
   const [propertyName, setPropertyName] = useState("");
-  const [weeks, setWeeks] = useState<Week[]>([]);
+  const [weeks, setWeeks] = useState<CalendarWeekPickerWeek[]>([]);
   const [mine, setMine] = useState<string[]>([]);
   const [oppWeekIds, setOppWeekIds] = useState<string[]>([]);
   const [selectedWeekId, setSelectedWeekId] = useState<string | null>(null);
@@ -83,7 +96,8 @@ export default function MinhasSemanasPropertyPage() {
         );
         if (cancelled) return;
         const first = results.find((x) => x?.weeks?.length);
-        setWeeks(first?.weeks ?? results[0]?.weeks ?? []);
+        const rawWeeks = first?.weeks ?? results[0]?.weeks ?? [];
+        setWeeks(normalizeWeeksForPicker(rawWeeks));
         const mineSet = new Set<string>();
         for (const j of results) {
           for (const id of j?.myPropertyWeekIds ?? []) mineSet.add(id);
@@ -114,8 +128,8 @@ export default function MinhasSemanasPropertyPage() {
               {propertyName || "Minhas semanas"} · {year}
             </h1>
             <p className="text-sm text-[#1A2F4B]/70">
-              Toque em um dia: a seleção é sempre a <strong>semana inteira</strong>, com nome e
-              temporada — não há escolha de datas soltas.
+              Toque em um dia: a seleção é sempre a <strong>semana inteira</strong> (quinta a quarta),
+              com descrição, classificação Gold/Silver/Black e tipo — sem datas soltas.
             </p>
           </div>
         </div>

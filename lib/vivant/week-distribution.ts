@@ -11,7 +11,7 @@ export type WeekForDistribution = {
 
 export type CotaRef = { id: string };
 
-export type Assignment = { cotaId: string; propertyWeekId: string };
+export type Assignment = { cotaId: string; propertyCalendarWeekId: string };
 
 export type DistributionMetrics = {
   totalWeight: number;
@@ -25,13 +25,13 @@ export type DistributionMetrics = {
   maxDelta: number;
 };
 
-/** Semanas já alocadas no ciclo: propertyWeekId -> cotaId */
+/** Semanas já alocadas no slot: propertyCalendarWeekId -> cotaId */
 export function buildExistingMap(
-  allocations: Array<{ propertyWeekId: string; cotaId: string }>
+  allocations: Array<{ propertyCalendarWeekId: string; cotaId: string }>
 ): Map<string, string> {
   const m = new Map<string, string>();
   for (const a of allocations) {
-    m.set(a.propertyWeekId, a.cotaId);
+    m.set(a.propertyCalendarWeekId, a.cotaId);
   }
   return m;
 }
@@ -67,7 +67,7 @@ export function computeBalancedAssignments(
       }
     }
     totals.set(bestId, bestTotal + w.weight);
-    out.push({ cotaId: bestId, propertyWeekId: w.id });
+    out.push({ cotaId: bestId, propertyCalendarWeekId: w.id });
   }
   return out;
 }
@@ -75,7 +75,7 @@ export function computeBalancedAssignments(
 export function computeMetrics(
   cotas: CotaRef[],
   weeksById: Map<string, { weight: number }>,
-  assignments: Array<{ cotaId: string; propertyWeekId: string }>
+  assignments: Array<{ cotaId: string; propertyCalendarWeekId: string }>
 ): DistributionMetrics {
   const byCota = new Map<
     string,
@@ -87,7 +87,7 @@ export function computeMetrics(
 
   let totalWeight = 0;
   for (const a of assignments) {
-    const w = weeksById.get(a.propertyWeekId);
+    const w = weeksById.get(a.propertyCalendarWeekId);
     if (!w) continue;
     const cur = byCota.get(a.cotaId);
     if (!cur) continue;

@@ -40,7 +40,6 @@ export async function GET(
       numeroCota: cota.numeroCota,
       percentualCota: Number(cota.percentualCota),
       semanasAno: cota.semanasAno,
-      semanasConfig: cota.semanasConfig,
       property: {
         id: cota.property.id,
         name: cota.property.name,

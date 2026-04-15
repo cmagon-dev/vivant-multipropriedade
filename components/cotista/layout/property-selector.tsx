@@ -17,6 +17,7 @@ import {
   CotaWeekDatesLines,
   type SemanaAlocadaItem,
 } from "@/components/cotista/cota-week-dates";
+import { weekDisplayName } from "@/lib/vivant/week-ui-labels";
 
 interface Property {
   id: string;
@@ -87,21 +88,19 @@ export function PropertySelector() {
 
   if (properties.length === 1) {
     return (
-      <div className="hidden sm:flex max-w-md flex-col gap-1 rounded-lg border border-vivant-green/20 bg-vivant-green/5 px-3 py-2">
+      <div className="hidden sm:flex w-[20rem] shrink-0 flex-col gap-1 rounded-lg border border-vivant-green/20 bg-vivant-green/5 px-3 py-2 overflow-hidden">
         <div className="flex items-center gap-2">
           <Home className="h-4 w-4 flex-shrink-0 text-vivant-green" />
-          <div className="min-w-0 text-sm">
+          <div className="min-w-0 flex-1 text-sm">
             <p className="truncate font-medium text-[#1A2F4B]">{selectedProperty.name}</p>
-            <p className="text-xs text-[#1A2F4B]/60">{selectedProperty.numeroCota}</p>
+            <p className="truncate text-xs text-[#1A2F4B]/60">{selectedProperty.numeroCota}</p>
           </div>
         </div>
-        <CotaWeekDatesLines
-          items={dates}
-          anoReferencia={anoSemanas}
-          maxItems={3}
-          compact
-          className="pl-6"
-        />
+        <p className="pl-6 text-[11px] leading-tight text-[#1A2F4B]/70">
+          {dates.length > 0
+            ? `${dates.length} semana(s) alocada(s) em ${anoSemanas ?? new Date().getFullYear()}`
+            : `Sem datas em ${anoSemanas ?? new Date().getFullYear()} — o administrador ainda não distribuiu suas semanas neste calendário.`}
+        </p>
       </div>
     );
   }
@@ -111,7 +110,7 @@ export function PropertySelector() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="hidden h-auto min-h-[2.75rem] max-w-md flex-col items-stretch gap-1 border-vivant-green/30 py-2 hover:border-vivant-green hover:bg-vivant-green/5 sm:flex"
+          className="hidden h-auto min-h-[2.75rem] w-[20rem] shrink-0 flex-col items-stretch gap-1 border-vivant-green/30 py-2 hover:border-vivant-green hover:bg-vivant-green/5 sm:flex overflow-hidden"
         >
           <div className="flex w-full items-center gap-2">
             <Home className="h-4 w-4 flex-shrink-0 text-vivant-green" />
@@ -119,25 +118,18 @@ export function PropertySelector() {
               <p className="truncate text-sm font-medium text-[#1A2F4B]">
                 {selectedProperty.name}
               </p>
-              <p className="text-xs text-[#1A2F4B]/60">{selectedProperty.numeroCota}</p>
+              <p className="truncate text-xs text-[#1A2F4B]/60">{selectedProperty.numeroCota}</p>
             </div>
             <ChevronDown className="h-4 w-4 flex-shrink-0 text-[#1A2F4B]/60" />
           </div>
-          {dates.length > 0 && (
-            <p className="w-full pl-6 text-left text-[10px] leading-tight text-[#1A2F4B]/70">
-              {dates.slice(0, 2).map((s) => (
-                <span key={s.startDate} className="block truncate">
-                  {formatRangeShort(s)}
-                </span>
-              ))}
-              {dates.length > 2 && (
-                <span className="text-[#1A2F4B]/55">+{dates.length - 2} período(s)</span>
-              )}
-            </p>
-          )}
+          <p className="w-full pl-6 text-left text-[10px] leading-tight text-[#1A2F4B]/70 truncate">
+            {dates.length > 0
+              ? `${dates.length} semana(s) alocada(s) em ${anoSemanas ?? new Date().getFullYear()}`
+              : `Sem datas em ${anoSemanas ?? new Date().getFullYear()}`}
+          </p>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 max-h-[min(70vh,28rem)] overflow-y-auto">
+      <DropdownMenuContent align="end" className="w-[24rem] max-h-[min(70vh,28rem)] overflow-y-auto">
         <DropdownMenuLabel>Minhas cotas</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {properties.map((property) => (
@@ -176,6 +168,6 @@ export function PropertySelector() {
 function formatRangeShort(s: SemanaAlocadaItem) {
   const a = format(parseISO(s.startDate), "dd/MM/yyyy", { locale: ptBR });
   const b = format(parseISO(s.endDate), "dd/MM/yyyy", { locale: ptBR });
-  const nome = s.label ?? `Sem. ${s.weekIndex}`;
+  const nome = weekDisplayName(s.description, s.weekIndex);
   return `${nome}: ${a} – ${b}`;
 }

@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { weekDisplayName } from "@/lib/vivant/week-ui-labels";
 
 export default function OportunidadesTrocasPage() {
   const [loading, setLoading] = useState(true);
@@ -14,7 +15,12 @@ export default function OportunidadesTrocasPage() {
       createdAt: string;
       property: { name: string };
       cotista: { name: string };
-      ownedWeek: { label: string | null; weekIndex: number };
+      ownedWeek: {
+        description: string | null;
+        weekIndex: number;
+        startDate: string;
+        endDate: string;
+      };
     }>
   >([]);
 
@@ -55,7 +61,11 @@ export default function OportunidadesTrocasPage() {
                 <p className="font-semibold text-[#1A2F4B]">{r.property.name}</p>
                 <p className="text-sm text-[#1A2F4B]/80 mt-1">
                   Oferta de {r.cotista.name}:{" "}
-                  {r.ownedWeek.label ?? `Semana ${r.ownedWeek.weekIndex}`}
+                  {weekDisplayName(r.ownedWeek.description, r.ownedWeek.weekIndex)}
+                </p>
+                <p className="text-xs text-[#1A2F4B]/60 mt-0.5">
+                  {format(new Date(r.ownedWeek.startDate), "dd/MM/yyyy", { locale: ptBR })} —{" "}
+                  {format(new Date(r.ownedWeek.endDate), "dd/MM/yyyy", { locale: ptBR })}
                 </p>
                 <p className="text-xs text-[#1A2F4B]/50 mt-2">
                   Publicado em{" "}

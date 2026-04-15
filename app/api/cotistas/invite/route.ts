@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, email, cpf, phone, propertyId, numeroCota, percentualCota, semanasAno, semanasConfig } = body;
+    const { name, email, cpf, phone, propertyId, numeroCota, percentualCota, semanasAno } = body;
 
     if (!name || !email || !cpf) {
       return NextResponse.json(
@@ -82,7 +82,6 @@ export async function POST(request: NextRequest) {
           numeroCota,
           percentualCota: percentualCota || 16.67,
           semanasAno: semanasAno || 8,
-          semanasConfig: semanasConfig || { baseYear: new Date().getFullYear(), weeks: [] },
         }
       });
     }

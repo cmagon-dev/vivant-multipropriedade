@@ -3,7 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
-import type { WeekSeasonType } from "@prisma/client";
+import { toAdminWeekJson } from "@/lib/vivant/admin-week-visual";
+import type { OfficialWeekType, WeekTier } from "@prisma/client";
 
 function canManage(session: unknown) {
   const s = session as { user?: { userType?: string } } | null;
@@ -24,8 +25,11 @@ export async function PUT(
     }
 
     const { id: propertyId, weekId } = await ctx.params;
-    const week = await prisma.propertyWeek.findFirst({
-      where: { id: weekId, propertyId },
+    const week = await prisma.propertyCalendarWeek.findFirst({
+      where: {
+        id: weekId,
+        calendarYear: { propertyId },
+      },
     });
     if (!week) {
       return NextResponse.json({ error: "Semana não encontrada" }, { status: 404 });
@@ -33,44 +37,41 @@ export async function PUT(
 
     const body = await request.json();
     const {
-      label,
-      seasonType,
+      description,
+      officialWeekType,
+      tier,
+      isExtra,
       weight,
-      isHoliday,
-      isSchoolVacation,
       isBlocked,
-      isExchangeAllowed,
-      color,
+      exchangeAllowed,
       notes,
       startDate,
       endDate,
       weekIndex,
     } = body as {
-      label?: string | null;
-      seasonType?: WeekSeasonType;
+      description?: string | null;
+      officialWeekType?: OfficialWeekType;
+      tier?: WeekTier;
+      isExtra?: boolean;
       weight?: number;
-      isHoliday?: boolean;
-      isSchoolVacation?: boolean;
       isBlocked?: boolean;
-      isExchangeAllowed?: boolean;
-      color?: string | null;
+      exchangeAllowed?: boolean;
       notes?: string | null;
       startDate?: string;
       endDate?: string;
       weekIndex?: number;
     };
 
-    const updated = await prisma.propertyWeek.update({
+    await prisma.propertyCalendarWeek.update({
       where: { id: weekId },
       data: {
-        ...(label !== undefined ? { label: label ?? null } : {}),
-        ...(seasonType !== undefined ? { seasonType } : {}),
+        ...(description !== undefined ? { description: description ?? null } : {}),
+        ...(officialWeekType !== undefined ? { officialWeekType } : {}),
+        ...(tier !== undefined ? { tier } : {}),
+        ...(isExtra !== undefined ? { isExtra } : {}),
         ...(weight !== undefined ? { weight } : {}),
-        ...(isHoliday !== undefined ? { isHoliday } : {}),
-        ...(isSchoolVacation !== undefined ? { isSchoolVacation } : {}),
         ...(isBlocked !== undefined ? { isBlocked } : {}),
-        ...(isExchangeAllowed !== undefined ? { isExchangeAllowed } : {}),
-        ...(color !== undefined ? { color: color ?? null } : {}),
+        ...(exchangeAllowed !== undefined ? { exchangeAllowed } : {}),
         ...(notes !== undefined ? { notes: notes ?? null } : {}),
         ...(startDate !== undefined ? { startDate: new Date(startDate) } : {}),
         ...(endDate !== undefined ? { endDate: new Date(endDate) } : {}),
@@ -78,7 +79,19 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json({ week: updated });
+    const full = await prisma.propertyCalendarWeek.findFirst({
+      where: { id: weekId },
+      include: {
+        assignments: { select: { id: true } },
+        weekReservations: {
+          select: { status: true },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
+    });
+
+    return NextResponse.json({ week: full ? toAdminWeekJson(full) : null });
   } catch (e) {
     console.error(e);
     return NextResponse.json(

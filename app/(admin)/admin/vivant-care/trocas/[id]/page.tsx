@@ -9,20 +9,57 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import type { WeekExchangeRequestStatus } from "@prisma/client";
 
-const STATUS_LABEL: Record<string, string> = {
-  ABERTA: "Aberta",
-  EM_NEGOCIACAO: "Em negociação",
-  ACEITA: "Aceita",
-  CONCLUIDA: "Concluída",
-  CANCELADA: "Cancelada",
-  EXPIRADA: "Expirada",
+const STATUS_LABEL: Record<WeekExchangeRequestStatus, string> = {
+  REQUESTED: "Solicitada",
+  UNDER_ADMIN_REVIEW: "Em análise",
+  ADMIN_OPTION_FOUND: "Opção encontrada",
+  PUBLISHED_TO_PEERS: "Publicada aos pares",
+  PEER_INTEREST_FOUND: "Interesse de par",
+  NEGOTIATION_IN_PROGRESS: "Em negociação",
+  PENDING_ADMIN_APPROVAL: "Aguardando aprovação",
+  APPROVED: "Aprovada",
+  REJECTED: "Rejeitada",
+  EXPIRED: "Expirada",
+  CANCELLED: "Cancelada",
+};
+
+const TERMINAL: WeekExchangeRequestStatus[] = [
+  "APPROVED",
+  "REJECTED",
+  "CANCELLED",
+  "EXPIRED",
+];
+
+type WeekBrief = {
+  id: string;
+  weekIndex: number;
+  startDate: string;
+  endDate: string;
+  description: string | null;
 };
 
 export default function TrocaDetalheAdminPage() {
   const params = useParams();
   const id = params.id as string;
-  const [t, setT] = useState<any>(null);
+  const [t, setT] = useState<{
+    status: WeekExchangeRequestStatus;
+    notes: string | null;
+    adminNotes: string | null;
+    createdAt: string;
+    cotista?: { name?: string | null; email?: string | null };
+    property?: { name?: string | null };
+    cota?: { numeroCota?: number | null };
+    ownedWeek?: WeekBrief | null;
+    desiredWeek?: WeekBrief | null;
+    peerInterests?: Array<{
+      id: string;
+      status: string;
+      interestedCotista?: { name?: string | null };
+      offeredWeek?: WeekBrief | null;
+    }>;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
@@ -34,7 +71,7 @@ export default function TrocaDetalheAdminPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const updateStatus = async (newStatus: string) => {
+  const updateStatus = async (newStatus: WeekExchangeRequestStatus) => {
     setUpdating(true);
     try {
       const res = await fetch("/api/admin/trocas/" + id, {
@@ -78,7 +115,16 @@ export default function TrocaDetalheAdminPage() {
     );
   }
 
-  const canChangeStatus = ["ABERTA", "EM_NEGOCIACAO"].includes(t.status);
+  const canChangeStatus = !TERMINAL.includes(t.status);
+
+  const formatWeek = (w: WeekBrief) => (
+    <>
+      Semana {w.weekIndex}
+      {w.description ? ` — ${w.description}` : ""} ·{" "}
+      {format(new Date(w.startDate), "dd MMM yyyy", { locale: ptBR })} →{" "}
+      {format(new Date(w.endDate), "dd MMM yyyy", { locale: ptBR })}
+    </>
+  );
 
   return (
     <div className="space-y-6">
@@ -94,22 +140,43 @@ export default function TrocaDetalheAdminPage() {
             <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-gray-500">
               <span className="inline-flex items-center gap-1">
                 <User className="w-4 h-4" />
-                {t.solicitante?.name ?? "—"} ({t.solicitante?.email})
+                {t.cotista?.name ?? "—"} ({t.cotista?.email})
               </span>
-              <span className={`px-2 py-0.5 rounded ${t.status === "CONCLUIDA" ? "bg-green-100 text-green-700" : t.status === "CANCELADA" || t.status === "EXPIRADA" ? "bg-gray-100 text-gray-600" : "bg-amber-100 text-amber-800"}`}>
+              <span
+                className={`px-2 py-0.5 rounded ${
+                  t.status === "APPROVED"
+                    ? "bg-green-100 text-green-700"
+                    : TERMINAL.includes(t.status)
+                      ? "bg-gray-100 text-gray-600"
+                      : "bg-amber-100 text-amber-800"
+                }`}
+              >
                 {STATUS_LABEL[t.status] ?? t.status}
               </span>
-              <span>{format(new Date(t.createdAt), "dd MMM yyyy HH:mm", { locale: ptBR })}</span>
+              <span>
+                {format(new Date(t.createdAt), "dd MMM yyyy HH:mm", { locale: ptBR })}
+              </span>
             </div>
           </div>
         </div>
         {canChangeStatus && (
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => updateStatus("ACEITA")} disabled={updating}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => updateStatus("APPROVED")}
+              disabled={updating}
+            >
               Aprovar
             </Button>
-            <Button size="sm" variant="outline" className="text-red-600" onClick={() => updateStatus("CANCELADA")} disabled={updating}>
-              Reprovar
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-red-600"
+              onClick={() => updateStatus("REJECTED")}
+              disabled={updating}
+            >
+              Rejeitar
             </Button>
           </div>
         )}
@@ -117,29 +184,69 @@ export default function TrocaDetalheAdminPage() {
 
       <Card>
         <CardContent className="p-6 space-y-4">
-          {t.observacoes && (
+          {t.property?.name && (
+            <p className="text-sm text-gray-700 flex items-center gap-2">
+              <Building2 className="w-4 h-4 shrink-0" />
+              {t.property.name}
+              {t.cota?.numeroCota != null && (
+                <span className="text-gray-500">· Cota {t.cota.numeroCota}</span>
+              )}
+            </p>
+          )}
+          {t.notes && (
             <div>
-              <h3 className="font-semibold text-vivant-navy mb-1">Observações</h3>
-              <p className="text-gray-700 whitespace-pre-wrap">{t.observacoes}</p>
+              <h3 className="font-semibold text-vivant-navy mb-1">Observações do cotista</h3>
+              <p className="text-gray-700 whitespace-pre-wrap">{t.notes}</p>
             </div>
           )}
-          {t.reservas?.length > 0 && (
+          {t.adminNotes && (
+            <div>
+              <h3 className="font-semibold text-vivant-navy mb-1">Notas internas</h3>
+              <p className="text-gray-700 whitespace-pre-wrap">{t.adminNotes}</p>
+            </div>
+          )}
+          {(t.ownedWeek || t.desiredWeek) && (
             <div>
               <h3 className="font-semibold text-vivant-navy mb-2 flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                Semanas/reservas
+                Semanas oficiais
               </h3>
-              <ul className="space-y-2">
-                {t.reservas.map((r: any) => (
-                  <li key={r.id} className="text-sm text-gray-700">
-                    {r.cota?.property?.name ?? "—"} — Semana {r.numeroSemana} ({format(new Date(r.dataInicio), "dd MMM yyyy", { locale: ptBR })})
+              <ul className="space-y-2 text-sm text-gray-700">
+                {t.ownedWeek && (
+                  <li>
+                    <span className="font-medium text-vivant-navy">Oferece: </span>
+                    {formatWeek(t.ownedWeek)}
+                  </li>
+                )}
+                {t.desiredWeek && (
+                  <li>
+                    <span className="font-medium text-vivant-navy">Deseja: </span>
+                    {formatWeek(t.desiredWeek)}
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+          {t.peerInterests && t.peerInterests.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-vivant-navy mb-2">Interesses de pares</h3>
+              <ul className="space-y-2 text-sm">
+                {t.peerInterests.map((p) => (
+                  <li key={p.id} className="text-gray-700">
+                    {p.interestedCotista?.name ?? "—"} — {p.status}
+                    {p.offeredWeek && (
+                      <span className="block text-gray-600 mt-0.5">
+                        Oferece semana {p.offeredWeek.weekIndex} (
+                        {format(new Date(p.offeredWeek.startDate), "dd/MM/yyyy", {
+                          locale: ptBR,
+                        })}
+                        )
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
             </div>
-          )}
-          {t.concluidaEm && (
-            <p className="text-sm text-gray-500">Concluída em {format(new Date(t.concluidaEm), "dd MMM yyyy HH:mm", { locale: ptBR })}</p>
           )}
         </CardContent>
       </Card>

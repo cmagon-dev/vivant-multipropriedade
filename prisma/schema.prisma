@@ -450,9 +450,9 @@ model Property {
   assembleias     Assembleia[]
   mensagens       Mensagem[]
   documentos      Documento[]
-  propertyWeeks   PropertyWeek[]
-  allocationCycles PropertyAllocationCycle[]
+  calendarYears   PropertyCalendarYear[]
   weekExchangeRequests WeekExchangeRequest[]
+  weekMarketplaceListings WeekMarketplaceListing[]
   notificacoes    Notificacao[]
   // Vivant Capital: camada de investimento sobre o imóvel (sem duplicar dados)
   capitalAssetConfigs CapitalAssetConfig[]
@@ -545,10 +545,11 @@ model Cotista {
   invitedAt         DateTime?
   
   cotas             CotaPropriedade[]
-  reservas          Reserva[]
-  trocasSemanas     TrocaSemana[]
+  weekReservations  WeekReservation[]
   weekExchangeRequests WeekExchangeRequest[]
   weekPeerInterests WeekExchangePeerInterest[]
+  weekMarketplaceListings WeekMarketplaceListing[]
+  weekMarketplaceProposals WeekMarketplaceProposal[]
   votosAssembleia   VotoAssembleia[]
   mensagens         Mensagem[]
   targetedMensagens Mensagem[]           @relation("MensagemTargetCotista")
@@ -574,15 +575,18 @@ model CotaPropriedade {
   numeroCota        String
   percentualCota    Decimal         @db.Decimal(5,2)
   semanasAno        Int             @default(8)
-  semanasConfig     Json
   
   ativo             Boolean         @default(true)
   dataAquisicao     DateTime        @default(now())
   
   cobrancas         Cobranca[]
-  reservas          Reserva[]
-  weekAllocations   PropertyWeekAllocation[]
+  weekReservations  WeekReservation[]
+  weekAssignments   PropertyWeekAssignment[]
   weekExchangeRequests WeekExchangeRequest[]
+  marketplaceListingAsOwner WeekMarketplaceListing[] @relation("ListingOwnerCota")
+  marketplaceProposalsAsProposer WeekMarketplaceProposal[] @relation("ProposerCota")
+  usageOverridesFrom WeekUsageOverride[] @relation("UsageFromCota")
+  usageOverridesTo   WeekUsageOverride[] @relation("UsageToCota")
   
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
@@ -593,43 +597,7 @@ model CotaPropriedade {
   @@map("cotas_propriedade")
 }
 
-// ===== CALENDÁRIO E RESERVAS =====
-
-model Reserva {
-  id                String              @id @default(cuid())
-  cotaId            String
-  cota              CotaPropriedade     @relation(fields: [cotaId], references: [id], onDelete: Cascade)
-  cotistaId         String
-  cotista           Cotista             @relation(fields: [cotistaId], references: [id], onDelete: Cascade)
-  
-  ano               Int
-  numeroSemana      Int
-  dataInicio        DateTime
-  dataFim           DateTime
-  
-  status            StatusReserva       @default(PENDENTE)
-  confirmadoEm      DateTime?
-  checkInEm         DateTime?
-  checkOutEm        DateTime?
-  
-  limpezaSolicitada Boolean             @default(false)
-  limpezaRealizada  Boolean             @default(false)
-  
-  observacoes       String?             @db.Text
-  
-  trocaId           String?
-  troca             TrocaSemana?        @relation(fields: [trocaId], references: [id])
-  
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  checkinReports    CheckinCheckoutReport[]
-  
-  @@unique([cotaId, ano, numeroSemana])
-  @@index([cotistaId])
-  @@index([status])
-  @@index([ano, numeroSemana])
-  @@map("reservas")
-}
+// ===== CALENDÁRIO E RESERVAS (semanas oficiais) =====
 
 enum PropertyAssetCategory {
   MOVEIS
@@ -678,8 +646,8 @@ model CheckinCheckoutReport {
   property            Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   cotistaId           String
   cotista             Cotista   @relation(fields: [cotistaId], references: [id], onDelete: Cascade)
-  reservaId           String?
-  reserva             Reserva?  @relation(fields: [reservaId], references: [id], onDelete: SetNull)
+  weekReservationId   String?
+  weekReservation     WeekReservation?  @relation(fields: [weekReservationId], references: [id], onDelete: SetNull)
   expectedCheckinDate DateTime?
   expectedCheckinTime String?
   expectedCheckoutDate DateTime?
@@ -695,7 +663,7 @@ model CheckinCheckoutReport {
 
   @@index([propertyId])
   @@index([cotistaId])
-  @@index([reservaId])
+  @@index([weekReservationId])
   @@map("checkin_checkout_reports")
 }
 
@@ -727,50 +695,6 @@ enum StatusReserva {
   FINALIZADA
   CANCELADA
   DISPONIVEL_TROCA
-}
-
-model TrocaSemana {
-  id                String          @id @default(cuid())
-  
-  cotistaSolicitante String
-  solicitante        Cotista        @relation(fields: [cotistaSolicitante], references: [id], onDelete: Cascade)
-  
-  reservaOferecida   String?
-  
-  status             StatusTroca    @default(ABERTA)
-  tipo               TipoTroca      @default(QUALQUER_PROPRIEDADE)
-  
-  propriedadeDesejada String?
-  semanasDesejadas    Json?
-  observacoes         String?       @db.Text
-  
-  cotistaConclusao    String?
-  reservaRecebida     String?
-  concluidaEm         DateTime?
-  
-  reservas            Reserva[]
-  
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  
-  @@index([cotistaSolicitante])
-  @@index([status])
-  @@map("trocas_semanas")
-}
-
-enum StatusTroca {
-  ABERTA
-  EM_NEGOCIACAO
-  ACEITA
-  CONCLUIDA
-  CANCELADA
-  EXPIRADA
-}
-
-enum TipoTroca {
-  MESMA_PROPRIEDADE
-  QUALQUER_PROPRIEDADE
-  PROPRIEDADE_ESPECIFICA
 }
 
 // ===== FINANCEIRO =====
@@ -1073,82 +997,146 @@ model Notificacao {
   @@map("notificacoes")
 }
 
-// ===== SEMANAS POR PROPRIEDADE + DISTRIBUIÇÃO + TROCAS MEDIADAS =====
+// ===== CALENDÁRIO OFICIAL + DISTRIBUIÇÃO + RESERVAS + TROCAS MEDIADAS =====
 
-enum WeekSeasonType {
-  BAIXA
-  MEDIA
-  ALTA
-  SUPER_ALTA
+enum WeekTier {
+  GOLD
+  SILVER
+  BLACK
 }
 
-/// Semana canônica do calendário da casa (única fonte de verdade para UI e trocas).
-model PropertyWeek {
-  id                String   @id @default(cuid())
-  propertyId        String
-  property          Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  year              Int
-  weekIndex         Int
-  startDate         DateTime
-  endDate           DateTime
-  label             String?
-  seasonType        WeekSeasonType @default(MEDIA)
-  weight            Decimal  @db.Decimal(12, 4)
-  isHoliday         Boolean  @default(false)
-  isSchoolVacation  Boolean  @default(false)
-  isBlocked         Boolean  @default(false)
-  isExchangeAllowed Boolean  @default(true)
-  color             String?
-  notes             String?  @db.Text
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  allocations       PropertyWeekAllocation[]
-  requestsAsOwned   WeekExchangeRequest[] @relation("OwnedWeek")
-  requestsAsDesired WeekExchangeRequest[] @relation("DesiredWeek")
-  peerOffers        WeekExchangePeerInterest[] @relation("OfferedWeek")
-
-  @@unique([propertyId, year, weekIndex])
-  @@index([propertyId, year])
-  @@index([startDate, endDate])
-  @@map("property_weeks")
+enum OfficialWeekType {
+  TYPE_1
+  TYPE_2
+  TYPE_3
+  TYPE_4
+  TYPE_5
+  TYPE_6
+  EXTRA
 }
 
-model PropertyAllocationCycle {
-  id          String   @id @default(cuid())
-  propertyId  String
-  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  label       String
-  yearRef     Int?
-  status      String   @default("RASCUNHO")
-  notes       String?  @db.Text
-  finalizedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+enum CalendarYearStatus {
+  DRAFT
+  PUBLISHED
+}
 
-  allocations PropertyWeekAllocation[]
+/// Um ano civil de calendário oficial por propriedade.
+model PropertyCalendarYear {
+  id         String             @id @default(cuid())
+  propertyId String
+  property   Property           @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  year       Int
+  label      String?
+  status     CalendarYearStatus @default(DRAFT)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
 
+  weeks             PropertyCalendarWeek[]
+  distributionSlots CalendarDistributionSlot[]
+  weekMarketplaceListings WeekMarketplaceListing[]
+
+  @@unique([propertyId, year])
   @@index([propertyId])
-  @@map("property_allocation_cycles")
+  @@map("property_calendar_years")
 }
 
-model PropertyWeekAllocation {
-  id               String   @id @default(cuid())
-  cycleId          String
-  cycle            PropertyAllocationCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
-  cotaId           String
-  cota             CotaPropriedade @relation(fields: [cotaId], references: [id], onDelete: Cascade)
-  propertyWeekId   String
-  propertyWeek     PropertyWeek @relation(fields: [propertyWeekId], references: [id], onDelete: Cascade)
-  locked           Boolean  @default(false)
-  simulationOnly Boolean  @default(false)
-  notes            String?  @db.Text
-  createdAt        DateTime @default(now())
+/// Semana oficial (datas reais + tipo + classificação).
+model PropertyCalendarWeek {
+  id                     String               @id @default(cuid())
+  propertyCalendarYearId String
+  calendarYear           PropertyCalendarYear @relation(fields: [propertyCalendarYearId], references: [id], onDelete: Cascade)
+  weekIndex              Int
+  startDate              DateTime
+  endDate                DateTime
+  description            String?
+  officialWeekType       OfficialWeekType
+  tier                   WeekTier
+  isExtra                Boolean              @default(false)
+  exchangeAllowed        Boolean              @default(true)
+  isBlocked              Boolean              @default(false)
+  weight                 Decimal              @default(1) @db.Decimal(12, 4)
+  notes                  String?              @db.Text
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
 
-  @@unique([cycleId, propertyWeekId])
+  assignments       PropertyWeekAssignment[]
+  weekReservations    WeekReservation[]
+  requestsAsOwned     WeekExchangeRequest[]    @relation("OwnedCalendarWeek")
+  requestsAsDesired   WeekExchangeRequest[]    @relation("DesiredCalendarWeek")
+  peerOffers          WeekExchangePeerInterest[] @relation("OfferedCalendarWeek")
+  marketplaceListings WeekMarketplaceListing[]
+  marketplaceProposerWeeks WeekMarketplaceProposal[] @relation("ProposerWeek")
+
+  usageOverrides      WeekUsageOverride[]
+
+  @@unique([propertyCalendarYearId, weekIndex])
+  @@index([propertyCalendarYearId])
+  @@index([startDate, endDate])
+  @@map("property_calendar_weeks")
+}
+
+/// Rodada de distribuição de semanas às cotas (por ano).
+model CalendarDistributionSlot {
+  id                     String               @id @default(cuid())
+  propertyCalendarYearId String
+  calendarYear           PropertyCalendarYear @relation(fields: [propertyCalendarYearId], references: [id], onDelete: Cascade)
+  label                  String
+  status                 String               @default("RASCUNHO")
+  notes                  String?              @db.Text
+  finalizedAt            DateTime?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+
+  assignments PropertyWeekAssignment[]
+
+  @@index([propertyCalendarYearId])
+  @@map("calendar_distribution_slots")
+}
+
+model PropertyWeekAssignment {
+  id                     String               @id @default(cuid())
+  distributionSlotId     String
+  distributionSlot       CalendarDistributionSlot @relation(fields: [distributionSlotId], references: [id], onDelete: Cascade)
+  cotaId                 String
+  cota                   CotaPropriedade      @relation(fields: [cotaId], references: [id], onDelete: Cascade)
+  propertyCalendarWeekId String
+  calendarWeek           PropertyCalendarWeek @relation(fields: [propertyCalendarWeekId], references: [id], onDelete: Cascade)
+  locked                 Boolean              @default(false)
+  notes                  String?              @db.Text
+  createdAt              DateTime             @default(now())
+
+  @@unique([distributionSlotId, propertyCalendarWeekId])
   @@index([cotaId])
-  @@index([propertyWeekId])
-  @@map("property_week_allocations")
+  @@index([propertyCalendarWeekId])
+  @@map("property_week_assignments")
+}
+
+model WeekReservation {
+  id                     String               @id @default(cuid())
+  cotaId                 String
+  cota                   CotaPropriedade      @relation(fields: [cotaId], references: [id], onDelete: Cascade)
+  cotistaId              String
+  cotista                Cotista              @relation(fields: [cotistaId], references: [id], onDelete: Cascade)
+  propertyCalendarWeekId String
+  calendarWeek           PropertyCalendarWeek @relation(fields: [propertyCalendarWeekId], references: [id], onDelete: Cascade)
+
+  status            StatusReserva @default(PENDENTE)
+  confirmadoEm      DateTime?
+  checkInEm         DateTime?
+  checkOutEm        DateTime?
+  limpezaSolicitada Boolean       @default(false)
+  limpezaRealizada  Boolean       @default(false)
+  observacoes       String?       @db.Text
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  checkinReports CheckinCheckoutReport[]
+
+  @@unique([cotaId, propertyCalendarWeekId])
+  @@index([cotistaId])
+  @@index([status])
+  @@index([propertyCalendarWeekId])
+  @@map("week_reservations")
 }
 
 enum WeekExchangeRequestStatus {
@@ -1165,7 +1153,7 @@ enum WeekExchangeRequestStatus {
   CANCELLED
 }
 
-/// Solicitação de troca — nenhuma conclusão automática; admin sempre no fluxo.
+/// Solicitação de troca — semanas oficiais; admin no fluxo.
 model WeekExchangeRequest {
   id                    String   @id @default(cuid())
   propertyId            String
@@ -1174,10 +1162,10 @@ model WeekExchangeRequest {
   cotista               Cotista @relation(fields: [cotistaId], references: [id], onDelete: Cascade)
   cotaId                String
   cota                  CotaPropriedade @relation(fields: [cotaId], references: [id], onDelete: Cascade)
-  ownedPropertyWeekId   String
-  ownedWeek             PropertyWeek @relation("OwnedWeek", fields: [ownedPropertyWeekId], references: [id], onDelete: Restrict)
-  desiredPropertyWeekId String?
-  desiredWeek           PropertyWeek? @relation("DesiredWeek", fields: [desiredPropertyWeekId], references: [id], onDelete: SetNull)
+  ownedCalendarWeekId   String
+  ownedWeek             PropertyCalendarWeek @relation("OwnedCalendarWeek", fields: [ownedCalendarWeekId], references: [id], onDelete: Restrict)
+  desiredCalendarWeekId String?
+  desiredWeek           PropertyCalendarWeek? @relation("DesiredCalendarWeek", fields: [desiredCalendarWeekId], references: [id], onDelete: SetNull)
   desiredPeriodStart    DateTime?
   desiredPeriodEnd      DateTime?
   acceptsAlternatives   Boolean  @default(false)
@@ -1211,8 +1199,8 @@ model WeekExchangePeerInterest {
   request               WeekExchangeRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
   interestedCotistaId   String
   interestedCotista     Cotista @relation(fields: [interestedCotistaId], references: [id], onDelete: Cascade)
-  offeredPropertyWeekId String
-  offeredWeek           PropertyWeek @relation("OfferedWeek", fields: [offeredPropertyWeekId], references: [id], onDelete: Cascade)
+  offeredCalendarWeekId String
+  offeredWeek           PropertyCalendarWeek @relation("OfferedCalendarWeek", fields: [offeredCalendarWeekId], references: [id], onDelete: Cascade)
   message               String?  @db.Text
   status                WeekPeerInterestStatus @default(PENDING)
   createdAt             DateTime @default(now())
@@ -1236,6 +1224,138 @@ model WeekExchangeEventLog {
   @@index([requestId])
   @@index([createdAt])
   @@map("week_exchange_event_logs")
+}
+
+// ===== MARKETPLACE DE SEMANAS (cotista a cotista; sem pagamento no sistema) =====
+
+enum WeekMarketplaceListingType {
+  EXCHANGE
+  SALE
+  BOTH
+}
+
+enum WeekMarketplaceListingStatus {
+  DRAFT
+  PUBLISHED
+  NEGOTIATING
+  WAITING_CONFIRMATION
+  COMPLETED
+  CANCELLED
+}
+
+enum WeekMarketplaceProposalType {
+  EXCHANGE
+  SALE
+}
+
+enum WeekMarketplaceProposalStatus {
+  PENDING
+  ACCEPTED_BY_OWNER
+  ACCEPTED_BY_PROPOSER
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+enum WeekUsageOverrideReason {
+  EXCHANGE
+  SALE
+}
+
+/// Anúncio de semana para troca e/ou venda (por propriedade e ano).
+model WeekMarketplaceListing {
+  id                     String                       @id @default(cuid())
+  propertyId             String
+  property               Property                     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyCalendarYearId String
+  calendarYear           PropertyCalendarYear         @relation(fields: [propertyCalendarYearId], references: [id], onDelete: Cascade)
+  ownerCotistaId         String
+  ownerCotista           Cotista                      @relation(fields: [ownerCotistaId], references: [id], onDelete: Cascade)
+  ownerCotaId            String
+  ownerCota              CotaPropriedade              @relation("ListingOwnerCota", fields: [ownerCotaId], references: [id], onDelete: Cascade)
+  ownedCalendarWeekId    String
+  ownedWeek              PropertyCalendarWeek           @relation(fields: [ownedCalendarWeekId], references: [id], onDelete: Restrict)
+  type                   WeekMarketplaceListingType
+  preferences            Json?
+  status                 WeekMarketplaceListingStatus @default(DRAFT)
+  createdAt              DateTime                     @default(now())
+  updatedAt              DateTime                     @updatedAt
+
+  proposals WeekMarketplaceProposal[]
+  eventLogs WeekMarketplaceEventLog[]
+
+  @@index([propertyId, status])
+  @@index([ownerCotistaId])
+  @@index([propertyCalendarYearId])
+  @@index([ownedCalendarWeekId])
+  @@map("week_marketplace_listings")
+}
+
+model WeekMarketplaceProposal {
+  id                  String                        @id @default(cuid())
+  listingId           String
+  listing             WeekMarketplaceListing        @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  proposerCotistaId   String
+  proposerCotista     Cotista                       @relation(fields: [proposerCotistaId], references: [id], onDelete: Cascade)
+  proposerCotaId      String
+  proposerCota        CotaPropriedade               @relation("ProposerCota", fields: [proposerCotaId], references: [id], onDelete: Cascade)
+  proposerWeekId      String?
+  proposerWeek        PropertyCalendarWeek?         @relation("ProposerWeek", fields: [proposerWeekId], references: [id], onDelete: Restrict)
+  type                WeekMarketplaceProposalType
+  status              WeekMarketplaceProposalStatus @default(PENDING)
+  /// Troca: dono aceitou a proposta em princípio.
+  ownerAcceptedAt     DateTime?
+  /// Troca: proponente confirmou o fechamento. Venda: comprador confirmou após o vendedor.
+  proposerAcceptedAt  DateTime?
+  /// Venda: vendedor (dono do listing) confirmou fora da plataforma.
+  sellerConfirmedAt   DateTime?
+  /// Venda: comprador confirmou fora da plataforma.
+  buyerConfirmedAt    DateTime?
+  message             String?                       @db.Text
+  createdAt           DateTime                      @default(now())
+  updatedAt           DateTime                      @updatedAt
+
+  usageOverrides WeekUsageOverride[]
+
+  @@index([listingId])
+  @@index([proposerCotistaId])
+  @@index([status])
+  @@map("week_marketplace_proposals")
+}
+
+/// Uso efetivo da semana no ano (não altera PropertyWeekAssignment).
+model WeekUsageOverride {
+  id                     String                 @id @default(cuid())
+  propertyCalendarWeekId String
+  calendarWeek           PropertyCalendarWeek   @relation(fields: [propertyCalendarWeekId], references: [id], onDelete: Cascade)
+  fromCotaId             String
+  fromCota               CotaPropriedade        @relation("UsageFromCota", fields: [fromCotaId], references: [id], onDelete: Cascade)
+  toCotaId               String
+  toCota                 CotaPropriedade        @relation("UsageToCota", fields: [toCotaId], references: [id], onDelete: Cascade)
+  reason                 WeekUsageOverrideReason
+  proposalId             String
+  proposal               WeekMarketplaceProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  createdAt              DateTime               @default(now())
+
+  @@unique([propertyCalendarWeekId])
+  @@index([fromCotaId])
+  @@index([toCotaId])
+  @@index([proposalId])
+  @@map("week_usage_overrides")
+}
+
+model WeekMarketplaceEventLog {
+  id        String                 @id @default(cuid())
+  listingId String?
+  listing   WeekMarketplaceListing? @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  actorCotistaId String?
+  action    String
+  payload   Json?
+  createdAt DateTime               @default(now())
+
+  @@index([listingId])
+  @@index([createdAt])
+  @@map("week_marketplace_event_logs")
 }
 
 // ===== VIVANT CAPITAL (camada investimento sobre imóveis existentes) =====

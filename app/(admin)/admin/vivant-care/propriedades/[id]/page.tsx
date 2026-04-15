@@ -36,7 +36,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ConfigurarSemanasDialog } from "@/components/admin-portal/configurar-semanas-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarioPropriedade } from "@/components/admin-portal/calendario-propriedade";
 import { PlanejamentoSemanasPanel } from "@/components/admin/vivant-care/planejamento-semanas-panel";
@@ -55,7 +54,6 @@ interface Propriedade {
     numeroCota: string;
     percentualCota: number;
     semanasAno: number;
-    semanasConfig: any;
     ativo: boolean;
     cotista: { id: string; name: string; email: string };
   }>;
@@ -106,13 +104,15 @@ function extrairNumeroCota(valor: string): number | null {
 
 const baseProp = "/admin/vivant-care/propriedades";
 
+type PropriedadeLoadStatus = "idle" | "missing" | "unauthorized" | "error";
+
 export default function PropriedadeDetalhesVivantCarePage({ params }: { params: { id: string } }) {
   const [propriedade, setPropriedade] = useState<Propriedade | null>(null);
+  const [loadStatus, setLoadStatus] = useState<PropriedadeLoadStatus>("idle");
   const [cotistas, setCotistas] = useState<Cotista[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNovaCota, setShowNovaCota] = useState(false);
   const [activeTab, setActiveTab] = useState("cotas");
-  const [cotaParaConfigurar, setCotaParaConfigurar] = useState<any>(null);
   const [documentos, setDocumentos] = useState<DocumentoCasa[]>([]);
   const [loadingDocumentos, setLoadingDocumentos] = useState(false);
   const [tituloDocumento, setTituloDocumento] = useState("");
@@ -135,6 +135,9 @@ export default function PropriedadeDetalhesVivantCarePage({ params }: { params: 
   });
 
   useEffect(() => {
+    setLoading(true);
+    setPropriedade(null);
+    setLoadStatus("idle");
     carregarPropriedade();
     carregarCotistas();
     carregarDocumentos();
@@ -160,8 +163,25 @@ export default function PropriedadeDetalhesVivantCarePage({ params }: { params: 
       if (response.ok) {
         const data = await response.json();
         setPropriedade(data);
+        setLoadStatus("idle");
+        return;
       }
+      setPropriedade(null);
+      if (response.status === 404) {
+        setLoadStatus("missing");
+        return;
+      }
+      if (response.status === 401) {
+        setLoadStatus("unauthorized");
+        toast.error("Sessão expirada ou sem permissão. Entre novamente.");
+        return;
+      }
+      setLoadStatus("error");
+      const err = await response.json().catch(() => ({}));
+      toast.error(err.error || "Erro ao carregar propriedade");
     } catch {
+      setPropriedade(null);
+      setLoadStatus("error");
       toast.error("Erro ao carregar propriedade");
     } finally {
       setLoading(false);
@@ -381,10 +401,24 @@ export default function PropriedadeDetalhesVivantCarePage({ params }: { params: 
   }
 
   if (!propriedade) {
+    const isMissing = loadStatus === "missing";
+    const isUnauthorized = loadStatus === "unauthorized";
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-12 max-w-lg mx-auto px-4">
         <Home className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-600">Propriedade não encontrada</p>
+        <p className="text-gray-800 font-medium">
+          {isUnauthorized ? "Acesso não autorizado" : "Propriedade não encontrada"}
+        </p>
+        {isMissing ? (
+          <p className="text-sm text-gray-600 mt-2">
+            Não existe registro com este ID no banco atual (por exemplo após migração ou seed).
+            Abra a propriedade pela lista em Propriedades ou cadastre de novo.
+          </p>
+        ) : isUnauthorized ? (
+          <p className="text-sm text-gray-600 mt-2">Faça login de novo como administrador com permissão de Vivant Care.</p>
+        ) : loadStatus === "error" ? (
+          <p className="text-sm text-gray-600 mt-2">Ocorreu um erro ao consultar o servidor. Tente novamente.</p>
+        ) : null}
         <Button asChild className="mt-4">
           <Link href={baseProp}>
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -610,17 +644,26 @@ export default function PropriedadeDetalhesVivantCarePage({ params }: { params: 
                         <div className="text-right">
                           <p className="font-semibold text-vivant-navy">{cota.numeroCota}</p>
                           <p className="text-sm text-gray-600">
-                            {cota.percentualCota}% • {cota.semanasAno} semanas/ano
+                            {cota.percentualCota}% • {cota.semanasAno} semanas/ano (contrato)
                           </p>
-                          {cota.semanasConfig?.weeks?.length > 0 && (
-                            <p className="text-xs text-vivant-green mt-1">{cota.semanasConfig.weeks.length} semanas configuradas</p>
-                          )}
+                          <p className="text-xs text-gray-500 mt-1">
+                            Distribuição no calendário oficial: aba <strong>Distribuir semanas</strong> ou{" "}
+                            <Link
+                              className="text-vivant-navy underline font-medium"
+                              href={`/admin/vivant-care/propriedades/${params.id}/distribuir-semanas`}
+                            >
+                              abrir distribuição
+                            </Link>
+                            .
+                          </p>
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setCotaParaConfigurar(cota)}>
-                          <Settings className="w-4 h-4 mr-2" />
-                          Configurar Semanas
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/admin/vivant-care/propriedades/${params.id}/distribuir-semanas`}>
+                            <CalendarRange className="w-4 h-4 mr-2" />
+                            Distribuir semanas
+                          </Link>
                         </Button>
                         <Button
                           variant="ghost"
@@ -800,15 +843,6 @@ export default function PropriedadeDetalhesVivantCarePage({ params }: { params: 
         </TabsContent>
       </Tabs>
 
-      {cotaParaConfigurar && (
-        <ConfigurarSemanasDialog
-          open={!!cotaParaConfigurar}
-          onOpenChange={(open) => !open && setCotaParaConfigurar(null)}
-          cota={cotaParaConfigurar}
-          propriedadeId={params.id}
-          onSuccess={carregarPropriedade}
-        />
-      )}
     </div>
   );
 }

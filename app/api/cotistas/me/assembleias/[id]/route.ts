@@ -114,10 +114,22 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       return NextResponse.json({ error: "Votação indisponível para esta pauta." }, { status: 400 });
     }
 
-    await prisma.votoAssembleia.upsert({
+    const votoExistente = await prisma.votoAssembleia.findUnique({
       where: { pautaId_cotistaId: { pautaId, cotistaId } },
-      create: { pautaId, cotistaId, voto },
-      update: { voto, votadoEm: new Date() },
+      select: { id: true, voto: true },
+    });
+    if (votoExistente) {
+      if (votoExistente.voto === voto) {
+        return NextResponse.json({ success: true });
+      }
+      return NextResponse.json(
+        { error: "Você já registrou seu voto nesta pauta." },
+        { status: 409 }
+      );
+    }
+
+    await prisma.votoAssembleia.create({
+      data: { pautaId, cotistaId, voto },
     });
 
     return NextResponse.json({ success: true });

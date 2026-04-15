@@ -3,24 +3,33 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
+import type { WeekExchangeRequestStatus } from "@prisma/client";
 
-function canAccess(session: any) {
-  if (!session || (session.user as { userType?: string }).userType !== "admin") return false;
-  return hasPermission(session, "vivantCare.trocas.view") || hasPermission(session, "vivantCare.trocas.manage");
+function canAccess(session: unknown) {
+  if (!session || (session as { user?: { userType?: string } }).user?.userType !== "admin")
+    return false;
+  return (
+    hasPermission(session as any, "vivantCare.trocas.view") ||
+    hasPermission(session as any, "vivantCare.trocas.manage")
+  );
 }
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!canAccess(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    if (!canAccess(session))
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     const sp = request.nextUrl.searchParams;
-    const status = sp.get("status") || undefined;
-    const where = status ? { status: status as "ABERTA" | "EM_NEGOCIACAO" | "ACEITA" | "CONCLUIDA" | "CANCELADA" | "EXPIRADA" } : {};
-    const trocas = await prisma.trocaSemana.findMany({
+    const status = sp.get("status") as WeekExchangeRequestStatus | null;
+    const where = status ? { status } : {};
+    const trocas = await prisma.weekExchangeRequest.findMany({
       where,
       include: {
-        solicitante: { select: { id: true, name: true, email: true } },
-        reservas: { include: { cota: { include: { property: { select: { id: true, name: true } } } } } },
+        cotista: { select: { id: true, name: true, email: true } },
+        property: { select: { id: true, name: true } },
+        ownedWeek: true,
+        desiredWeek: true,
+        cota: { select: { id: true, numeroCota: true } },
       },
       orderBy: { createdAt: "desc" },
       take: 200,

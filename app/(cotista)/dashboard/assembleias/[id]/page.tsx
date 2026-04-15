@@ -28,6 +28,12 @@ const TIPO_PAUTA: Record<string, string> = {
   ELETIVA: "Eletiva",
 };
 
+const VOTO_LABEL: Record<string, string> = {
+  FAVOR: "Favor",
+  CONTRA: "Contra",
+  ABSTENCAO: "Abstenção",
+};
+
 export default function AssembleiaDetalheCotistaPage() {
   const params = useParams();
   const id = params.id as string;
@@ -153,44 +159,51 @@ export default function AssembleiaDetalheCotistaPage() {
                   {p._count?.votos != null && <span className="text-xs text-[#1A2F4B]/50 ml-2">· {p._count.votos} voto(s)</span>}
                   {p.requererVotacao ? (
                     <div className="mt-3 space-y-2">
-                      <p className="text-xs text-[#1A2F4B]/60">
-                        Meu voto: <strong>{p.meuVoto ? p.meuVoto : "não registrado"}</strong>
-                      </p>
                       <p className="text-xs text-[#1A2F4B]/50">
                         Resultado parcial: {p.resumoVotos?.favor ?? 0} favor · {p.resumoVotos?.contra ?? 0} contra · {p.resumoVotos?.abstencao ?? 0} abstenção
                       </p>
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={p.meuVoto === "FAVOR" ? "default" : "outline"}
-                          disabled={!p.votacaoAberta || votandoPautaId === p.id}
-                          onClick={() => votar(p.id, "FAVOR")}
-                        >
-                          Favor
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={p.meuVoto === "CONTRA" ? "default" : "outline"}
-                          disabled={!p.votacaoAberta || votandoPautaId === p.id}
-                          onClick={() => votar(p.id, "CONTRA")}
-                        >
-                          Contra
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={p.meuVoto === "ABSTENCAO" ? "default" : "outline"}
-                          disabled={!p.votacaoAberta || votandoPautaId === p.id}
-                          onClick={() => votar(p.id, "ABSTENCAO")}
-                        >
-                          Abstenção
-                        </Button>
-                        {!p.votacaoAberta ? (
-                          <span className="text-xs text-amber-700 self-center">Votação encerrada para esta pauta</span>
-                        ) : null}
-                      </div>
+                      {p.meuVoto ? (
+                        <p className="text-xs text-emerald-800">
+                          Seu voto nesta pauta:{" "}
+                          <strong>{VOTO_LABEL[p.meuVoto] ?? p.meuVoto}</strong>
+                        </p>
+                      ) : p.votacaoAberta && (a.status === "AGENDADA" || a.status === "EM_ANDAMENTO") ? (
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={votandoPautaId === p.id}
+                            onClick={() => votar(p.id, "FAVOR")}
+                          >
+                            Favor
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={votandoPautaId === p.id}
+                            onClick={() => votar(p.id, "CONTRA")}
+                          >
+                            Contra
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={votandoPautaId === p.id}
+                            onClick={() => votar(p.id, "ABSTENCAO")}
+                          >
+                            Abstenção
+                          </Button>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-amber-700">
+                          {!p.votacaoAberta
+                            ? "Votação encerrada para esta pauta."
+                            : "Votação indisponível no momento."}
+                        </p>
+                      )}
                     </div>
                   ) : null}
                 </li>

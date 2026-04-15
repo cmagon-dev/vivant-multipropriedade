@@ -26,22 +26,21 @@ type Cota = {
 type Week = {
   id: string;
   weekIndex: number;
-  label: string | null;
+  description: string | null;
   startDate: string;
   endDate: string;
 };
 
-type Cycle = {
+type DistributionSlot = {
   id: string;
   label: string;
-  yearRef: number | null;
   status: string;
-  allocations: Array<{
+  assignments: Array<{
     id: string;
     cota: { numeroCota: string; cotista: { name: string } };
-    propertyWeek: {
+    calendarWeek: {
       weekIndex: number;
-      label: string | null;
+      description: string | null;
     };
   }>;
 };
@@ -51,9 +50,10 @@ export function DistribuirSemanasPanel({ propertyId }: { propertyId: string }) {
   const [loading, setLoading] = useState(true);
   const [cotas, setCotas] = useState<Cota[]>([]);
   const [weeks, setWeeks] = useState<Week[]>([]);
-  const [cycles, setCycles] = useState<Cycle[]>([]);
-  const [cycleId, setCycleId] = useState<string>("");
-  const [newCycleLabel, setNewCycleLabel] = useState("");
+  const [slots, setSlots] = useState<DistributionSlot[]>([]);
+  const [calendarYearId, setCalendarYearId] = useState<string | null>(null);
+  const [distributionSlotId, setDistributionSlotId] = useState<string>("");
+  const [newSlotLabel, setNewSlotLabel] = useState("");
   const [pickWeekId, setPickWeekId] = useState<string>("");
   const [pickCotaId, setPickCotaId] = useState<string>("");
   const [saving, setSaving] = useState(false);
@@ -68,9 +68,12 @@ export function DistribuirSemanasPanel({ propertyId }: { propertyId: string }) {
       if (!d) return;
       setCotas(d.cotas ?? []);
       setWeeks(d.weeks ?? []);
-      const list = (d.cycles ?? []) as Cycle[];
-      setCycles(list);
-      setCycleId((prev) => (prev && list.some((c) => c.id === prev) ? prev : list[0]?.id ?? ""));
+      setCalendarYearId(d.calendarYear?.id ?? null);
+      const list = (d.distributionSlots ?? []) as DistributionSlot[];
+      setSlots(list);
+      setDistributionSlotId((prev) =>
+        prev && list.some((c) => c.id === prev) ? prev : list[0]?.id ?? ""
+      );
     } finally {
       setLoading(false);
     }
@@ -80,9 +83,13 @@ export function DistribuirSemanasPanel({ propertyId }: { propertyId: string }) {
     void load();
   }, [load]);
 
-  const criarCiclo = async () => {
-    if (!newCycleLabel.trim()) {
-      toast.error("Digite um nome para o ciclo");
+  const criarSlot = async () => {
+    if (!newSlotLabel.trim()) {
+      toast.error("Digite um nome para o slot");
+      return;
+    }
+    if (!calendarYearId) {
+      toast.error("Gere o calendário do ano em Planejamento antes.");
       return;
     }
     setSaving(true);
@@ -91,16 +98,16 @@ export function DistribuirSemanasPanel({ propertyId }: { propertyId: string }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "createCycle",
-          label: newCycleLabel.trim(),
-          yearRef: year,
+          action: "createSlot",
+          label: newSlotLabel.trim(),
+          propertyCalendarYearId: calendarYearId,
         }),
       });
       const data = await res.json();
       if (res.ok) {
-        toast.success("Ciclo criado.");
-        setNewCycleLabel("");
-        setCycleId(data.cycle.id);
+        toast.success("Slot criado.");
+        setNewSlotLabel("");
+        setDistributionSlotId(data.distributionSlot.id);
         await load();
       } else {
         toast.error(data.error || "Erro");
@@ -111,8 +118,8 @@ export function DistribuirSemanasPanel({ propertyId }: { propertyId: string }) {
   };
 
   const alocar = async () => {
-    if (!cycleId || !pickWeekId || !pickCotaId) {
-      toast.error("Escolha ciclo, semana e cota");
+    if (!distributionSlotId || !pickWeekId || !pickCotaId) {
+      toast.error("Escolha slot, semana e cota");
       return;
     }
     setSaving(true);
@@ -122,9 +129,9 @@ export function DistribuirSemanasPanel({ propertyId }: { propertyId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "allocate",
-          cycleId,
+          distributionSlotId,
           cotaId: pickCotaId,
-          propertyWeekId: pickWeekId,
+          propertyCalendarWeekId: pickWeekId,
         }),
       });
       const data = await res.json();
@@ -141,7 +148,7 @@ export function DistribuirSemanasPanel({ propertyId }: { propertyId: string }) {
     }
   };
 
-  const currentCycle = cycles.find((c) => c.id === cycleId);
+  const currentSlot = slots.find((c) => c.id === distributionSlotId);
 
   return (
     <Card>
@@ -163,16 +170,15 @@ export function DistribuirSemanasPanel({ propertyId }: { propertyId: string }) {
             />
           </div>
           <div className="space-y-2 min-w-[220px]">
-            <Label>Ciclo de alocação</Label>
-            <Select value={cycleId || undefined} onValueChange={(v) => setCycleId(v)}>
+            <Label>Slot de distribuição</Label>
+            <Select value={distributionSlotId || undefined} onValueChange={(v) => setDistributionSlotId(v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
-                {cycles.map((c) => (
+                {slots.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.label}
-                    {c.yearRef ? ` (${c.yearRef})` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -180,16 +186,16 @@ export function DistribuirSemanasPanel({ propertyId }: { propertyId: string }) {
           </div>
           <div className="flex flex-wrap gap-2 items-end">
             <div className="space-y-2">
-              <Label>Novo ciclo</Label>
+              <Label>Novo slot</Label>
               <Input
                 placeholder="Ex: Rodízio 2026"
-                value={newCycleLabel}
-                onChange={(e) => setNewCycleLabel(e.target.value)}
+                value={newSlotLabel}
+                onChange={(e) => setNewSlotLabel(e.target.value)}
                 className="w-56"
               />
             </div>
-            <Button type="button" variant="secondary" disabled={saving} onClick={() => void criarCiclo()}>
-              Criar ciclo
+            <Button type="button" variant="secondary" disabled={saving} onClick={() => void criarSlot()}>
+              Criar slot
             </Button>
           </div>
         </div>
@@ -207,7 +213,8 @@ export function DistribuirSemanasPanel({ propertyId }: { propertyId: string }) {
                 <SelectContent className="max-h-72">
                   {weeks.map((w) => (
                     <SelectItem key={w.id} value={w.id}>
-                      {w.label ?? `Semana ${w.weekIndex}`} - {format(new Date(w.startDate), "dd/MM", { locale: ptBR })} a{" "}
+                      {w.description ?? `Semana ${w.weekIndex}`} -{" "}
+                      {format(new Date(w.startDate), "dd/MM", { locale: ptBR })} a{" "}
                       {format(new Date(w.endDate), "dd/MM/yyyy", { locale: ptBR })}
                     </SelectItem>
                   ))}
@@ -229,7 +236,12 @@ export function DistribuirSemanasPanel({ propertyId }: { propertyId: string }) {
                 </SelectContent>
               </Select>
             </div>
-            <Button type="button" className="bg-vivant-green hover:bg-vivant-green/90" disabled={saving || !cycleId} onClick={() => void alocar()}>
+            <Button
+              type="button"
+              className="bg-vivant-green hover:bg-vivant-green/90"
+              disabled={saving || !distributionSlotId}
+              onClick={() => void alocar()}
+            >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Atribuir"}
             </Button>
           </div>
@@ -239,17 +251,20 @@ export function DistribuirSemanasPanel({ propertyId }: { propertyId: string }) {
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
               <Link2 className="w-4 h-4" />
-              Alocações do ciclo atual
+              Alocações do slot atual
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {!currentCycle?.allocations?.length ? (
-              <p className="text-sm text-gray-500">Nenhuma semana atribuída ainda neste ciclo.</p>
+            {!currentSlot?.assignments?.length ? (
+              <p className="text-sm text-gray-500">Nenhuma semana atribuída ainda neste slot.</p>
             ) : (
               <ul className="divide-y border rounded-md">
-                {currentCycle.allocations.map((a) => (
+                {currentSlot.assignments.map((a) => (
                   <li key={a.id} className="px-4 py-3 text-sm">
-                    <strong>{a.propertyWeek.label ?? `Semana ${a.propertyWeek.weekIndex}`}</strong> - {a.cota.numeroCota} — {a.cota.cotista.name}
+                    <strong>
+                      {a.calendarWeek.description ?? `Semana ${a.calendarWeek.weekIndex}`}
+                    </strong>{" "}
+                    - {a.cota.numeroCota} — {a.cota.cotista.name}
                   </li>
                 ))}
               </ul>

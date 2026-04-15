@@ -18,7 +18,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useSession } from "next-auth/react";
 import { signOutAndGoToLogin } from "@/lib/auth/signOutClient";
-import { PropertySelector } from "./property-selector";
 
 type NotificacaoItem = {
   id: string;
@@ -125,8 +124,6 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <PropertySelector />
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">
@@ -199,6 +196,9 @@ export function Header({ onMenuClick }: HeaderProps) {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/configuracoes">Configurações</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/propriedades">Minhas Cotas / Propriedades</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 

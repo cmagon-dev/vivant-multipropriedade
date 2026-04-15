@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { requirePortalCotista } from "@/lib/auth/cotistaPortalSession";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
     const auth = await requirePortalCotista(session);
@@ -12,17 +12,16 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     const cotistaId = auth.cotistaId;
 
     const { id } = await ctx.params;
-    const t = await prisma.trocaSemana.findFirst({
-      where: { id, cotistaSolicitante: cotistaId },
+    const t = await prisma.weekExchangeRequest.findFirst({
+      where: { id, cotistaId },
       include: {
-        reservas: {
-          include: {
-            cota: { include: { property: { select: { id: true, name: true } } } },
-          },
-        },
+        property: { select: { id: true, name: true } },
+        ownedWeek: true,
+        desiredWeek: true,
+        cota: { select: { id: true, numeroCota: true } },
       },
     });
-    if (!t) return NextResponse.json({ error: "Troca não encontrada" }, { status: 404 });
+    if (!t) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
     return NextResponse.json(t);
   } catch (e) {
     console.error("Erro ao buscar troca:", e);
@@ -38,21 +37,20 @@ export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string 
     const cotistaId = auth.cotistaId;
 
     const { id } = await ctx.params;
-    const existente = await prisma.trocaSemana.findFirst({
-      where: { id, cotistaSolicitante: cotistaId },
+    const existente = await prisma.weekExchangeRequest.findFirst({
+      where: { id, cotistaId },
     });
-    if (!existente) return NextResponse.json({ error: "Troca não encontrada" }, { status: 404 });
+    if (!existente)
+      return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
     const body = await req.json().catch(() => ({}));
-    if (body.cancelar === true && existente.status === "ABERTA") {
-      const t = await prisma.trocaSemana.update({
+    if (body.cancelar === true && existente.status === "REQUESTED") {
+      const t = await prisma.weekExchangeRequest.update({
         where: { id },
-        data: { status: "CANCELADA" },
+        data: { status: "CANCELLED" },
         include: {
-          reservas: {
-            include: {
-              cota: { include: { property: { select: { id: true, name: true } } } },
-            },
-          },
+          property: { select: { id: true, name: true } },
+          ownedWeek: true,
+          desiredWeek: true,
         },
       });
       return NextResponse.json(t);

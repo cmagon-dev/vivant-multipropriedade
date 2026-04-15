@@ -2,15 +2,20 @@ import { prisma } from "@/lib/prisma";
 
 export type AllocatedWeekSummary = {
   id: string;
-  label: string | null;
+  description: string | null;
   weekIndex: number;
   startDate: string;
   endDate: string;
   year: number;
+  officialWeekType: string;
+  tier: string;
+  isExtra: boolean;
+  exchangeAllowed: boolean;
 };
 
 /**
- * Semanas já alocadas às cotas no planejamento (ciclo), para o ano civil informado.
+ * Semanas oficiais alocadas às cotas (slots de distribuição) para o ano civil,
+ * apenas se o calendário do ano estiver publicado.
  */
 export async function allocatedWeeksByCotaId(
   cotaIds: string[],
@@ -20,36 +25,49 @@ export async function allocatedWeeksByCotaId(
   if (cotaIds.length === 0) return map;
   for (const id of cotaIds) map.set(id, []);
 
-  const rows = await prisma.propertyWeekAllocation.findMany({
+  const rows = await prisma.propertyWeekAssignment.findMany({
     where: {
       cotaId: { in: cotaIds },
-      propertyWeek: { year },
-    },
-    include: {
-      propertyWeek: {
-        select: {
-          id: true,
-          label: true,
-          weekIndex: true,
-          startDate: true,
-          endDate: true,
-          year: true,
+      distributionSlot: {
+        calendarYear: {
+          year,
+          status: "PUBLISHED",
         },
       },
     },
-    orderBy: { propertyWeek: { startDate: "asc" } },
+    include: {
+      calendarWeek: {
+        select: {
+          id: true,
+          description: true,
+          weekIndex: true,
+          startDate: true,
+          endDate: true,
+          officialWeekType: true,
+          tier: true,
+          isExtra: true,
+          exchangeAllowed: true,
+          calendarYear: { select: { year: true } },
+        },
+      },
+    },
+    orderBy: { calendarWeek: { startDate: "asc" } },
   });
 
   for (const r of rows) {
-    const w = r.propertyWeek;
+    const w = r.calendarWeek;
     const list = map.get(r.cotaId) ?? [];
     list.push({
       id: w.id,
-      label: w.label,
+      description: w.description,
       weekIndex: w.weekIndex,
       startDate: w.startDate.toISOString(),
       endDate: w.endDate.toISOString(),
-      year: w.year,
+      year: w.calendarYear.year,
+      officialWeekType: w.officialWeekType,
+      tier: w.tier,
+      isExtra: w.isExtra,
+      exchangeAllowed: w.exchangeAllowed,
     });
     map.set(r.cotaId, list);
   }

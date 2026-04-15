@@ -10,7 +10,7 @@ import { ptBR } from "date-fns/locale";
 
 interface Reservation {
   id: string;
-  numeroSemana: number;
+  weekIndex: number;
   dataInicio: string;
   dataFim: string;
   status: string;
@@ -102,7 +102,7 @@ export function NextReservations() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <p className="font-semibold text-[#1A2F4B] text-sm">
-                        Semana {reservation.numeroSemana}
+                        Semana {reservation.weekIndex}
                       </p>
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 ${statusBadge.color}`}>
                         <StatusIcon className="w-3 h-3" />

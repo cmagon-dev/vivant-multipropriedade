@@ -5,17 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Home, 
-  Users, 
-  Calendar, 
-  Plus, 
-  Trash2, 
+import {
+  Home,
+  Users,
+  Calendar,
+  CalendarRange,
+  Plus,
+  Trash2,
   Edit,
   ArrowLeft,
   UserPlus,
   MapPin,
-  Settings
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -34,8 +34,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ConfigurarSemanasDialog } from "@/components/admin-portal/configurar-semanas-dialog";
-
 interface Propriedade {
   id: string;
   name: string;
@@ -49,7 +47,6 @@ interface Propriedade {
     numeroCota: string;
     percentualCota: number;
     semanasAno: number;
-    semanasConfig: any;
     ativo: boolean;
     cotista: {
       id: string;
@@ -77,7 +74,6 @@ export default function PropriedadeDetalhesPage({ params }: { params: { id: stri
   const [cotistas, setCotistas] = useState<Cotista[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNovaCota, setShowNovaCota] = useState(false);
-  const [cotaParaConfigurar, setCotaParaConfigurar] = useState<any>(null);
   
   // Form para nova cota
   const [novaCota, setNovaCota] = useState({
@@ -446,23 +442,32 @@ export default function PropriedadeDetalhesPage({ params }: { params: { id: stri
                     <div className="text-right">
                       <p className="font-semibold text-vivant-navy">{cota.numeroCota}</p>
                       <p className="text-sm text-gray-600">
-                        {cota.percentualCota}% • {cota.semanasAno} semanas/ano
+                        {cota.percentualCota}% • {cota.semanasAno} semanas/ano (contrato)
                       </p>
-                      {cota.semanasConfig?.weeks?.length > 0 && (
-                        <p className="text-xs text-vivant-green mt-1">
-                          {cota.semanasConfig.weeks.length} semanas configuradas
-                        </p>
-                      )}
+                      <p className="text-xs text-gray-500 mt-1 max-w-xs ml-auto text-right">
+                        Calendário oficial e distribuição:{" "}
+                        <Link
+                          className="text-vivant-navy underline font-medium"
+                          href={`/admin/vivant-care/propriedades/${params.id}/planejamento-semanas`}
+                        >
+                          planejamento
+                        </Link>
+                        {" · "}
+                        <Link
+                          className="text-vivant-navy underline font-medium"
+                          href={`/admin/vivant-care/propriedades/${params.id}/distribuir-semanas`}
+                        >
+                          distribuir
+                        </Link>
+                      </p>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCotaParaConfigurar(cota)}
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Configurar Semanas
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/admin/vivant-care/propriedades/${params.id}/distribuir-semanas`}>
+                        <CalendarRange className="w-4 h-4 mr-2" />
+                        Vivant: distribuir
+                      </Link>
                     </Button>
                     <Button
                       variant="ghost"
@@ -480,16 +485,6 @@ export default function PropriedadeDetalhesPage({ params }: { params: { id: stri
         </CardContent>
       </Card>
 
-      {/* Dialog de Configuração de Semanas */}
-      {cotaParaConfigurar && (
-        <ConfigurarSemanasDialog
-          open={!!cotaParaConfigurar}
-          onOpenChange={(open) => !open && setCotaParaConfigurar(null)}
-          cota={cotaParaConfigurar}
-          propriedadeId={params.id}
-          onSuccess={carregarPropriedade}
-        />
-      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ClipboardList } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { weekDisplayName } from "@/lib/vivant/week-ui-labels";
 
 const STATUS: Record<string, string> = {
   REQUESTED: "Enviada",
@@ -28,7 +29,14 @@ export default function SolicitacoesTrocasPage() {
       status: string;
       createdAt: string;
       property: { name: string };
-      ownedWeek: { label: string | null; weekIndex: number };
+      ownedWeek: {
+        description: string | null;
+        weekIndex: number;
+        startDate: string;
+        endDate: string;
+        tier?: string;
+        exchangeAllowed?: boolean;
+      };
     }>
   >([]);
 
@@ -68,7 +76,11 @@ export default function SolicitacoesTrocasPage() {
               <CardContent className="py-4 px-5">
                 <p className="font-semibold text-[#1A2F4B]">{r.property.name}</p>
                 <p className="text-sm text-[#1A2F4B]/80 mt-1">
-                  Semana: {r.ownedWeek.label ?? `Semana ${r.ownedWeek.weekIndex}`}
+                  {weekDisplayName(r.ownedWeek.description, r.ownedWeek.weekIndex)}
+                </p>
+                <p className="text-xs text-[#1A2F4B]/65 mt-0.5">
+                  {format(new Date(r.ownedWeek.startDate), "dd/MM/yyyy", { locale: ptBR })} —{" "}
+                  {format(new Date(r.ownedWeek.endDate), "dd/MM/yyyy", { locale: ptBR })}
                 </p>
                 <p className="text-xs text-vivant-green font-medium mt-2">
                   {STATUS[r.status] ?? r.status}

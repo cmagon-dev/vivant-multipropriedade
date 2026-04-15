@@ -48,7 +48,7 @@ export default async function PropriedadesPage({
             cotista: true,
             _count: {
               select: {
-                reservas: true,
+                weekReservations: true,
               },
             },
           },
@@ -146,7 +146,7 @@ export default async function PropriedadesPage({
           <CardContent>
             <div className="text-3xl font-bold text-blue-600">
               {propriedades.reduce((acc, p) => 
-                acc + p.cotas.reduce((sum, cota) => sum + (cota._count?.reservas || 0), 0), 0
+                acc + p.cotas.reduce((sum, cota) => sum + (cota._count?.weekReservations || 0), 0), 0
               )}
             </div>
           </CardContent>
@@ -208,7 +208,7 @@ export default async function PropriedadesPage({
                           <div>
                             <p className="text-xs text-gray-500">Reservas</p>
                             <p className="font-semibold text-vivant-navy">
-                              {propriedade.cotas.reduce((sum, cota) => sum + (cota._count?.reservas || 0), 0)}
+                              {propriedade.cotas.reduce((sum, cota) => sum + (cota._count?.weekReservations || 0), 0)}
                             </p>
                           </div>
                         </div>

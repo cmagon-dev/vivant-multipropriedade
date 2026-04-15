@@ -51,26 +51,61 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const weeks = await prisma.propertyWeek.findMany({
-      where: { propertyId, year },
+    const calYear = await prisma.propertyCalendarYear.findFirst({
+      where: { propertyId, year, status: "PUBLISHED" },
+    });
+
+    if (!calYear) {
+      return NextResponse.json({
+        weeks: [],
+        myPropertyWeekIds: [],
+        allocations: [],
+        calendarPublished: false,
+      });
+    }
+
+    const weeks = await prisma.propertyCalendarWeek.findMany({
+      where: { propertyCalendarYearId: calYear.id },
       orderBy: { weekIndex: "asc" },
     });
 
-    const allocations = await prisma.propertyWeekAllocation.findMany({
+    const allocations = await prisma.propertyWeekAssignment.findMany({
       where: {
         cotaId: cota.id,
-        cycle: { propertyId },
+        distributionSlot: { propertyCalendarYearId: calYear.id },
       },
       include: {
-        cycle: { select: { id: true, label: true, status: true, yearRef: true } },
+        distributionSlot: {
+          select: { id: true, label: true, status: true },
+        },
       },
     });
-    const myWeekIds = new Set(allocations.map((a) => a.propertyWeekId));
+    const weekIdSet = new Set(weeks.map((w) => w.id));
+    const myWeekIds = new Set(allocations.map((a) => a.propertyCalendarWeekId));
+
+    const overrides =
+      weekIdSet.size === 0
+        ? []
+        : await prisma.weekUsageOverride.findMany({
+            where: {
+              propertyCalendarWeekId: { in: Array.from(weekIdSet) },
+              OR: [{ fromCotaId: cota.id }, { toCotaId: cota.id }],
+            },
+          });
+    for (const o of overrides) {
+      if (o.fromCotaId === cota.id) {
+        myWeekIds.delete(o.propertyCalendarWeekId);
+      }
+      if (o.toCotaId === cota.id) {
+        myWeekIds.add(o.propertyCalendarWeekId);
+      }
+    }
 
     return NextResponse.json({
       weeks,
       myPropertyWeekIds: Array.from(myWeekIds),
       allocations,
+      calendarPublished: true,
     });
   } catch (e) {
     console.error(e);

@@ -24,11 +24,20 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { AdminCalendarWeek } from "./property-year-calendar";
 
-const SEASONS = [
-  { value: "BAIXA", label: "Baixa temporada" },
-  { value: "MEDIA", label: "Média temporada" },
-  { value: "ALTA", label: "Alta temporada" },
-  { value: "SUPER_ALTA", label: "Super alta temporada" },
+const TIERS = [
+  { value: "GOLD", label: "Gold" },
+  { value: "SILVER", label: "Silver" },
+  { value: "BLACK", label: "Black" },
+] as const;
+
+const TYPES = [
+  { value: "TYPE_1", label: "Tipo 1" },
+  { value: "TYPE_2", label: "Tipo 2" },
+  { value: "TYPE_3", label: "Tipo 3" },
+  { value: "TYPE_4", label: "Tipo 4" },
+  { value: "TYPE_5", label: "Tipo 5" },
+  { value: "TYPE_6", label: "Tipo 6" },
+  { value: "EXTRA", label: "Extra" },
 ] as const;
 
 type Props = {
@@ -47,26 +56,24 @@ export function EditPropertyWeekDialog({
   onSaved,
 }: Props) {
   const [saving, setSaving] = useState(false);
-  const [label, setLabel] = useState("");
-  const [seasonType, setSeasonType] = useState<string>("MEDIA");
+  const [description, setDescription] = useState("");
+  const [officialWeekType, setOfficialWeekType] = useState<string>("TYPE_1");
+  const [tier, setTier] = useState<string>("SILVER");
+  const [isExtra, setIsExtra] = useState(false);
   const [weight, setWeight] = useState("1");
-  const [isHoliday, setIsHoliday] = useState(false);
-  const [isSchoolVacation, setIsSchoolVacation] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
-  const [isExchangeAllowed, setIsExchangeAllowed] = useState(true);
-  const [color, setColor] = useState("");
+  const [exchangeAllowed, setExchangeAllowed] = useState(true);
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
     if (!week) return;
-    setLabel(week.label ?? "");
-    setSeasonType(week.seasonType);
+    setDescription(week.description ?? "");
+    setOfficialWeekType(week.officialWeekType);
+    setTier(week.tier);
+    setIsExtra(week.isExtra);
     setWeight(String(week.weight ?? 1));
-    setIsHoliday(week.isHoliday);
-    setIsSchoolVacation(week.isSchoolVacation);
     setIsBlocked(week.isBlocked);
-    setIsExchangeAllowed(week.isExchangeAllowed);
-    setColor(week.color ?? "");
+    setExchangeAllowed(week.exchangeAllowed);
     setNotes(week.notes ?? "");
   }, [week]);
 
@@ -80,14 +87,13 @@ export function EditPropertyWeekDialog({
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            label: label.trim() || null,
-            seasonType,
+            description: description.trim() || null,
+            officialWeekType,
+            tier,
+            isExtra,
             weight: parseFloat(weight.replace(",", ".")) || 1,
-            isHoliday,
-            isSchoolVacation,
             isBlocked,
-            isExchangeAllowed,
-            color: color.trim() || null,
+            exchangeAllowed,
             notes: notes.trim() || null,
           }),
         }
@@ -105,21 +111,28 @@ export function EditPropertyWeekDialog({
     }
   };
 
-  const preset = (name: string, st: string, w: string, holiday: boolean) => {
-    setLabel(name);
-    setSeasonType(st);
+  const preset = (
+    name: string,
+    t: string,
+    typ: string,
+    w: string,
+    extra: boolean
+  ) => {
+    setDescription(name);
+    setTier(t);
+    setOfficialWeekType(typ);
     setWeight(w);
-    setIsHoliday(holiday);
+    setIsExtra(extra);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Editar semana</DialogTitle>
+          <DialogTitle>Editar semana oficial</DialogTitle>
           {week ? (
             <p className="text-sm text-muted-foreground">
-              #{week.weekIndex} · use um nome amigável (ex.: Férias de julho, Natal)
+              #{week.weekIndex} · período fixo (quinta–quarta); ajuste tipo, classificação e peso.
             </p>
           ) : null}
         </DialogHeader>
@@ -131,7 +144,7 @@ export function EditPropertyWeekDialog({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => preset("Natal", "SUPER_ALTA", "2.5", true)}
+                onClick={() => preset("Natal", "GOLD", "EXTRA", "2.5", true)}
               >
                 Natal
               </Button>
@@ -139,7 +152,7 @@ export function EditPropertyWeekDialog({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => preset("Réveillon", "SUPER_ALTA", "3", true)}
+                onClick={() => preset("Réveillon", "GOLD", "EXTRA", "3", true)}
               >
                 Réveillon
               </Button>
@@ -147,30 +160,30 @@ export function EditPropertyWeekDialog({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => preset("Carnaval", "ALTA", "2", true)}
+                onClick={() => preset("Carnaval", "GOLD", "TYPE_3", "2", false)}
               >
                 Carnaval
               </Button>
             </div>
 
             <div className="space-y-2">
-              <Label>Nome amigável (display)</Label>
+              <Label>Descrição (exibição)</Label>
               <Input
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 placeholder="Ex.: Férias de julho"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>Temporada</Label>
-                <Select value={seasonType} onValueChange={setSeasonType}>
+                <Label>Tipo de semana</Label>
+                <Select value={officialWeekType} onValueChange={setOfficialWeekType}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {SEASONS.map((s) => (
+                    {TYPES.map((s) => (
                       <SelectItem key={s.value} value={s.value}>
                         {s.label}
                       </SelectItem>
@@ -178,6 +191,24 @@ export function EditPropertyWeekDialog({
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label>Classificação</Label>
+                <Select value={tier} onValueChange={setTier}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIERS.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Peso (distribuição)</Label>
                 <Input
@@ -187,23 +218,16 @@ export function EditPropertyWeekDialog({
                   onChange={(e) => setWeight(e.target.value)}
                 />
               </div>
+              <label className="flex items-center gap-2 text-sm pt-8">
+                <Checkbox
+                  checked={isExtra}
+                  onCheckedChange={(c) => setIsExtra(c === true)}
+                />
+                Semana extra
+              </label>
             </div>
 
             <div className="flex flex-wrap gap-4">
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={isHoliday}
-                  onCheckedChange={(c) => setIsHoliday(c === true)}
-                />
-                Feriado / data especial
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={isSchoolVacation}
-                  onCheckedChange={(c) => setIsSchoolVacation(c === true)}
-                />
-                Férias escolares
-              </label>
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox
                   checked={isBlocked}
@@ -213,20 +237,11 @@ export function EditPropertyWeekDialog({
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox
-                  checked={isExchangeAllowed}
-                  onCheckedChange={(c) => setIsExchangeAllowed(c === true)}
+                  checked={exchangeAllowed}
+                  onCheckedChange={(c) => setExchangeAllowed(c === true)}
                 />
                 Permite troca
               </label>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Cor (hex opcional)</Label>
-              <Input
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                placeholder="#e0f2fe"
-              />
             </div>
 
             <div className="space-y-2">

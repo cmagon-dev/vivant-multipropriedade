@@ -33,20 +33,13 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const STATUS_LEGADO: Record<string, string> = {
-  ABERTA: "Aberta",
-  EM_NEGOCIACAO: "Em negociação",
-  ACEITA: "Aceita",
-  CONCLUIDA: "Concluída",
-  CANCELADA: "Cancelada",
-  EXPIRADA: "Expirada",
-};
-
-const STATUS_NOVO: Record<string, string> = {
+const STATUS_TROCA: Record<string, string> = {
   REQUESTED: "Enviada",
   UNDER_ADMIN_REVIEW: "Em análise",
+  ADMIN_OPTION_FOUND: "Alternativa sugerida",
   PUBLISHED_TO_PEERS: "Publicada (oportunidade)",
   PEER_INTEREST_FOUND: "Interesse recebido",
+  NEGOTIATION_IN_PROGRESS: "Em negociação",
   PENDING_ADMIN_APPROVAL: "Aguardando aprovação",
   APPROVED: "Aprovada",
   REJECTED: "Recusada",
@@ -63,16 +56,16 @@ type CotaRow = {
 type WeekRow = {
   id: string;
   weekIndex: number;
-  label: string | null;
+  description: string | null;
   startDate: string;
   endDate: string;
   isBlocked: boolean;
-  isExchangeAllowed: boolean;
+  exchangeAllowed: boolean;
 };
 
 /** Rótulo completo para o cotista escolher: nome + datas (nunca só “Semana N”). */
 function labelSemanaComDatas(w: WeekRow): string {
-  const nome = w.label ?? `Semana ${w.weekIndex}`;
+  const nome = w.description ?? `Semana ${w.weekIndex}`;
   const d1 = format(new Date(w.startDate), "dd/MM/yyyy", { locale: ptBR });
   const d2 = format(new Date(w.endDate), "dd/MM/yyyy", { locale: ptBR });
   return `${nome} · ${d1} – ${d2}`;
@@ -97,7 +90,7 @@ export default function TrocasPage() {
       createdAt: string;
       property: { name: string };
       cotista: { name: string };
-      ownedWeek: { label: string | null; weekIndex: number };
+      ownedWeek: { description: string | null; weekIndex: number };
     }>
   >([]);
   const [solicitacoes, setSolicitacoes] = useState<
@@ -106,13 +99,9 @@ export default function TrocasPage() {
       status: string;
       createdAt: string;
       property: { name: string };
-      ownedWeek: { label: string | null; weekIndex: number };
+      ownedWeek: { description: string | null; weekIndex: number };
     }>
   >([]);
-  const [legado, setLegado] = useState<
-    Array<{ id: string; status: string; createdAt: string; observacoes: string | null }>
-  >([]);
-
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formPropertyId, setFormPropertyId] = useState("");
@@ -126,20 +115,17 @@ export default function TrocasPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [rCotas, rOp, rReq, rLeg] = await Promise.all([
+      const [rCotas, rOp, rReq] = await Promise.all([
         fetch("/api/cotistas/me/cotas", { credentials: "include" }),
         fetch("/api/cotistas/me/trocas-oportunidades", { credentials: "include" }),
         fetch("/api/cotistas/me/week-exchange-requests", { credentials: "include" }),
-        fetch("/api/cotistas/me/trocas", { credentials: "include" }),
       ]);
       const jCotas = rCotas.ok ? await rCotas.json() : { cotas: [] };
       const jOp = rOp.ok ? await rOp.json() : { oportunidades: [] };
       const jReq = rReq.ok ? await rReq.json() : { requests: [] };
-      const jLeg = rLeg.ok ? await rLeg.json() : { trocas: [] };
 
       setOportunidades(jOp.oportunidades ?? []);
       setSolicitacoes(jReq.requests ?? []);
-      setLegado(jLeg.trocas ?? []);
 
       const cotas = (jCotas.cotas ?? []) as CotaRow[];
       const out: Array<{
@@ -208,8 +194,8 @@ export default function TrocasPage() {
         body: JSON.stringify({
           propertyId: formPropertyId,
           cotaId: formCotaId,
-          ownedPropertyWeekId: formOwnedWeekId,
-          desiredPropertyWeekId: formDesiredWeekId || undefined,
+          ownedCalendarWeekId: formOwnedWeekId,
+          desiredCalendarWeekId: formDesiredWeekId || undefined,
           notes: formNotes.trim() || undefined,
           acceptsAlternatives: formAlt,
           publicToPeers: formPublic,
@@ -306,7 +292,7 @@ export default function TrocasPage() {
                         >
                           <div>
                             <p className="font-medium text-[#1A2F4B]">
-                              {w.label ?? `Semana ${w.weekIndex}`}
+                              {w.description ?? `Semana ${w.weekIndex}`}
                             </p>
                             <p className="text-xs text-[#1A2F4B]/65">
                               {format(new Date(w.startDate), "dd/MM", { locale: ptBR })} –{" "}
@@ -316,7 +302,7 @@ export default function TrocasPage() {
                           <Button
                             size="sm"
                             className="bg-vivant-green hover:bg-vivant-green/90"
-                            disabled={w.isBlocked || !w.isExchangeAllowed}
+                            disabled={w.isBlocked || !w.exchangeAllowed}
                             onClick={() => abrirTroca(b.propertyId, b.cotaId, w.id)}
                           >
                             Solicitar troca
@@ -356,7 +342,7 @@ export default function TrocasPage() {
               >
                 <span className="font-medium text-[#1A2F4B]">{o.property.name}</span>
                 {" — "}
-                {o.cotista.name}: {o.ownedWeek.label ?? `Semana ${o.ownedWeek.weekIndex}`}
+                {o.cotista.name}: {o.ownedWeek.description ?? `Semana ${o.ownedWeek.weekIndex}`}
               </li>
             ))}
           </ul>
@@ -378,8 +364,8 @@ export default function TrocasPage() {
         {solicitacoes.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-[#1A2F4B]/60 text-sm">
-              Você ainda não enviou solicitações pelo novo fluxo. Use &quot;Solicitar troca&quot; em
-              uma das suas semanas acima.
+              Você ainda não enviou solicitações. Use &quot;Solicitar troca&quot; em uma das suas
+              semanas oficiais acima.
             </CardContent>
           </Card>
         ) : (
@@ -391,10 +377,10 @@ export default function TrocasPage() {
               >
                 <span>
                   <strong>{s.property.name}</strong> —{" "}
-                  {s.ownedWeek.label ?? `Semana ${s.ownedWeek.weekIndex}`}
+                  {s.ownedWeek.description ?? `Semana ${s.ownedWeek.weekIndex}`}
                 </span>
                 <span className="text-vivant-green font-medium">
-                  {STATUS_NOVO[s.status] ?? s.status}
+                  {STATUS_TROCA[s.status] ?? s.status}
                 </span>
               </li>
             ))}
@@ -408,24 +394,6 @@ export default function TrocasPage() {
         </Link>
       </section>
 
-      {/* 4 — Legado */}
-      {legado.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-base font-medium text-[#1A2F4B]/80">Solicitações antigas (legado)</h2>
-          <ul className="space-y-2">
-            {legado.map((t) => (
-              <li key={t.id} className="text-sm border border-slate-100 rounded-md px-3 py-2">
-                <Link href={`/dashboard/trocas/${t.id}`} className="text-vivant-navy hover:underline">
-                  {format(new Date(t.createdAt), "dd/MM/yyyy", { locale: ptBR })}
-                </Link>
-                {" · "}
-                {STATUS_LEGADO[t.status] ?? t.status}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -435,7 +403,7 @@ export default function TrocasPage() {
             <p className="text-sm text-[#1A2F4B]/80">
               Sua semana:{" "}
               <strong>
-                {minhaSemana.label ?? `Semana ${minhaSemana.weekIndex}`}
+                {minhaSemana.description ?? `Semana ${minhaSemana.weekIndex}`}
               </strong>
               {" — "}
               {format(new Date(minhaSemana.startDate), "dd/MM", { locale: ptBR })} a{" "}

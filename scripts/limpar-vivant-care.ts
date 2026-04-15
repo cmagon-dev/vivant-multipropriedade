@@ -55,27 +55,38 @@ async function limparVivantCare() {
     const assembleias = await prisma.assembleia.deleteMany({});
     console.log(`   ✓ ${assembleias.count} assembleias removidas\n`);
 
-    // 8. Limpar trocas de semanas
-    console.log('🔄 Removendo trocas de semanas...');
-    const trocas = await prisma.trocaSemana.deleteMany({});
-    console.log(`   ✓ ${trocas.count} trocas removidas\n`);
+    // 8. Limpar trocas e reservas (semanas oficiais)
+    console.log('🔄 Removendo solicitações de troca (semanas oficiais)...');
+    const trocasNovo = await prisma.weekExchangeRequest.deleteMany({});
+    console.log(`   ✓ ${trocasNovo.count} solicitações removidas\n`);
 
-    // 9. Limpar reservas (serão deletadas com as cotas por cascade, mas vamos garantir)
-    console.log('📅 Removendo reservas...');
-    const reservas = await prisma.reserva.deleteMany({});
-    console.log(`   ✓ ${reservas.count} reservas removidas\n`);
+    console.log('📅 Removendo reservas por semana oficial...');
+    const reservasNovo = await prisma.weekReservation.deleteMany({});
+    console.log(`   ✓ ${reservasNovo.count} reservas removidas\n`);
 
-    // 10. Limpar cobranças (serão deletadas com as cotas por cascade, mas vamos garantir)
+    console.log('📌 Removendo atribuições de semanas...');
+    const assigns = await prisma.propertyWeekAssignment.deleteMany({});
+    console.log(`   ✓ ${assigns.count} atribuições removidas\n`);
+
+    console.log('🗓️  Removendo slots e calendários anuais das propriedades...');
+    const slots = await prisma.calendarDistributionSlot.deleteMany({});
+    console.log(`   ✓ ${slots.count} slots removidos\n`);
+    const weeks = await prisma.propertyCalendarWeek.deleteMany({});
+    console.log(`   ✓ ${weeks.count} semanas oficiais removidas\n`);
+    const years = await prisma.propertyCalendarYear.deleteMany({});
+    console.log(`   ✓ ${years.count} anos de calendário removidos\n`);
+
+    // 9. Limpar cobranças (serão deletadas com as cotas por cascade, mas vamos garantir)
     console.log('💰 Removendo cobranças...');
     const cobrancas = await prisma.cobranca.deleteMany({});
     console.log(`   ✓ ${cobrancas.count} cobranças removidas\n`);
 
-    // 11. Limpar cotas de propriedade
+    // 10. Limpar cotas de propriedade
     console.log('📊 Removendo cotas de propriedade...');
     const cotas = await prisma.cotaPropriedade.deleteMany({});
     console.log(`   ✓ ${cotas.count} cotas removidas\n`);
 
-    // 12. Limpar cotistas
+    // 11. Limpar cotistas
     console.log('👥 Removendo cotistas...');
     const cotistas = await prisma.cotista.deleteMany({});
     console.log(`   ✓ ${cotistas.count} cotistas removidos\n`);

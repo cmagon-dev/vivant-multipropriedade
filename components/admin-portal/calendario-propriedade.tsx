@@ -10,24 +10,52 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import {
+  Calendar,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Loader2,
+} from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { CalendarWeekLegend } from "@/components/admin/vivant-care/calendar-week-legend";
+import {
+  tierCardSurfaceClass,
+  operationalStatusBadgeClass,
+  OPERATIONAL_STATUS_LABEL,
+  operationalKeyFromCalendarioPortalEntry,
+  tierLabelPt,
+  ALL_PLANNING_TIER_KEYS,
+  ALL_OPERATIONAL_STATUS_KEYS,
+  type OperationalStatusUiKey,
+} from "@/lib/vivant/admin-week-visual";
 
-interface PropertyWeekBrief {
+/** Semana oficial (PropertyCalendarWeek) — resposta da API admin. */
+interface OfficialWeekBrief {
   id: string;
-  label: string | null;
+  description: string | null;
   weekIndex: number;
   startDate: string;
   endDate: string;
   isBlocked: boolean;
-  seasonType: string;
+  officialWeekType?: string;
+  tier?: string;
+  isExtra?: boolean;
 }
 
 interface CalendarioEntry {
   semana: number;
-  propertyWeek: PropertyWeekBrief | null;
+  propertyWeek: OfficialWeekBrief | null;
   reserva: {
     id: string;
     status: string;
@@ -42,11 +70,6 @@ interface CalendarioEntry {
   } | null;
   origemCota: "RESERVA" | "ALOCACAO" | null;
   disponivel: boolean;
-  cotasComDireito: Array<{
-    id: string;
-    numeroCota: string;
-    cotista: { id: string; name: string; email: string };
-  }>;
 }
 
 interface CalendarioData {
@@ -80,52 +103,6 @@ const MESES = [
   "Dezembro",
 ];
 
-/** Fallback quando não há PropertyWeek no banco: grade antiga 1–52 (legado). */
-const getSemanasDoMesLegacy = (mes: number): number[] => {
-  const semanasPorMes = [
-    [1, 2, 3, 4, 5],
-    [6, 7, 8, 9],
-    [10, 11, 12, 13],
-    [14, 15, 16, 17, 18],
-    [19, 20, 21, 22],
-    [23, 24, 25, 26, 27],
-    [28, 29, 30, 31],
-    [32, 33, 34, 35],
-    [36, 37, 38, 39, 40],
-    [41, 42, 43, 44],
-    [45, 46, 47, 48],
-    [49, 50, 51, 52],
-  ];
-  return semanasPorMes[mes] || [];
-};
-
-const getStatusColor = (entry: CalendarioEntry) => {
-  if (entry.reserva) {
-    switch (entry.reserva.status) {
-      case "CONFIRMADA":
-      case "EM_USO":
-      case "FINALIZADA":
-        return "bg-green-100 hover:bg-green-200 border-green-400 text-green-800";
-      case "PENDENTE":
-        return "bg-yellow-100 hover:bg-yellow-200 border-yellow-400 text-yellow-800";
-      case "DISPONIVEL_TROCA":
-        return "bg-blue-100 hover:bg-blue-200 border-blue-400 text-blue-800";
-      case "CANCELADA":
-      case "NAO_UTILIZADA":
-        return "bg-red-100 hover:bg-red-200 border-red-400 text-red-800";
-      default:
-        return "bg-gray-100 hover:bg-gray-200 border-gray-300";
-    }
-  }
-  if (entry.origemCota === "ALOCACAO" && entry.cota) {
-    return "bg-emerald-50 hover:bg-emerald-100 border-emerald-400 text-emerald-900";
-  }
-  if (entry.propertyWeek?.isBlocked) {
-    return "bg-red-50 hover:bg-red-100 border-red-300 text-red-900";
-  }
-  return "bg-gray-100 hover:bg-gray-200 border-gray-300";
-};
-
 const getStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
     CONFIRMADA: "Confirmada",
@@ -139,50 +116,53 @@ const getStatusLabel = (status: string) => {
   return labels[status] || status;
 };
 
+/** Agrupa entradas do calendário oficial por mês (data de início da semana). */
 function agruparPorMes(
   calendario: CalendarioEntry[],
   ano: number
 ): CalendarioEntry[][] {
   const months: CalendarioEntry[][] = Array.from({ length: 12 }, () => []);
-  const temPlanejamento = calendario.some((e) => e.propertyWeek?.startDate);
 
-  if (temPlanejamento) {
-    for (const e of calendario) {
-      if (e.propertyWeek?.startDate) {
-        const d = parseISO(e.propertyWeek.startDate);
-        if (d.getFullYear() !== ano) continue;
-        months[d.getMonth()].push(e);
-      }
+  for (const e of calendario) {
+    if (e.propertyWeek?.startDate) {
+      const d = parseISO(e.propertyWeek.startDate);
+      if (d.getFullYear() !== ano) continue;
+      months[d.getMonth()].push(e);
     }
-    for (const m of months) {
-      m.sort(
-        (a, b) =>
-          parseISO(a.propertyWeek!.startDate).getTime() -
-          parseISO(b.propertyWeek!.startDate).getTime()
-      );
-    }
-    return months;
   }
-
-  for (let mes = 0; mes < 12; mes++) {
-    const nums = getSemanasDoMesLegacy(mes);
-    for (const n of nums) {
-      const e = calendario.find((c) => c.semana === n);
-      if (e) months[mes].push(e);
-    }
+  for (const m of months) {
+    m.sort(
+      (a, b) =>
+        parseISO(a.propertyWeek!.startDate).getTime() -
+        parseISO(b.propertyWeek!.startDate).getTime()
+    );
   }
   return months;
 }
 
-function tituloCelula(entry: CalendarioEntry): string {
+function calendarioEntryMatchesFilters(
+  entry: CalendarioEntry,
+  tierInclude: readonly string[],
+  statusInclude: readonly OperationalStatusUiKey[]
+): boolean {
+  const tiers =
+    tierInclude.length > 0 ? tierInclude : [...ALL_PLANNING_TIER_KEYS];
+  const statuses =
+    statusInclude.length > 0 ? statusInclude : [...ALL_OPERATIONAL_STATUS_KEYS];
+  const tier = entry.propertyWeek?.tier ?? "SILVER";
+  const opKey = operationalKeyFromCalendarioPortalEntry(entry);
+  return tiers.includes(tier) && statuses.includes(opKey);
+}
+
+function tituloCelula(entry: CalendarioEntry, anoCalendario: number): string {
   let base: string;
   if (entry.propertyWeek) {
     const pw = entry.propertyWeek;
     const a = format(parseISO(pw.startDate), "dd/MM/yyyy", { locale: ptBR });
     const b = format(parseISO(pw.endDate), "dd/MM/yyyy", { locale: ptBR });
-    base = `${pw.label ?? "Semana " + pw.weekIndex} · ${a} – ${b}`;
+    base = `${pw.description ?? "Semana " + pw.weekIndex} · ${a} – ${b}`;
   } else {
-    base = `Semana ${entry.semana} (sem planejamento de datas)`;
+    base = `Semana ${entry.semana} (${anoCalendario})`;
   }
   if (entry.cota) {
     return `${base} · Cotista: ${entry.cota.cotista.name} · ${entry.cota.numeroCota}`;
@@ -194,7 +174,16 @@ export function CalendarioPropriedade({ propriedadeId }: CalendarioPropriedadePr
   const [data, setData] = useState<CalendarioData | null>(null);
   const [loading, setLoading] = useState(true);
   const [ano, setAno] = useState(new Date().getFullYear());
-  const [semanaHover, setSemanaHover] = useState<number | null>(null);
+  /** Semana cujo detalhe está aberto no modal (clique no card — não mais hover no fim da página). */
+  const [detailSemana, setDetailSemana] = useState<number | null>(null);
+  const [tierFilterInclude, setTierFilterInclude] = useState<string[]>(() => [
+    ...ALL_PLANNING_TIER_KEYS,
+  ]);
+  const [statusFilterInclude, setStatusFilterInclude] = useState<OperationalStatusUiKey[]>(() => [
+    ...ALL_OPERATIONAL_STATUS_KEYS,
+  ]);
+  /** Painel de filtros + legenda: oculto por padrão para deixar a página mais limpa. */
+  const [filtrosLegendaAberto, setFiltrosLegendaAberto] = useState(false);
 
   const fetchCalendario = useCallback(async () => {
     setLoading(true);
@@ -225,9 +214,9 @@ export function CalendarioPropriedade({ propriedadeId }: CalendarioPropriedadePr
     return agruparPorMes(data.calendario, data.ano);
   }, [data]);
 
-  const getSemanaInfo = (numeroSemana: number) => {
+  const getSemanaInfo = (weekIndex: number) => {
     if (!data) return null;
-    return data.calendario.find((s) => s.semana === numeroSemana) ?? null;
+    return data.calendario.find((s) => s.semana === weekIndex) ?? null;
   };
 
   if (loading) {
@@ -250,7 +239,7 @@ export function CalendarioPropriedade({ propriedadeId }: CalendarioPropriedadePr
     );
   }
 
-  const semanaInfo = semanaHover ? getSemanaInfo(semanaHover) : null;
+  const semanaDetail = detailSemana != null ? getSemanaInfo(detailSemana) : null;
 
   const nAlocacao = data.calendario.filter((s) => s.origemCota === "ALOCACAO").length;
 
@@ -261,7 +250,7 @@ export function CalendarioPropriedade({ propriedadeId }: CalendarioPropriedadePr
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-vivant-green" />
-              Calendário Anual - {data.propriedade.name}
+              Calendário oficial — {data.propriedade.name}
             </CardTitle>
 
             <div className="flex items-center gap-2">
@@ -292,43 +281,59 @@ export function CalendarioPropriedade({ propriedadeId }: CalendarioPropriedadePr
           </div>
           {(data.semanasPlanejadas ?? 0) === 0 && (
             <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
-              Não há <strong>semanas planejadas</strong> para {data.ano}. Gere o calendário em{" "}
-              <strong>Planejamento de semanas</strong> para ver intervalos reais (datas) aqui.
+              Não há <strong>semanas oficiais</strong> cadastradas para {data.ano}. Use{" "}
+              <strong>Planejamento de semanas</strong> no Vivant Care para gerar o calendário (datas
+              quinta–quarta) e publique o ano.
             </p>
           )}
         </CardHeader>
       </Card>
 
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-gray-100 border-2 border-gray-300 rounded" />
-              <span>Disponível</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-emerald-50 border-2 border-emerald-400 rounded" />
-              <span>Alocada (rodízio)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-green-100 border-2 border-green-400 rounded" />
-              <span>Reserva confirmada / uso</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-yellow-100 border-2 border-yellow-400 rounded" />
-              <span>Pendente</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-blue-100 border-2 border-blue-400 rounded" />
-              <span>Disponível p/ Troca</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-red-100 border-2 border-red-400 rounded" />
-              <span>Cancelada / bloqueada</span>
-            </div>
+      <Card className="overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setFiltrosLegendaAberto((v) => !v)}
+          aria-expanded={filtrosLegendaAberto}
+          aria-controls={
+            filtrosLegendaAberto ? "calendario-filtros-legenda-conteudo" : undefined
+          }
+          className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-slate-50/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-vivant-green focus-visible:ring-offset-2"
+        >
+          <div className="min-w-0">
+            <p className="font-semibold text-vivant-navy">Filtros e legenda</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Classe da semana, status no selo e explicações — toque para{" "}
+              {filtrosLegendaAberto ? "recolher" : "expandir"}
+            </p>
           </div>
-        </CardContent>
+          {filtrosLegendaAberto ? (
+            <ChevronUp className="h-5 w-5 shrink-0 text-slate-500" aria-hidden />
+          ) : (
+            <ChevronDown className="h-5 w-5 shrink-0 text-slate-500" aria-hidden />
+          )}
+        </button>
+        {filtrosLegendaAberto ? (
+          <CardContent
+            id="calendario-filtros-legenda-conteudo"
+            className="border-t border-slate-100 pt-4 pb-4"
+          >
+            <CalendarWeekLegend
+              variant="compact"
+              showFilters
+              showStatusHelpList
+              tierFilterInclude={tierFilterInclude}
+              statusFilterInclude={statusFilterInclude}
+              onTierFilterIncludeChange={setTierFilterInclude}
+              onStatusFilterIncludeChange={setStatusFilterInclude}
+            />
+          </CardContent>
+        ) : null}
       </Card>
+
+      <p className="text-sm text-gray-600">
+        <strong>Dica:</strong> abra <strong>Filtros e legenda</strong> para ajustar classe e status (o que
+        ficar fora do filtro aparece esmaecido). Clique em uma semana para ver cotista, cota e reserva.
+      </p>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {MESES.map((nomeMes, mesIndex) => {
@@ -343,50 +348,105 @@ export function CalendarioPropriedade({ propriedadeId }: CalendarioPropriedadePr
               </CardHeader>
               <CardContent>
                 {semanasDoMes.length === 0 ? (
-                  <p className="text-xs text-gray-500">Nenhuma semana neste mês ({data.ano}).</p>
+                  <p className="text-xs text-gray-500">Nenhuma semana oficial neste mês ({data.ano}).</p>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {semanasDoMes.map((entry) => (
-                      <div
-                        key={entry.semana + (entry.propertyWeek?.id ?? "")}
-                        className={cn(
-                          "relative flex flex-col rounded border-2 p-2 text-left cursor-pointer transition-all min-h-[5.5rem]",
-                          getStatusColor(entry)
-                        )}
-                        onMouseEnter={() => setSemanaHover(entry.semana)}
-                        onMouseLeave={() => setSemanaHover(null)}
-                        title={tituloCelula(entry)}
-                      >
-                        {entry.propertyWeek ? (
-                          <>
-                            <div className="text-[10px] font-bold leading-tight text-current">
-                              {format(parseISO(entry.propertyWeek.startDate), "dd/MM", {
-                                locale: ptBR,
-                              })}{" "}
-                              –{" "}
-                              {format(parseISO(entry.propertyWeek.endDate), "dd/MM", {
-                                locale: ptBR,
-                              })}
+                    {semanasDoMes.map((entry) => {
+                      const opKey = operationalKeyFromCalendarioPortalEntry(entry);
+                      const tier = entry.propertyWeek?.tier;
+                      const filteredOut = !calendarioEntryMatchesFilters(
+                        entry,
+                        tierFilterInclude,
+                        statusFilterInclude
+                      );
+                      return (
+                        <div
+                          key={entry.propertyWeek?.id ?? `w-${entry.semana}`}
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`${tituloCelula(entry, data.ano)}${filteredOut ? " · (fora do filtro atual)" : ""}. Clique para ver detalhes.`}
+                          className={cn(
+                            "relative flex flex-col rounded border-2 p-2 text-left cursor-pointer transition-all min-h-[6.25rem] hover:brightness-[1.02] select-none [&_*]:select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-vivant-navy focus-visible:ring-offset-2",
+                            entry.propertyWeek
+                              ? tierCardSurfaceClass(tier)
+                              : "bg-slate-50 border-slate-200 text-slate-800",
+                            filteredOut && "opacity-[0.28] saturate-[0.35]"
+                          )}
+                          onClick={() => setDetailSemana(entry.semana)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              setDetailSemana(entry.semana);
+                            }
+                          }}
+                        >
+                          <span
+                            className={cn(
+                              "pointer-events-none absolute right-1 top-1 z-10 max-w-[min(100%,7.5rem)] truncate rounded px-1 py-0.5 text-[8px] font-semibold leading-tight shadow-sm",
+                              operationalStatusBadgeClass(opKey)
+                            )}
+                          >
+                            {OPERATIONAL_STATUS_LABEL[opKey]}
+                          </span>
+                          {entry.propertyWeek ? (
+                            <>
+                              <div className="pr-1 pt-5 text-[10px] font-bold leading-tight">
+                                {format(parseISO(entry.propertyWeek.startDate), "dd/MM", {
+                                  locale: ptBR,
+                                })}{" "}
+                                –{" "}
+                                {format(parseISO(entry.propertyWeek.endDate), "dd/MM", {
+                                  locale: ptBR,
+                                })}
+                              </div>
+                              <div
+                                className={cn(
+                                  "text-[9px] mt-0.5 line-clamp-2",
+                                  tier === "BLACK" ? "text-white/90" : "text-current/90"
+                                )}
+                              >
+                                {entry.propertyWeek.description ?? `Sem. ${entry.propertyWeek.weekIndex}`}
+                              </div>
+                              <div
+                                className={cn(
+                                  "mt-0.5 text-[8px] font-medium",
+                                  tier === "BLACK" ? "text-amber-200/95" : "text-vivant-navy/80"
+                                )}
+                              >
+                                Classe: {tierLabelPt(tier)}
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-xs font-bold pt-5">{entry.semana}</div>
+                          )}
+                          {entry.cota ? (
+                            <div
+                              className={cn(
+                                "mt-auto pt-1.5 border-t",
+                                tier === "BLACK" ? "border-white/20" : "border-current/15"
+                              )}
+                            >
+                              <p
+                                className={cn(
+                                  "text-[10px] font-semibold leading-tight line-clamp-2",
+                                  tier === "BLACK" ? "text-white" : "text-current"
+                                )}
+                              >
+                                {entry.cota.cotista.name}
+                              </p>
+                              <p
+                                className={cn(
+                                  "text-[9px] mt-0.5 font-medium truncate",
+                                  tier === "BLACK" ? "text-white/85" : "opacity-90"
+                                )}
+                              >
+                                Cota {entry.cota.numeroCota}
+                              </p>
                             </div>
-                            <div className="text-[9px] mt-0.5 line-clamp-1 text-current/80">
-                              {entry.propertyWeek.label ?? `Sem. ${entry.propertyWeek.weekIndex}`}
-                            </div>
-                          </>
-                        ) : (
-                          <div className="text-xs font-bold">{entry.semana}</div>
-                        )}
-                        {entry.cota ? (
-                          <div className="mt-auto pt-1.5 border-t border-current/15">
-                            <p className="text-[10px] font-semibold leading-tight line-clamp-2 text-current">
-                              {entry.cota.cotista.name}
-                            </p>
-                            <p className="text-[9px] mt-0.5 font-medium opacity-90 truncate">
-                              {entry.cota.numeroCota}
-                            </p>
-                          </div>
-                        ) : null}
-                      </div>
-                    ))}
+                          ) : null}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -395,116 +455,156 @@ export function CalendarioPropriedade({ propriedadeId }: CalendarioPropriedadePr
         })}
       </div>
 
-      {semanaInfo && (
-        <Card className="border-2 border-vivant-navy">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">
-              {semanaInfo.propertyWeek ? (
-                <>
-                  {semanaInfo.propertyWeek.label ?? `Semana ${semanaInfo.propertyWeek.weekIndex}`}{" "}
-                  ·{" "}
-                  {format(parseISO(semanaInfo.propertyWeek.startDate), "dd/MM/yyyy", {
-                    locale: ptBR,
-                  })}{" "}
-                  a{" "}
-                  {format(parseISO(semanaInfo.propertyWeek.endDate), "dd/MM/yyyy", {
-                    locale: ptBR,
-                  })}
-                </>
-              ) : (
-                <>Semana {semanaInfo.semana} · {data.ano}</>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {semanaInfo.origemCota === "ALOCACAO" && semanaInfo.cota && !semanaInfo.reserva && (
-              <p className="text-sm text-emerald-800 bg-emerald-50 rounded px-2 py-1">
-                Semana distribuída no ciclo de rodízio (sem reserva registrada ainda).
-              </p>
-            )}
-            {semanaInfo.reserva ? (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">Status:</span>
-                  <span
-                    className={cn(
-                      "px-2 py-1 rounded text-xs font-semibold",
-                      semanaInfo.reserva.status === "CONFIRMADA" &&
-                        "bg-green-100 text-green-800",
-                      semanaInfo.reserva.status === "PENDENTE" &&
-                        "bg-yellow-100 text-yellow-800",
-                      semanaInfo.reserva.status === "DISPONIVEL_TROCA" &&
-                        "bg-blue-100 text-blue-800"
-                    )}
-                  >
-                    {getStatusLabel(semanaInfo.reserva.status)}
-                  </span>
-                </div>
-
-                {semanaInfo.cota && (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600">Cotista:</span>
-                      <span className="text-sm font-semibold">{semanaInfo.cota.cotista.name}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600">Cota:</span>
-                      <span className="text-sm font-semibold">{semanaInfo.cota.numeroCota}</span>
-                    </div>
-                  </>
-                )}
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">Check-in:</span>
-                  <span className="text-sm">
-                    {format(parseISO(semanaInfo.reserva.dataInicio), "dd/MM/yyyy", {
-                      locale: ptBR,
-                    })}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">Check-out:</span>
-                  <span className="text-sm">
-                    {format(parseISO(semanaInfo.reserva.dataFim), "dd/MM/yyyy", {
-                      locale: ptBR,
-                    })}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {semanaInfo.cota && semanaInfo.origemCota === "ALOCACAO" && (
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-gray-600">Cotista (rodízio):</p>
-                    <p className="text-sm font-semibold">{semanaInfo.cota.cotista.name}</p>
-                    <p className="text-sm">Cota {semanaInfo.cota.numeroCota}</p>
-                  </div>
-                )}
-                {!semanaInfo.cota && (
-                  <p className="text-sm text-gray-600">Semana disponível no planejamento.</p>
-                )}
-
-                {semanaInfo.cotasComDireito.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-500 mb-1">
-                      Cotas com direito (config. legado):
-                    </p>
-                    <div className="space-y-1">
-                      {semanaInfo.cotasComDireito.map((c) => (
-                        <div key={c.id} className="text-xs bg-vivant-green/10 px-2 py-1 rounded">
-                          {c.cotista.name} - Cota {c.numeroCota}
+      <Dialog
+        open={detailSemana !== null}
+        onOpenChange={(open) => {
+          if (!open) setDetailSemana(null);
+        }}
+      >
+        <DialogContent className="max-h-[min(90vh,720px)] max-w-lg overflow-y-auto sm:max-w-lg">
+          {!semanaDetail && detailSemana !== null ? (
+            <p className="text-sm text-gray-600">Semana não encontrada nos dados carregados.</p>
+          ) : null}
+          {semanaDetail ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  {semanaDetail.propertyWeek ? (
+                    <>
+                      {semanaDetail.propertyWeek.description ??
+                        `Semana ${semanaDetail.propertyWeek.weekIndex}`}{" "}
+                      ·{" "}
+                      {format(parseISO(semanaDetail.propertyWeek.startDate), "dd/MM/yyyy", {
+                        locale: ptBR,
+                      })}{" "}
+                      a{" "}
+                      {format(parseISO(semanaDetail.propertyWeek.endDate), "dd/MM/yyyy", {
+                        locale: ptBR,
+                      })}
+                    </>
+                  ) : (
+                    <>Semana {semanaDetail.semana} · {data.ano}</>
+                  )}
+                </DialogTitle>
+                <DialogDescription>
+                  Detalhes da cota, do cotista e da reserva para a semana selecionada.
+                </DialogDescription>
+              </DialogHeader>
+              {(() => {
+                const detailOpKey = semanaDetail.propertyWeek
+                  ? operationalKeyFromCalendarioPortalEntry(semanaDetail)
+                  : null;
+                return (
+                  <div className="space-y-3 text-left">
+                    {semanaDetail.propertyWeek && detailOpKey ? (
+                      <div className="flex flex-wrap items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                        <div>
+                          <span className="text-gray-600">Classe: </span>
+                          <span className="font-semibold text-vivant-navy">
+                            {tierLabelPt(semanaDetail.propertyWeek.tier)}
+                          </span>
                         </div>
-                      ))}
-                    </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-600">Status: </span>
+                          <span
+                            className={cn(
+                              "rounded px-2 py-0.5 text-xs font-semibold shadow-sm",
+                              operationalStatusBadgeClass(detailOpKey)
+                            )}
+                          >
+                            {OPERATIONAL_STATUS_LABEL[detailOpKey]}
+                          </span>
+                        </div>
+                      </div>
+                    ) : null}
+                    {semanaDetail.origemCota === "ALOCACAO" &&
+                      semanaDetail.cota &&
+                      !semanaDetail.reserva && (
+                        <p className="text-sm text-emerald-800 bg-emerald-50 rounded px-2 py-1">
+                          Semana atribuída à cota no planejamento de distribuição (sem reserva
+                          registrada ainda).
+                        </p>
+                      )}
+                    {semanaDetail.reserva ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-medium text-gray-600">Status da reserva:</span>
+                          <span
+                            className={cn(
+                              "shrink-0 px-2 py-1 rounded text-xs font-semibold",
+                              semanaDetail.reserva.status === "CONFIRMADA" &&
+                                "bg-green-100 text-green-800",
+                              semanaDetail.reserva.status === "PENDENTE" &&
+                                "bg-yellow-100 text-yellow-800",
+                              semanaDetail.reserva.status === "DISPONIVEL_TROCA" &&
+                                "bg-blue-100 text-blue-800"
+                            )}
+                          >
+                            {getStatusLabel(semanaDetail.reserva.status)}
+                          </span>
+                        </div>
+
+                        {semanaDetail.cota && (
+                          <>
+                            <div className="flex items-center justify-between gap-2 border-b border-slate-100 py-1">
+                              <span className="text-sm font-medium text-gray-600">Cotista</span>
+                              <span className="text-sm font-semibold text-right">
+                                {semanaDetail.cota.cotista.name}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-2 border-b border-slate-100 py-1">
+                              <span className="text-sm font-medium text-gray-600">Cota</span>
+                              <span className="text-sm font-semibold">{semanaDetail.cota.numeroCota}</span>
+                            </div>
+                          </>
+                        )}
+
+                        <div className="flex items-center justify-between gap-2 py-1">
+                          <span className="text-sm font-medium text-gray-600">Check-in</span>
+                          <span className="text-sm">
+                            {format(parseISO(semanaDetail.reserva.dataInicio), "dd/MM/yyyy", {
+                              locale: ptBR,
+                            })}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2 py-1">
+                          <span className="text-sm font-medium text-gray-600">Check-out</span>
+                          <span className="text-sm">
+                            {format(parseISO(semanaDetail.reserva.dataFim), "dd/MM/yyyy", {
+                              locale: ptBR,
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {semanaDetail.cota && semanaDetail.origemCota === "ALOCACAO" && (
+                          <div className="space-y-2 rounded-md border border-slate-100 bg-slate-50/80 p-3">
+                            <p className="text-sm font-medium text-gray-700">Cotista (distribuição)</p>
+                            <p className="text-base font-semibold text-vivant-navy">
+                              {semanaDetail.cota.cotista.name}
+                            </p>
+                            <p className="text-sm text-gray-700">
+                              Cota <strong>{semanaDetail.cota.numeroCota}</strong>
+                            </p>
+                          </div>
+                        )}
+                        {!semanaDetail.cota && (
+                          <p className="text-sm text-gray-600">
+                            Semana disponível no calendário oficial (sem cota associada nesta visão).
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                );
+              })()}
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardContent className="p-4">
@@ -525,11 +625,11 @@ export function CalendarioPropriedade({ propriedadeId }: CalendarioPropriedadePr
               <p className="text-2xl font-bold text-gray-600">
                 {data.calendario.filter((s) => s.disponivel).length}
               </p>
-              <p className="text-xs text-gray-600">Livres (sem reserva e sem rodízio)</p>
+              <p className="text-xs text-gray-600">Livres (sem reserva e sem atribuição)</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-emerald-600">{nAlocacao}</p>
-              <p className="text-xs text-gray-600">Alocadas (rodízio)</p>
+              <p className="text-xs text-gray-600">Atribuídas (distribuição)</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-blue-600">
