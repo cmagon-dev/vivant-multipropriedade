@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 import type { WeekExchangeRequestStatus } from "@prisma/client";
@@ -20,7 +19,7 @@ function canManage(session: unknown) {
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (!canAccess(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     const { id } = await ctx.params;
     const t = await prisma.weekExchangeRequest.findUnique({
@@ -50,7 +49,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
 
 export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (!canManage(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
     const { id } = await ctx.params;
     const body = await req.json();

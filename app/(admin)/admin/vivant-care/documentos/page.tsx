@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -29,7 +28,7 @@ function formatBytes(bytes: number): string {
 }
 
 export default async function VivantCareDocumentosPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) redirect("/login");
   if (
     !hasPermission(session as any, "vivantCare.documentos.view") &&

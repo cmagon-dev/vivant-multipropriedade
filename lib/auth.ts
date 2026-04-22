@@ -1,9 +1,23 @@
 import { NextAuthOptions } from "next-auth";
+import { getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { DEFAULT_ROLE_PERMISSIONS } from "@/lib/auth/permissionCatalog";
+import { authOptionsAdmin } from "@/lib/auth-admin";
+import { authOptionsCotista } from "@/lib/auth-cotista";
+
+/**
+ * Substituto drop-in para getServerSession(authOptions).
+ * Tenta ler a sessão admin (cookie vivant.admin.session-token) e,
+ * se não existir, tenta a sessão cotista (vivant.cotista.session-token).
+ */
+export async function getSession() {
+  const adminSession = await getServerSession(authOptionsAdmin);
+  if (adminSession?.user) return adminSession;
+  return getServerSession(authOptionsCotista);
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),

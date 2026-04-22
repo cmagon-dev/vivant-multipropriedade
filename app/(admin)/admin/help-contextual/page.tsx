@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -8,7 +7,7 @@ import { PermissionsDocSection } from "@/components/admin/permissions-doc-sectio
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function AdminHelpContextualPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const canManage = hasPermission(session as any, "help.manage");

@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 import { trackEvent } from "@/lib/telemetry/trackEvent";
@@ -39,7 +38,7 @@ async function getAllowedResponsibleIds() {
 
 /** GET — lista leads (comercial: só próprios; OWNER: todos). Filtros: type, stage, status */
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user?.id) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   const canView = hasPermission(session as any, "comercial.view") || canManageCrm(session as any);
   if (!canView) return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
@@ -112,7 +111,7 @@ export async function GET(request: NextRequest) {
 
 /** POST — criar lead (comercial para si). Stage inicial = primeira etapa do tipo. trackEvent + createTask SLA */
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user?.id) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   if (!hasPermission(session as any, "comercial.view")) return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
 

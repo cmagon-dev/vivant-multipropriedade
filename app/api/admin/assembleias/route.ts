@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
@@ -18,7 +17,7 @@ function canManage(session: any) {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (!canAccess(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     const sp = request.nextUrl.searchParams;
     const propertyId = sp.get("propertyId") || undefined;
@@ -46,7 +45,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (!canManage(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
     const body = await request.json();
     const { propertyId, titulo, descricao, tipo, dataRealizacao, dataInicio, dataFim, status, quorumMinimo } = body;

@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 import type { WeekExchangeRequestStatus } from "@prisma/client";
@@ -16,7 +15,7 @@ function canAccess(session: unknown) {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (!canAccess(session))
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     const sp = request.nextUrl.searchParams;

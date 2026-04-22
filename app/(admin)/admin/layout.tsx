@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
 import { AppShell } from "@/components/shell/AppShell";
 import { ContextualHelpAuto } from "@/components/help/ContextualHelpAuto";
 import {
@@ -15,7 +14,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session) {
     redirect("/login");

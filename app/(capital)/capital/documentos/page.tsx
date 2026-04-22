@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { getSession } from "@/lib/auth";
 import { getCapitalInvestorProfileId, isCapitalInvestor } from "@/lib/capital-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -9,7 +8,7 @@ import { FileText } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function CapitalDocumentosPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) redirect("/login");
   if (!isCapitalInvestor(session)) redirect("/403");
 

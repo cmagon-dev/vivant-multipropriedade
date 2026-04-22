@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
@@ -9,7 +8,7 @@ import { sendInviteEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (!session || (session.user as { userType?: string }).userType !== "admin") {
       return NextResponse.json(
         { error: "Não autorizado" },
@@ -114,7 +113,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (!session || (session.user as { userType?: string }).userType !== "admin") {
       return NextResponse.json(
         { error: "Não autorizado" },

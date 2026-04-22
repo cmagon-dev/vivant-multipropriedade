@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 
@@ -10,7 +9,7 @@ export async function PUT(
   request: NextRequest,
   context: { params?: Promise<{ id: string }> | { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user?.id) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   const canManageCrm = hasPermission(session as any, "crm.manage");
   const canManageSla = hasPermission(session as any, "sla.manage");
@@ -145,7 +144,7 @@ export async function DELETE(
   _request: NextRequest,
   context: { params?: Promise<{ id: string }> | { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user?.id) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   if (!hasPermission(session as any, "crm.manage")) return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
 

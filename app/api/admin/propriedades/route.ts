@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { propertyCreateSchema } from "@/lib/validations/property-admin";
 import { createAuditLog } from "@/lib/audit";
@@ -9,7 +8,7 @@ import { revalidatePath } from "next/cache";
 // GET /api/admin/propriedades - Listar todas (Admin Portal)
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
 
     if (!session || session.user.userType !== "admin") {
       return NextResponse.json(
@@ -92,7 +91,7 @@ export async function GET(request: NextRequest) {
 
 // POST /api/admin/propriedades - Criar nova propriedade
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   
   if (!session || session.user.userType !== "admin") {
     return NextResponse.json(

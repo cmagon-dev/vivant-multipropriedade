@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { userUpdateSchema } from "@/lib/validations/user";
@@ -12,7 +11,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   if (!hasPermission(session as any, "users.manage")) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
@@ -74,7 +73,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   if (!hasPermission(session as any, "users.manage")) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
@@ -218,7 +217,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   if (!hasPermission(session as any, "users.manage")) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });

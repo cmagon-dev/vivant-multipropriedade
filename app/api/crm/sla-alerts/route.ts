@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
@@ -15,7 +14,7 @@ const canView =
 
 /** GET — leads atrasados agora + contagem de SLA_BREACHED na semana (sla.manage ou crm.manage ou tasks.view) */
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user?.id) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   if (!canView(session as any)) return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
 

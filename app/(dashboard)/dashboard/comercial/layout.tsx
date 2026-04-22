@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { hasPermission } from "@/lib/auth/permissions";
 import { AppShell } from "@/components/shell/AppShell";
@@ -15,7 +14,7 @@ export default async function ComercialLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) redirect("/login");
   if (!hasPermission(session as any, "comercial.view")) redirect("/403");
 

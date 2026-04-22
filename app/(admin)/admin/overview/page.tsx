@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -10,7 +9,7 @@ import { getUserContext } from "@/lib/auth/getUserContext";
 import { HelpTip } from "@/components/help/HelpTip";
 
 export default async function AdminOverviewPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) redirect("/login");
   const ctx = await getUserContext();
   const canViewEvents = ctx && (ctx.role === "OWNER" || ctx.role === "SUPER_ADMIN" || ctx.permissions.includes("events.view"));

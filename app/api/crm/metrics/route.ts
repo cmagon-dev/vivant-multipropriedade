@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 
@@ -8,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 /** GET — métricas CRM: por tipo, gargalos, vendedores (sempre dados atualizados) */
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user?.id) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   const isOwner =
     (session.user as { roleKey?: string }).roleKey === "OWNER" ||

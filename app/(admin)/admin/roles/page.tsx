@@ -1,11 +1,10 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
 import { RolesManager } from "@/components/admin/roles-manager";
 
 export default async function AdminRolesPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) redirect("/login");
   if (!hasPermission(session as any, "roles.manage")) redirect("/admin/overview");
 

@@ -1,11 +1,10 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
 import { PermissionsList } from "@/components/admin/permissions-list";
 
 export default async function AdminPermissionsPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) redirect("/login");
   if (!hasPermission(session as any, "permissions.manage")) redirect("/admin/overview");
 

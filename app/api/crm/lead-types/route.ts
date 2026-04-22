@@ -1,12 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 
 /** GET — lista tipos (comercial: só ativos; crm.manage: ?all=true para todos) com etapas */
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user?.id) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   const can = hasPermission(session as any, "comercial.view") || hasPermission(session as any, "crm.manage");
   const isOwner = (session.user as { roleKey?: string }).roleKey === "OWNER" || (session.user as { roleKey?: string }).roleKey === "SUPER_ADMIN";
@@ -50,7 +49,7 @@ export async function GET(request: NextRequest) {
 
 /** POST — criar tipo (crm.manage) */
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user?.id) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   if (!hasPermission(session as any, "crm.manage")) return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
 

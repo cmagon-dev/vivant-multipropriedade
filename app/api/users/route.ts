@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { userCreateSchema } from "@/lib/validations/user";
@@ -10,7 +9,7 @@ import { trackEvent } from "@/lib/telemetry/trackEvent";
 
 // GET /api/users - Listar usuários (users.manage)
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   if (!hasPermission(session as any, "users.manage")) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
@@ -57,7 +56,7 @@ export async function GET(request: NextRequest) {
 
 // POST /api/users - Criar usuário (users.manage). RBAC: roleKey obrigatório + extraPermissionKeys opcional.
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   if (!hasPermission(session as any, "users.manage")) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });

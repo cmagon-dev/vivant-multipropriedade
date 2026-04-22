@@ -1,10 +1,9 @@
-import { put } from "@vercel/blob";
+﻿import { put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   
   const role = session?.user?.role;
   if (!session || role == null || !["ADMIN", "EDITOR"].includes(role)) {

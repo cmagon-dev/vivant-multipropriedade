@@ -38,14 +38,24 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = await getToken({
+  // Lê os dois tokens independentes: admin (cookie dedicado) e cotista (cookie dedicado).
+  // Isso permite que ambas as sessões coexistam simultaneamente no mesmo browser.
+  const adminToken = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
+    cookieName: "vivant.admin.session-token",
   });
+  const cotistaToken = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+    cookieName: "vivant.cotista.session-token",
+  });
+  // "token" genérico: admin tem prioridade para rotas compartilhadas (ex: redirecionamento pós-login)
+  const token = adminToken ?? cotistaToken;
 
   // Redirecionar /portal-cotista para login do cotista
   if (pathname === "/portal-cotista") {
-    if (token?.userType === "cotista") {
+    if (cotistaToken?.userType === "cotista") {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     const url = new URL("/login-cotista", request.url);
@@ -58,19 +68,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Login admin: se já autenticado, redirecionar
+  // Login admin: se já tem sessão admin ativa, redireciona; caso contrário deixa passar
   if (pathname === "/login") {
-    if (token) {
-      const redirectUrl = getPostLoginRedirectFromToken(token);
+    if (adminToken) {
+      const redirectUrl = getPostLoginRedirectFromToken(adminToken);
       return NextResponse.redirect(new URL(redirectUrl, request.url));
     }
     return NextResponse.next();
   }
 
-  // Login cotista: se já autenticado, redirecionar
+  // Login cotista: se já tem sessão cotista ativa, redireciona; caso contrário deixa passar
+  // (sessão admin não bloqueia login cotista — são sessões independentes)
   if (pathname === "/login-cotista") {
-    if (token) {
-      const redirectUrl = getPostLoginRedirectFromToken(token);
+    if (cotistaToken) {
+      const redirectUrl = getPostLoginRedirectFromToken(cotistaToken);
       return NextResponse.redirect(new URL(redirectUrl, request.url));
     }
     return NextResponse.next();
@@ -81,17 +92,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Proteção /admin: userType admin; cada rota exige sua permissão (menu único, rotas por permissão)
+  // Proteção /admin: exige sessão admin (cookie vivant.admin.session-token)
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin-portal")) {
-    if (!token || token.userType !== "admin") {
+    if (!adminToken || adminToken.userType !== "admin") {
       const url = new URL("/login", request.url);
       url.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(url);
     }
     /** Usuário com role COTISTA (portal) não acessa o painel admin — só o portal em /dashboard */
-    if (token.roleKey === "COTISTA") {
+    if (adminToken.roleKey === "COTISTA") {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
+    const token = adminToken;
     const permissions = (token.permissions as string[] | undefined) ?? [];
     const isOwner = token.roleKey === "OWNER" || token.roleKey === "SUPER_ADMIN";
     const hasAdminView = isOwner || hasPermissionKey(permissions, "admin.view") || token.roleKey === "ADMIN";
@@ -192,13 +204,13 @@ export async function middleware(request: NextRequest) {
   // Portal do investidor /capital: apenas role INVESTOR (userType admin com role INVESTOR)
   // A landing pública é /capital; as rotas protegidas começam em /capital/...
   if (pathname.startsWith("/capital/")) {
-    if (!token) {
+    if (!adminToken) {
       const url = new URL("/login", request.url);
       url.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(url);
     }
-    const roleKey = token.roleKey as string | undefined;
-    const permissions = (token.permissions as string[] | undefined) ?? [];
+    const roleKey = adminToken.roleKey as string | undefined;
+    const permissions = (adminToken.permissions as string[] | undefined) ?? [];
     const isInvestor = roleKey === "INVESTOR" || hasPermissionKey(permissions, "capital.portal");
     if (!isInvestor) return NextResponse.redirect(new URL("/403", request.url));
     return NextResponse.next();
@@ -206,22 +218,22 @@ export async function middleware(request: NextRequest) {
 
   // OWNER/SUPER_ADMIN: nunca /dashboard (exceto /dashboard/comercial para Leads), sempre /admin
   if (pathname.startsWith("/dashboard")) {
-    const roleKey = token?.roleKey as string | undefined;
+    const roleKey = adminToken?.roleKey as string | undefined;
     const isComercialLeads = pathname.startsWith("/dashboard/comercial");
     if ((roleKey === "OWNER" || roleKey === "SUPER_ADMIN") && !isComercialLeads) {
       return NextResponse.redirect(new URL("/admin/overview", request.url));
     }
   }
 
-  // Proteção /dashboard/comercial: comercial.view
+  // Proteção /dashboard/comercial: comercial.view (sessão admin)
   if (pathname.startsWith("/dashboard/comercial")) {
-    if (!token) {
+    if (!adminToken) {
       const url = new URL("/login", request.url);
       url.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(url);
     }
-    const permissions = (token.permissions as string[] | undefined) ?? [];
-    const isOwner = token.roleKey === "OWNER" || token.roleKey === "SUPER_ADMIN";
+    const permissions = (adminToken.permissions as string[] | undefined) ?? [];
+    const isOwner = adminToken.roleKey === "OWNER" || adminToken.roleKey === "SUPER_ADMIN";
     const hasComercial = isOwner || hasPermissionKey(permissions, "comercial.view");
     if (!hasComercial) {
       return NextResponse.redirect(new URL("/403", request.url));
@@ -229,9 +241,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Proteção /admin-portal
+  // Proteção /admin-portal (sessão admin)
   if (pathname.startsWith("/admin-portal")) {
-    if (!token || token.userType !== "admin") {
+    if (!adminToken || adminToken.userType !== "admin") {
       const url = new URL("/login", request.url);
       url.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(url);
@@ -239,27 +251,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Proteção /dashboard (portal cotista): cotista ou comercial/dashboard.view (comercial já tratado acima)
+  // Proteção /dashboard (portal cotista): usa sessão cotista; admin com permissão também pode acessar
   if (pathname.startsWith("/dashboard")) {
-    if (!token) {
-      const url = new URL("/login-cotista", request.url);
-      url.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(url);
+    if (cotistaToken?.userType === "cotista") return NextResponse.next();
+    if (adminToken) {
+      const permissions = (adminToken.permissions as string[] | undefined) ?? [];
+      const hasDashboard =
+        adminToken.roleKey === "COTISTA" ||
+        adminToken.roleKey === "OWNER" ||
+        adminToken.roleKey === "SUPER_ADMIN" ||
+        hasPermissionKey(permissions, "dashboard.view");
+      if (hasDashboard) return NextResponse.next();
     }
-    if (token.userType === "cotista") return NextResponse.next();
-    const permissions = (token.permissions as string[] | undefined) ?? [];
-    const hasDashboard =
-      token.roleKey === "COTISTA" ||
-      token.roleKey === "OWNER" ||
-      token.roleKey === "SUPER_ADMIN" ||
-      hasPermissionKey(permissions, "dashboard.view");
-    if (hasDashboard) return NextResponse.next();
-    return NextResponse.redirect(new URL("/403", request.url));
+    const url = new URL("/login-cotista", request.url);
+    url.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(url);
   }
 
-  // Proteção /cotista: apenas cotista
+  // Proteção /cotista: apenas sessão cotista ativa
   if (pathname.startsWith("/cotista")) {
-    if (!token || token.userType !== "cotista") {
+    if (!cotistaToken || cotistaToken.userType !== "cotista") {
       const url = new URL("/login-cotista", request.url);
       url.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(url);

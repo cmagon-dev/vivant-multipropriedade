@@ -1,7 +1,6 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import type { Session } from "next-auth";
 
@@ -21,7 +20,7 @@ type RouteHandler = (
 export function withPermission(permissionKey: string) {
   return function (handler: RouteHandler): RouteHandler {
     return async (request: NextRequest, context: { params?: Record<string, string> }) => {
-      const session = (await getServerSession(authOptions)) as SessionWithPermissions | null;
+      const session = (await getSession()) as SessionWithPermissions | null;
       if (!session) {
         return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
       }

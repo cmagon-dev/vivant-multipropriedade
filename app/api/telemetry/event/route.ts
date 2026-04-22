@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 import { trackEvent } from "@/lib/telemetry/trackEvent";
 
 /**
@@ -8,7 +7,7 @@ import { trackEvent } from "@/lib/telemetry/trackEvent";
  * Body: { type, message, status?, severity?, entityType?, entityId?, productKey?, meta? }
  */
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }

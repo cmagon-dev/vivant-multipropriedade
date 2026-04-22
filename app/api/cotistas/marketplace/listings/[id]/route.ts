@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { requirePortalCotista } from "@/lib/auth/cotistaPortalSession";
 import { prisma } from "@/lib/prisma";
 import { logMarketplaceEvent } from "@/lib/vivant/week-marketplace-service";
@@ -12,7 +11,7 @@ export async function PATCH(
   ctx: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     const auth = await requirePortalCotista(session);
     if (!auth.ok) return auth.response;
 

@@ -10,12 +10,12 @@ export async function getCotistaSession() {
   return await getServerSession(authOptionsCotista);
 }
 
+/**
+ * Tenta obter sessão admin primeiro, depois cotista.
+ * Retorna null se nenhuma sessão for encontrada.
+ */
 export async function getAnySession() {
   const adminSession = await getAdminSession();
-  if (adminSession) return { ...adminSession, sessionType: 'admin' };
-  
-  const cotistaSession = await getCotistaSession();
-  if (cotistaSession) return { ...cotistaSession, sessionType: 'cotista' };
-  
-  return null;
+  if (adminSession?.user) return adminSession;
+  return getCotistaSession();
 }

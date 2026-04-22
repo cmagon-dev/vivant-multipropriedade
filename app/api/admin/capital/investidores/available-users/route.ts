@@ -1,13 +1,12 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 import { canAccessCapitalAdmin } from "@/lib/capital-auth";
 import { prisma } from "@/lib/prisma";
 
 /** GET — usuários com perfil Capital (role INVESTOR ou permissão capital.portal) que ainda não têm perfil de investidor. */
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (!canAccessCapitalAdmin(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
     const withProfile = await prisma.capitalInvestorProfile.findMany({

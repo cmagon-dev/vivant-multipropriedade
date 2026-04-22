@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
@@ -14,7 +13,7 @@ type Params = {
 };
 
 export default async function HelpDetailPage(props: { params: Promise<Params> }) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const canView = hasPermission(session as any, "help.view") || hasPermission(session as any, "help.manage");

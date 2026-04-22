@@ -1,8 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { UserForm } from "@/components/admin/user-form";
 import { notFound, redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 
 export default async function EditarUsuarioPage({
@@ -10,7 +9,7 @@ export default async function EditarUsuarioPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session || !hasPermission(session as any, "users.manage")) {
     redirect("/admin/overview");
   }

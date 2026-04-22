@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 import type { Prisma, TipoCobranca } from "@prisma/client";
@@ -29,7 +28,7 @@ const TIPO_LABEL: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (!session || (session.user as { userType?: string }).userType !== "admin") {
       return NextResponse.json(
         { error: "Não autorizado" },

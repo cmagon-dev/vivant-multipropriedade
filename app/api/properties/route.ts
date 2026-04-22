@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 import { propertyCreateSchema } from "@/lib/validations/property-admin";
@@ -10,7 +9,7 @@ import { trackEvent } from "@/lib/telemetry/trackEvent";
 
 // GET /api/properties - Listar todas (com filtros) — exige properties.view
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
@@ -48,7 +47,7 @@ export async function GET(request: NextRequest) {
 
 // POST /api/properties - Criar nova — exige properties.create ou properties.manage
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }

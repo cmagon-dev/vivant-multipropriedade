@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 
@@ -15,7 +14,7 @@ function canManage(session: any) {
 
 export async function GET(request: NextRequest, ctx: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (!canAccess(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     const doc = await prisma.documento.findUnique({
       where: { id: ctx.params.id },
@@ -31,7 +30,7 @@ export async function GET(request: NextRequest, ctx: { params: { id: string } })
 
 export async function PUT(request: NextRequest, ctx: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (!canManage(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
     const body = await request.json();
     const { titulo, descricao, tipo, categoria, ativo } = body;
@@ -55,7 +54,7 @@ export async function PUT(request: NextRequest, ctx: { params: { id: string } })
 
 export async function DELETE(request: NextRequest, ctx: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (!canManage(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
     await prisma.documento.delete({ where: { id: ctx.params.id } });
     return NextResponse.json({ success: true });

@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { requirePortalCotista } from "@/lib/auth/cotistaPortalSession";
 import { prisma } from "@/lib/prisma";
 import { TipoVoto } from "@prisma/client";
 
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     const auth = await requirePortalCotista(session);
     if (!auth.ok) return auth.response;
     const cotistaId = auth.cotistaId;
@@ -78,7 +77,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     const auth = await requirePortalCotista(session);
     if (!auth.ok) return auth.response;
     const cotistaId = auth.cotistaId;

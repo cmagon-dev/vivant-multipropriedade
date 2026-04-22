@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 
 export type UserContext = {
   userId: string;
@@ -17,7 +16,7 @@ export type UserContext = {
  * Use em Server Components ou API routes.
  */
 export async function getUserContext(): Promise<UserContext | null> {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user?.id) return null;
 
   const user = session.user as {

@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 import { MensagemTargetType, PrioridadeMensagem, TipoMensagem } from "@prisma/client";
@@ -53,7 +52,7 @@ async function resolveCotistaIdsForTarget(payload: {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (!canAccess(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     const where: { propertyId?: string; ativa?: boolean; targetType?: MensagemTargetType } = {};
     const sp = request.nextUrl.searchParams;
@@ -80,7 +79,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (!canManage(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
     const body = await request.json();
     const {

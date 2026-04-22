@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getCapitalInvestorProfileId, isCapitalInvestor } from "@/lib/capital-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -11,7 +10,7 @@ export const dynamic = "force-dynamic";
 const fmt = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 
 export default async function CapitalAtivoDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) redirect("/login");
   if (!isCapitalInvestor(session)) redirect("/403");
 

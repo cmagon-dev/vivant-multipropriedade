@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 import { Prisma, PropertyAssetCategory } from "@prisma/client";
@@ -16,7 +15,7 @@ export async function PUT(
   request: NextRequest,
   context: { params: { id: string; assetId: string } }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!canManage(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
 
   const { id: propertyId, assetId } = context.params;
@@ -72,7 +71,7 @@ export async function DELETE(
   _request: NextRequest,
   context: { params: { id: string; assetId: string } }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!canManage(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
 
   const { id: propertyId, assetId } = context.params;

@@ -1,13 +1,12 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+﻿import { NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 import { getCapitalInvestorProfileId, isCapitalInvestor } from "@/lib/capital-auth";
 import { prisma } from "@/lib/prisma";
 
 /** Lista documentos dos imóveis em que o investidor participa (reaproveita Documento do Property). */
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (!isCapitalInvestor(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
     const profileId = await getCapitalInvestorProfileId(session);
