@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,72 +27,82 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const result = await signIn("admin-credentials", {
-        email,
-        password,
-        redirect: false,
+      // 1. CSRF token do endpoint admin (não usa signIn() do next-auth/react para evitar
+      //    que __NEXTAUTH.basePath do SessionProvider raiz sobrescreva o endpoint correto)
+      const csrfRes = await fetch("/api/auth-admin/csrf");
+      const { csrfToken } = await csrfRes.json() as { csrfToken?: string };
+
+      // 2. Autenticar diretamente no endpoint admin
+      const loginRes = await fetch("/api/auth-admin/callback/admin-credentials", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-Auth-Return-Redirect": "1",
+        },
+        body: new URLSearchParams({
+          email,
+          password,
+          csrfToken: csrfToken ?? "",
+          callbackUrl: callbackUrl ?? "/",
+          json: "true",
+        }),
+        credentials: "include",
       });
 
-      if (result?.error) {
+      const loginData = await loginRes.json() as { url?: string };
+      const responseUrl = loginData.url
+        ? new URL(loginData.url, window.location.origin)
+        : null;
+      const urlError = responseUrl?.searchParams.get("error");
+
+      if (urlError || !loginRes.ok) {
         toast.error("Email ou senha incorretos");
         setIsLoading(false);
         return;
       }
 
-      if (result?.ok) {
-        // Valida que a sessão criada é de fato um usuário admin
-        const sessionRes = await fetch("/api/auth-admin/session");
-        const sessionData = await sessionRes.json();
+      // 3. Verificar que a sessão criada é de fato um usuário admin
+      const sessionRes = await fetch("/api/auth-admin/session");
+      const sessionData = await sessionRes.json() as {
+        user?: { userType?: string; roleKey?: string | null; defaultRoute?: string | null };
+      };
 
-        if (!sessionData?.user || sessionData.user.userType !== "admin") {
-          // Sessão inválida ou não-admin — desfaz o login e bloqueia acesso
-          await import("next-auth/react").then(({ signOut }) =>
-            signOut({ redirect: false })
-          );
-          toast.error("Acesso não autorizado. Use o Portal do Cotista.");
-          setIsLoading(false);
-          return;
-        }
-
-        toast.success("Login realizado com sucesso!");
-        fetch("/api/telemetry/event", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "auth.login", message: "Login realizado", status: "OK" }),
-        }).catch(() => {});
-
-        // Calcula a rota diretamente dos dados da sessão admin já obtidos acima,
-        // evitando chamar /api/auth/post-login-redirect que lê getSession() e pode
-        // confundir a sessão cotista ativa em outro cookie.
-        const { defaultRoute, roleKey } = sessionData.user as {
-          defaultRoute?: string | null;
-          roleKey?: string | null;
-        };
-        let targetRoute: string;
-        if (callbackUrl && callbackUrl.startsWith("/")) {
-          targetRoute = callbackUrl;
-        } else if (defaultRoute && defaultRoute.startsWith("/")) {
-          targetRoute = defaultRoute;
-        } else if (roleKey === "INVESTOR") {
-          targetRoute = "/capital/dashboard";
-        } else {
-          switch (roleKey) {
-            case "OWNER":
-            case "SUPER_ADMIN":
-              targetRoute = "/admin/overview";
-              break;
-            case "COMMERCIAL":
-              targetRoute = "/dashboard/comercial";
-              break;
-            default:
-              targetRoute = "/dashboard";
-          }
-        }
-        window.location.href = targetRoute;
-      } else {
-        toast.error("Erro inesperado ao fazer login");
+      if (!sessionData?.user || sessionData.user.userType !== "admin") {
+        toast.error("Acesso não autorizado. Use o Portal do Cotista.");
         setIsLoading(false);
+        return;
       }
+
+      // 4. Calcular rota de destino a partir dos dados da sessão e redirecionar
+      toast.success("Login realizado com sucesso!");
+      fetch("/api/telemetry/event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "auth.login", message: "Login realizado", status: "OK" }),
+      }).catch(() => {});
+
+      const { defaultRoute, roleKey } = sessionData.user;
+      let targetRoute: string;
+      if (callbackUrl && callbackUrl.startsWith("/")) {
+        targetRoute = callbackUrl;
+      } else if (defaultRoute && defaultRoute.startsWith("/")) {
+        targetRoute = defaultRoute;
+      } else if (roleKey === "INVESTOR") {
+        targetRoute = "/capital/dashboard";
+      } else {
+        switch (roleKey) {
+          case "OWNER":
+          case "SUPER_ADMIN":
+            targetRoute = "/admin/overview";
+            break;
+          case "COMMERCIAL":
+            targetRoute = "/dashboard/comercial";
+            break;
+          default:
+            targetRoute = "/dashboard";
+        }
+      }
+      window.location.href = targetRoute;
     } catch (error) {
       console.error("Erro no login:", error);
       toast.error("Erro ao fazer login");

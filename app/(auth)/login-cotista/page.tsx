@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,29 +22,43 @@ export default function LoginCotistaPage() {
     setIsLoading(true);
 
     try {
-      const result = await signIn("cotista-credentials", {
-        email,
-        password,
-        redirect: false,
+      // 1. CSRF token do endpoint cotista (não usa signIn() do next-auth/react para evitar
+      //    que __NEXTAUTH.basePath do SessionProvider raiz sobrescreva o endpoint correto)
+      const csrfRes = await fetch("/api/auth-cotista/csrf");
+      const { csrfToken } = await csrfRes.json() as { csrfToken?: string };
+
+      // 2. Autenticar diretamente no endpoint cotista
+      const loginRes = await fetch("/api/auth-cotista/callback/cotista-credentials", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-Auth-Return-Redirect": "1",
+        },
+        body: new URLSearchParams({
+          email,
+          password,
+          csrfToken: csrfToken ?? "",
+          callbackUrl: callbackUrl ?? "/dashboard",
+          json: "true",
+        }),
+        credentials: "include",
       });
 
-      if (result?.error) {
+      const loginData = await loginRes.json() as { url?: string };
+      const responseUrl = loginData.url
+        ? new URL(loginData.url, window.location.origin)
+        : null;
+      const urlError = responseUrl?.searchParams.get("error");
+
+      if (urlError || !loginRes.ok) {
         toast.error("Email/CPF ou senha incorretos");
         setIsLoading(false);
         return;
       }
 
-      if (result?.ok) {
-        toast.success("Login realizado com sucesso!");
-        if (callbackUrl && callbackUrl.startsWith("/")) {
-          window.location.href = callbackUrl;
-          return;
-        }
-        window.location.href = "/dashboard";
-      } else {
-        toast.error("Erro inesperado ao fazer login");
-        setIsLoading(false);
-      }
+      toast.success("Login realizado com sucesso!");
+      window.location.href =
+        callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/dashboard";
     } catch (error) {
       console.error("Erro no login:", error);
       toast.error("Erro ao fazer login");
