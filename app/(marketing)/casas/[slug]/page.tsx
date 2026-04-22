@@ -2,6 +2,7 @@ import { Navbar } from "@/components/marketing/navbar";
 import { Footer } from "@/components/marketing/footer";
 import { ShareButton } from "@/components/marketing/share-button";
 import { ImageLightbox } from "@/components/marketing/image-lightbox";
+import { PropertyPDFButton } from "@/components/marketing/property-pdf-button";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
+import type { DestinoFeature } from "@/lib/utils/pdf-property";
 
 export const revalidate = 60;
 
@@ -44,7 +46,7 @@ export default async function CasaPage({ params }: CasaPageProps) {
     where: { slug: params.slug, published: true },
     include: {
       destino: {
-        select: { name: true, slug: true, emoji: true },
+        select: { name: true, slug: true, emoji: true, description: true, climate: true, features: true },
       },
     },
   });
@@ -267,6 +269,41 @@ export default async function CasaPage({ params }: CasaPageProps) {
                       </div>
                     )}
 
+                    {/* Condições de Pagamento */}
+                    <div className="border-t border-gray-200 pt-4">
+                      <p className="text-xs font-bold text-vivant-navy uppercase tracking-wide mb-3">
+                        Condições de Pagamento
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                          <p className="text-xs font-bold text-amber-800 mb-2">
+                            Entrada Facilitada
+                          </p>
+                          <ul className="space-y-1">
+                            {["Permuta de imóveis", "Cartão de crédito", "Parcelamento negociável"].map((item) => (
+                              <li key={item} className="flex items-start gap-1.5 text-xs text-amber-700">
+                                <span className="mt-0.5 w-1.5 h-1.5 rounded-sm bg-amber-500 flex-shrink-0" />
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                          <p className="text-xs font-bold text-blue-900 mb-2">
+                            Saldo Parcelado
+                          </p>
+                          <ul className="space-y-1">
+                            {["Saldo em até 60x", "Reforços anuais ou semestrais", "Condições sob consulta"].map((item) => (
+                              <li key={item} className="flex items-start gap-1.5 text-xs text-blue-800">
+                                <span className="mt-0.5 w-1.5 h-1.5 rounded-sm bg-vivant-navy flex-shrink-0" />
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
                     <Button
                       asChild
                       className="w-full bg-vivant-navy hover:bg-vivant-navy/90 text-white"
@@ -282,6 +319,40 @@ export default async function CasaPage({ params }: CasaPageProps) {
                         Tenho Interesse
                       </a>
                     </Button>
+
+                    <PropertyPDFButton
+                      data={{
+                        name: property.name,
+                        slug: property.slug,
+                        location: property.location,
+                        cidade: property.cidade,
+                        description: property.description,
+                        status: property.status,
+                        price: property.price,
+                        monthlyFee: property.monthlyFee,
+                        weeks: property.weeks,
+                        fraction: property.fraction,
+                        appreciation: property.appreciation,
+                        bedrooms: property.bedrooms,
+                        bathrooms: property.bathrooms,
+                        area: property.area,
+                        condominio: property.condominio,
+                        type: property.type,
+                        features: features,
+                        images: images,
+                        destino: property.destino
+                          ? {
+                              name: property.destino.name,
+                              emoji: property.destino.emoji,
+                              description: property.destino.description ?? null,
+                              climate: property.destino.climate ?? null,
+                              features: property.destino.features
+                                ? (property.destino.features as unknown as DestinoFeature[])
+                                : null,
+                            }
+                          : null,
+                      }}
+                    />
 
                     <ShareButton
                       title={property.name}
