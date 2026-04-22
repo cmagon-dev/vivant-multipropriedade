@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/marketing/footer";
 import { Navbar } from "@/components/marketing/navbar";
@@ -20,6 +19,7 @@ import {
   Lock,
   Settings,
   ArrowDownRight,
+  ArrowRight,
 } from "lucide-react";
 import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 
@@ -27,7 +27,6 @@ const TOTAL_STEPS = 6;
 
 export function SobreCapitalStepsClient(): JSX.Element {
   const [step, setStep] = useState(0);
-  const router = useRouter();
   const progress = useMemo(() => ((step + 1) / TOTAL_STEPS) * 100, [step]);
   const stepsSectionRef = useRef<HTMLDivElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
@@ -494,7 +493,8 @@ export function SobreCapitalStepsClient(): JSX.Element {
               <Button
                 onClick={() => {
                   if (step === TOTAL_STEPS - 1) {
-                    router.push("/");
+                    const el = document.getElementById("simule-investimento");
+                    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
                     return;
                   }
                   goNext();
@@ -507,6 +507,41 @@ export function SobreCapitalStepsClient(): JSX.Element {
           </footer>
         </div>
       </div>
+
+      {/* CTA Simulador de Investimentos */}
+      <section id="simule-investimento" className="py-12 lg:py-16 bg-gradient-to-r from-[#1A2F4B] to-[#2A4F6B]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="text-center md:text-left">
+              <div className="inline-flex items-center gap-2 bg-vivant-green/20 border border-vivant-green/40 rounded-full px-4 py-2 mb-4 text-vivant-green text-sm font-semibold">
+                <Calculator className="w-4 h-4" />
+                Simulador Vivant Capital
+              </div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-white mb-3 leading-tight">
+                Simule seu Investimento agora
+              </h2>
+              <p className="text-base sm:text-lg text-white/80 max-w-xl">
+                Informe o valor do aporte e veja uma projeção detalhada de quanto você receberia — parcelas mensais, reforços anuais, TIR e simulador de liquidez antecipada.
+              </p>
+            </div>
+            <div className="flex-shrink-0 flex flex-col gap-3 w-full md:w-auto">
+              <Button
+                asChild
+                size="lg"
+                className="bg-vivant-green text-white hover:bg-vivant-green/90 text-base sm:text-lg min-h-[52px] h-auto py-3 px-8 font-semibold shadow-lg"
+              >
+                <Link href="/simulador-investimentos">
+                  Simular meu Investimento
+                  <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+                </Link>
+              </Button>
+              <p className="text-center text-xs text-white/60">
+                Gratuito · Sem compromisso · Resultado em segundos
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <Footer />
     </div>
