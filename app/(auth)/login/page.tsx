@@ -61,13 +61,35 @@ export default function LoginPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type: "auth.login", message: "Login realizado", status: "OK" }),
         }).catch(() => {});
+
+        // Calcula a rota diretamente dos dados da sessão admin já obtidos acima,
+        // evitando chamar /api/auth/post-login-redirect que lê getSession() e pode
+        // confundir a sessão cotista ativa em outro cookie.
+        const { defaultRoute, roleKey } = sessionData.user as {
+          defaultRoute?: string | null;
+          roleKey?: string | null;
+        };
+        let targetRoute: string;
         if (callbackUrl && callbackUrl.startsWith("/")) {
-          window.location.href = callbackUrl;
-          return;
+          targetRoute = callbackUrl;
+        } else if (defaultRoute && defaultRoute.startsWith("/")) {
+          targetRoute = defaultRoute;
+        } else if (roleKey === "INVESTOR") {
+          targetRoute = "/capital/dashboard";
+        } else {
+          switch (roleKey) {
+            case "OWNER":
+            case "SUPER_ADMIN":
+              targetRoute = "/admin/overview";
+              break;
+            case "COMMERCIAL":
+              targetRoute = "/dashboard/comercial";
+              break;
+            default:
+              targetRoute = "/dashboard";
+          }
         }
-        const res = await fetch("/api/auth/post-login-redirect");
-        const data = await res.json();
-        window.location.href = data?.url ?? "/dashboard";
+        window.location.href = targetRoute;
       } else {
         toast.error("Erro inesperado ao fazer login");
         setIsLoading(false);

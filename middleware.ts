@@ -38,6 +38,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Remove o cookie legado next-auth.session-token (sobra da versão anterior com cookie unificado).
+  // Sem ele o middleware e o getSession() nunca confundem a sessão de um portal com a do outro.
+  if (request.cookies.has("next-auth.session-token")) {
+    const cleanup = NextResponse.redirect(request.url);
+    cleanup.cookies.delete("next-auth.session-token");
+    return cleanup;
+  }
+
   // Lê os dois tokens independentes: admin (cookie dedicado) e cotista (cookie dedicado).
   // Isso permite que ambas as sessões coexistam simultaneamente no mesmo browser.
   const adminToken = await getToken({
@@ -216,11 +224,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // OWNER/SUPER_ADMIN: nunca /dashboard (exceto /dashboard/comercial para Leads), sempre /admin
+  // OWNER/SUPER_ADMIN: nunca /dashboard (exceto /dashboard/comercial para Leads), sempre /admin.
+  // EXCEÇÃO: se há sessão cotista ativa no mesmo browser, o cotista tem prioridade sobre /dashboard
+  // (sessões são independentes — admin logado não bloqueia o acesso cotista ao próprio portal).
   if (pathname.startsWith("/dashboard")) {
     const roleKey = adminToken?.roleKey as string | undefined;
     const isComercialLeads = pathname.startsWith("/dashboard/comercial");
-    if ((roleKey === "OWNER" || roleKey === "SUPER_ADMIN") && !isComercialLeads) {
+    const hasCotistaSession = cotistaToken?.userType === "cotista";
+    if ((roleKey === "OWNER" || roleKey === "SUPER_ADMIN") && !isComercialLeads && !hasCotistaSession) {
       return NextResponse.redirect(new URL("/admin/overview", request.url));
     }
   }
