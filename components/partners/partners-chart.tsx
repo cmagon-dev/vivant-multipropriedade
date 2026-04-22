@@ -34,8 +34,18 @@ function formatCurrencyFull(value: number): string {
   }).format(value);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CustomTooltip({ active, payload, label }: any) {
+interface PartnersChartTooltipPayload {
+  payload?: {
+    mes: number;
+    entradaMes: number;
+    parcelasMes: number;
+    reforcosMes: number;
+    fluxoCliente: number;
+    fluxoClienteAcumulado: number;
+  };
+}
+
+function CustomTooltip({ active, payload }: { active?: boolean; payload?: PartnersChartTooltipPayload[]; label?: number }) {
   if (!active || !payload || !payload.length) return null;
 
   const mes    = payload[0]?.payload?.mes as number;
@@ -117,8 +127,7 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 // Tick customizado do eixo X — mostra apenas nos meses múltiplos de 12
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CustomXAxisTick({ x, y, payload }: any) {
+function CustomXAxisTick({ x, y, payload }: { x?: number; y?: number; payload?: { value: number } }) {
   const mes = payload?.value as number;
   if (!mes || mes % 12 !== 0) return null;
   const ano = mes / 12;
