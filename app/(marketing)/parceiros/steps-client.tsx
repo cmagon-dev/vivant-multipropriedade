@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -11,13 +10,12 @@ import { Footer } from "@/components/marketing/footer";
 import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 import { ValidationTimeline } from "@/components/marketing/validation-timeline";
 import { PartnerLeadForm } from "@/components/marketing/partner-lead-form";
-import { Building2, TrendingUp, Shield, Zap, XCircle, CheckCircle2, ArrowRight, DollarSign } from "lucide-react";
+import { Building2, TrendingUp, Shield, Zap, XCircle, CheckCircle2, ArrowRight, DollarSign, BarChart2 } from "lucide-react";
 
 const TOTAL_STEPS = 5;
 
 export function ParceirosStepsClient(): JSX.Element {
   const [step, setStep] = useState(0);
-  const router = useRouter();
   const progress = useMemo(() => ((step + 1) / TOTAL_STEPS) * 100, [step]);
   const stepsSectionRef = useRef<HTMLDivElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
@@ -89,9 +87,11 @@ export function ParceirosStepsClient(): JSX.Element {
               Teste de mercado sem risco. Zero custos iniciais. Validação em 60 dias.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
-              <Button size="lg" className="bg-vivant-gold text-vivant-navy hover:bg-vivant-gold/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold" onClick={() => goToStep(4)}>
-                Avaliar meu Imóvel Agora
-                <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+              <Button size="lg" className="bg-vivant-gold text-vivant-navy hover:bg-vivant-gold/90 text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold" asChild>
+                <Link href="/simulador-parceiros">
+                  <BarChart2 className="mr-2 w-4 h-4 sm:w-5 sm:h-5" />
+                  Simule sua Venda
+                </Link>
               </Button>
               <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-[#1A2F4B] text-base sm:text-lg min-h-[48px] h-auto py-3 sm:py-4 px-6 sm:px-8 font-semibold" onClick={() => goToStep(1)}>
                 Como Funciona
@@ -436,7 +436,10 @@ export function ParceirosStepsClient(): JSX.Element {
               <Button
                 onClick={() => {
                   if (step === TOTAL_STEPS - 1) {
-                    router.push("/");
+                    const el = document.getElementById("simule-recebiveis");
+                    if (el) {
+                      el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }
                     return;
                   }
                   goNext();
@@ -451,7 +454,7 @@ export function ParceirosStepsClient(): JSX.Element {
       </div>
 
       {/* CTA Simulador de Recebíveis */}
-      <section className="py-12 lg:py-16 bg-gradient-to-r from-vivant-navy to-[#2A4F6B]">
+      <section id="simule-recebiveis" className="py-12 lg:py-16 bg-gradient-to-r from-vivant-navy to-[#2A4F6B]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="text-center md:text-left">
