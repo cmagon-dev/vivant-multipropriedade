@@ -34,15 +34,20 @@ function formatCurrencyFull(value: number): string {
   }).format(value);
 }
 
+interface ChartDataPoint {
+  mes: number;
+  entradaMes: number;
+  parcelasMes: number;
+  reforcosMes: number;
+  fluxoClienteAcumulado: number;
+  valorInvestido: number;
+}
+
 interface ChartTooltipPayload {
-  payload?: {
-    mes: number;
-    entradaMes: number;
-    parcelasMes: number;
-    reforcosMes: number;
-    fluxoClienteAcumulado: number;
-    valorInvestido: number;
-  };
+  name: string;
+  value: number;
+  color: string;
+  payload?: ChartDataPoint;
 }
 
 function CustomTooltip({ active, payload }: { active?: boolean; payload?: ChartTooltipPayload[] }) {
