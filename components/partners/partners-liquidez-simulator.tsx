@@ -4,10 +4,9 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import type { InvestmentAnalysis, LiquidezResult } from "@/lib/math/investment-calculator";
-import { simulateLiquidez } from "@/lib/math/investment-calculator";
+import type { PartnersAnalysis, PartnersLiquidezResult } from "@/lib/math/partners-calculator";
+import { simulateLiquidezPartners } from "@/lib/math/partners-calculator";
 import {
   Zap,
   TrendingDown,
@@ -18,23 +17,23 @@ import {
   Building2,
 } from "lucide-react";
 
-interface LiquidezSimulatorProps {
-  analysis: InvestmentAnalysis | null;
-  onLiquidezCalculated?: (result: LiquidezResult) => void;
+interface PartnersLiquidezSimulatorProps {
+  analysis: PartnersAnalysis | null;
+  onLiquidezCalculated?: (result: PartnersLiquidezResult) => void;
 }
 
-export function LiquidezSimulator({
+export function PartnersLiquidezSimulator({
   analysis,
   onLiquidezCalculated,
-}: LiquidezSimulatorProps): JSX.Element {
+}: PartnersLiquidezSimulatorProps): JSX.Element {
   const [isEnabled, setIsEnabled] = useState(false);
   const [mesAtual, setMesAtual] = useState<number | "">(24);
   const [taxaDesconto, setTaxaDesconto] = useState<number | "">(15);
-  const [result, setResult] = useState<LiquidezResult | null>(null);
+  const [result, setResult] = useState<PartnersLiquidezResult | null>(null);
   const [mesError, setMesError] = useState<string | null>(null);
   const [taxaError, setTaxaError] = useState<string | null>(null);
 
-  const mesMaximo = analysis?.mesUltimoRecebimento ?? 66;
+  const mesMaximo = analysis?.mesUltimoRecebimento ?? 69;
 
   const handleCalculate = () => {
     if (!analysis) return;
@@ -64,12 +63,9 @@ export function LiquidezSimulator({
 
     if (hasError) return;
 
-    const liquidezResult = simulateLiquidez(analysis, mes, taxa / 100);
+    const liquidezResult = simulateLiquidezPartners(analysis, mes, taxa / 100);
     setResult(liquidezResult);
-
-    if (onLiquidezCalculated) {
-      onLiquidezCalculated(liquidezResult);
-    }
+    if (onLiquidezCalculated) onLiquidezCalculated(liquidezResult);
   };
 
   if (!analysis) {
@@ -83,7 +79,7 @@ export function LiquidezSimulator({
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-slate-400">
-            <p>Disponível após calcular o investimento</p>
+            <p>Disponível após calcular a simulação</p>
           </div>
         </CardContent>
       </Card>
@@ -91,8 +87,8 @@ export function LiquidezSimulator({
   }
 
   return (
-    <Card className="border-2 border-vivant-gold-muted/30 bg-gradient-to-br from-white to-vivant-gold-muted/5">
-      <CardHeader className="bg-gradient-to-r from-vivant-gold-muted/10 to-orange-50">
+    <Card className="border-2 border-vivant-gold/30 bg-gradient-to-br from-white to-vivant-gold/5">
+      <CardHeader className="bg-gradient-to-r from-vivant-gold/10 to-vivant-gold-muted/10 border-b border-vivant-gold/20">
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-vivant-navy mb-2">
@@ -104,14 +100,24 @@ export function LiquidezSimulator({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Label htmlFor="liquidez-toggle" className="text-sm font-medium">
+            <span className="text-sm font-medium text-slate-600">
               {isEnabled ? "Ativado" : "Desativado"}
-            </Label>
-            <Switch
-              id="liquidez-toggle"
-              checked={isEnabled}
-              onCheckedChange={setIsEnabled}
-            />
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isEnabled}
+              onClick={() => setIsEnabled((v) => !v)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                isEnabled ? "bg-vivant-navy" : "bg-slate-300"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                  isEnabled ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
           </div>
         </div>
       </CardHeader>
@@ -119,23 +125,23 @@ export function LiquidezSimulator({
       <CardContent className="pt-6">
         {!isEnabled ? (
           <div className="text-center py-12">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-vivant-gold-muted/10 rounded-full mb-4">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-vivant-gold/10 rounded-full mb-4">
               <Zap className="w-10 h-10 text-vivant-gold-muted" />
             </div>
             <h3 className="text-lg font-semibold text-vivant-navy mb-2">
-              Simular Saída Antecipada?
+              Simular Antecipação dos Recebíveis?
             </h3>
             <p className="text-sm text-slate-600 max-w-md mx-auto mb-4">
-              Ative esta opção para calcular quanto você receberia se vendesse seus recebíveis
-              futuros a qualquer momento antes do prazo final.
+              Ative esta opção para calcular quanto você receberia à vista se vender seus
+              recebíveis futuros (securitização) antes do prazo final.
             </p>
             <p className="text-xs text-slate-500 italic">
-              Útil para avaliar liquidez e oportunidades de securitização (CRI)
+              Útil para avaliar liquidez e oportunidades de antecipação via CRI
             </p>
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Info Box */}
+            {/* Info */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-blue-900">
@@ -143,9 +149,7 @@ export function LiquidezSimulator({
                 <p>
                   Você pode vender seus recebíveis futuros (sua parte de 70%) aplicando uma{" "}
                   <strong>taxa de desconto</strong> sobre o valor presente dos fluxos restantes.
-                  Adicionalmente, a Vivant cobra uma{" "}
-                  <strong>taxa de estruturação de 10%</strong> sobre o saldo nominal dos
-                  recebíveis futuros pela montagem da operação.
+                  Quanto maior a taxa, menor o valor recebido, mas maior a liquidez imediata.
                 </p>
               </div>
             </div>
@@ -153,12 +157,12 @@ export function LiquidezSimulator({
             {/* Inputs */}
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="mesAtual" className="flex items-center gap-2">
+                <Label htmlFor="mesAtualPartners" className="flex items-center gap-2">
                   <Clock className="w-4 h-4" />
                   Mês da Saída (1–{mesMaximo})
                 </Label>
                 <Input
-                  id="mesAtual"
+                  id="mesAtualPartners"
                   type="number"
                   min="1"
                   max={mesMaximo}
@@ -167,10 +171,7 @@ export function LiquidezSimulator({
                   onChange={(e) => {
                     const value = e.target.value;
                     setMesError(null);
-                    if (value === "") {
-                      setMesAtual("");
-                      return;
-                    }
+                    if (value === "") { setMesAtual(""); return; }
                     const num = parseInt(value, 10);
                     if (isNaN(num)) return;
                     setMesAtual(num);
@@ -183,8 +184,7 @@ export function LiquidezSimulator({
                 />
                 {mesError ? (
                   <p className="text-xs text-red-500 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {mesError}
+                    <AlertCircle className="w-3 h-3" /> {mesError}
                   </p>
                 ) : (
                   <p className="text-xs text-slate-500">
@@ -194,13 +194,13 @@ export function LiquidezSimulator({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="taxaDesconto" className="flex items-center gap-2">
+                <Label htmlFor="taxaDescontoPartners" className="flex items-center gap-2">
                   <TrendingDown className="w-4 h-4" />
                   Taxa de Desconto (% a.a.)
                 </Label>
                 <div className="flex items-center gap-2">
                   <Input
-                    id="taxaDesconto"
+                    id="taxaDescontoPartners"
                     type="number"
                     min="5"
                     max="30"
@@ -210,10 +210,7 @@ export function LiquidezSimulator({
                     onChange={(e) => {
                       const value = e.target.value;
                       setTaxaError(null);
-                      if (value === "") {
-                        setTaxaDesconto("");
-                        return;
-                      }
+                      if (value === "") { setTaxaDesconto(""); return; }
                       const num = parseFloat(value);
                       if (isNaN(num)) return;
                       setTaxaDesconto(num);
@@ -228,8 +225,7 @@ export function LiquidezSimulator({
                 </div>
                 {taxaError ? (
                   <p className="text-xs text-red-500 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {taxaError}
+                    <AlertCircle className="w-3 h-3" /> {taxaError}
                   </p>
                 ) : (
                   <p className="text-xs text-slate-500">
@@ -239,44 +235,43 @@ export function LiquidezSimulator({
               </div>
             </div>
 
-            {/* Botão Calcular */}
+            {/* Botão */}
             <Button
               onClick={handleCalculate}
               size="lg"
               className="w-full bg-vivant-gold-muted hover:bg-vivant-gold-muted/90 text-white font-semibold"
             >
               <Zap className="w-5 h-5 mr-2" />
-              Calcular Valor de Antecipação dos Recebíveis
+              Calcular Antecipação dos Recebíveis
             </Button>
 
             {/* Resultado */}
             {result && (
-              <div className="space-y-6 pt-4 border-t-2 border-vivant-gold-muted/30">
-                {/* Header */}
+              <div className="space-y-6 pt-4 border-t-2 border-vivant-gold/30">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-bold text-vivant-navy flex items-center gap-2">
-                    <CheckCircle2 className="w-6 h-6 text-vivant-green" />
-                    Resultado da Simulação
+                    <CheckCircle2 className="w-6 h-6 text-vivant-gold-muted" />
+                    Resultado da Antecipação
                   </h3>
-                  <div className="flex items-center gap-2 bg-vivant-navy/10 px-4 py-2 rounded-lg">
-                    <Clock className="w-4 h-4 text-vivant-navy" />
+                  <div className="flex items-center gap-2 bg-vivant-gold/10 px-4 py-2 rounded-lg">
+                    <Clock className="w-4 h-4 text-vivant-gold-muted" />
                     <span className="text-sm font-semibold text-vivant-navy">
                       {result.percentualConcluido}% concluído
                     </span>
                   </div>
                 </div>
 
-                {/* Análise da Venda Antecipada */}
-                <div className="bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-orange-200 rounded-xl p-6">
+                {/* Cards da antecipação */}
+                <div className="bg-gradient-to-br from-vivant-gold/10 to-vivant-gold-muted/10 border-2 border-vivant-gold/30 rounded-xl p-6">
                   <h4 className="text-lg font-bold text-vivant-navy mb-4 flex items-center gap-2">
                     💰 Análise da Venda Antecipada (Liquidez)
                   </h4>
 
                   {/* Linha 1: Recebíveis + duas deduções */}
                   <div className="grid md:grid-cols-3 gap-4 mb-4">
-                    {/* Total de Recebíveis Futuros */}
+                    {/* Total Recebíveis Futuros */}
                     <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
-                      <CardContent className="pt-6">
+                      <CardContent className="pt-5 pb-5">
                         <div className="flex items-center gap-2 mb-2">
                           <DollarSign className="w-5 h-5 text-blue-600" />
                           <span className="text-sm font-medium text-slate-700">
@@ -287,21 +282,21 @@ export function LiquidezSimulator({
                           {result.totalFluxoFuturo}
                         </div>
                         <p className="text-xs text-slate-600 mt-1">
-                          Valor nominal dos seus 70%
+                          Valor nominal total dos seus 70%
                         </p>
                       </CardContent>
                     </Card>
 
-                    {/* Desconto Aplicado */}
-                    <Card className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100">
-                      <CardContent className="pt-6">
+                    {/* Desconto financeiro */}
+                    <Card className="border-2 border-vivant-gold/30 bg-gradient-to-br from-vivant-gold/10 to-vivant-gold/20">
+                      <CardContent className="pt-5 pb-5">
                         <div className="flex items-center gap-2 mb-2">
-                          <TrendingDown className="w-5 h-5 text-orange-600" />
+                          <TrendingDown className="w-5 h-5 text-vivant-gold-muted" />
                           <span className="text-sm font-medium text-slate-700">
                             Desconto Financeiro
                           </span>
                         </div>
-                        <div className="text-2xl font-bold text-orange-600">
+                        <div className="text-2xl font-bold text-vivant-gold-muted">
                           -{result.descontoAplicado}
                         </div>
                         <p className="text-xs text-slate-600 mt-1">
@@ -312,7 +307,7 @@ export function LiquidezSimulator({
 
                     {/* Taxa de Estruturação */}
                     <Card className="border-2 border-slate-300 bg-gradient-to-br from-slate-50 to-slate-100">
-                      <CardContent className="pt-6">
+                      <CardContent className="pt-5 pb-5">
                         <div className="flex items-center gap-2 mb-2">
                           <Building2 className="w-5 h-5 text-slate-600" />
                           <span className="text-sm font-medium text-slate-700">
@@ -334,7 +329,7 @@ export function LiquidezSimulator({
                     <CardContent className="pt-5 pb-5">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <CheckCircle2 className="w-6 h-6 text-vivant-green flex-shrink-0" />
+                          <CheckCircle2 className="w-6 h-6 text-vivant-gold flex-shrink-0" />
                           <div>
                             <p className="text-white font-semibold text-base">
                               Valor Antecipado Líquido
@@ -344,7 +339,7 @@ export function LiquidezSimulator({
                             </p>
                           </div>
                         </div>
-                        <div className="text-3xl sm:text-4xl font-bold text-vivant-green">
+                        <div className="text-3xl sm:text-4xl font-bold text-vivant-gold">
                           {result.valorVendaVista}
                         </div>
                       </div>
@@ -352,171 +347,69 @@ export function LiquidezSimulator({
                   </Card>
                 </div>
 
-                {/* Resultado Total com Venda Antecipada */}
-                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-300 rounded-xl p-6">
-                  <h4 className="text-lg font-bold text-vivant-navy mb-2 flex items-center gap-2">
-                    📊 Resultado Total com Venda Antecipada
-                  </h4>
-                  <p className="text-sm text-slate-600 mb-4">
-                    Recebido até o mês da simulação + valor antecipado líquido
-                  </p>
-
-                  <div className="grid md:grid-cols-4 gap-4">
-                    <Card className="border-none shadow-md bg-white">
-                      <CardContent className="pt-4">
-                        <span className="text-xs text-slate-600">Total Recebido</span>
-                        <p className="text-xl font-bold text-vivant-green mt-1">
-                          {result.totalRecebidoComVenda}
-                        </p>
-                        <span className="text-xs text-slate-500">Até o mês + antecipado</span>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-none shadow-md bg-white">
-                      <CardContent className="pt-4">
-                        <span className="text-xs text-slate-600">Lucro Total</span>
-                        <p className="text-xl font-bold text-vivant-navy mt-1">
-                          {result.lucroTotalComVenda}
-                        </p>
-                        <span className="text-xs text-slate-500">Ganho líquido</span>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-none shadow-md bg-white">
-                      <CardContent className="pt-4">
-                        <span className="text-xs text-slate-600">ROI Total</span>
-                        <p className="text-xl font-bold text-purple-600 mt-1">
-                          {result.roiTotalComVenda}
-                        </p>
-                        <span className="text-xs text-slate-500">Retorno sobre aporte</span>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-none shadow-md bg-white">
-                      <CardContent className="pt-4">
-                        <span className="text-xs text-slate-600">TIR Total</span>
-                        <p className="text-xl font-bold text-orange-600 mt-1">
-                          {result.tirTotalComVenda}
-                        </p>
-                        <span className="text-xs text-slate-500">Taxa interna retorno</span>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-
-                {/* Composição do Resultado Final */}
-                <div className="bg-slate-50 border-2 border-slate-200 rounded-lg p-5">
-                  <h4 className="text-base font-bold text-vivant-navy mb-3">
+                {/* Composição total */}
+                <div className="bg-vivant-gold/10 border-2 border-vivant-gold/30 rounded-xl p-5">
+                  <h4 className="text-base font-bold text-vivant-navy mb-4">
                     📋 Composição do Resultado Final
                   </h4>
                   <div className="space-y-0 text-sm">
-                    <div className="flex justify-between items-center py-2 border-b border-slate-200">
-                      <span className="text-slate-600">
-                        💵 Já recebido até o mês {result.mesAtual}:
-                      </span>
-                      <span className="font-semibold text-vivant-navy">
-                        {result.recebidoAteOMomento}
-                      </span>
+                    <div className="flex justify-between items-center py-2.5 border-b border-vivant-gold/20">
+                      <span className="text-slate-600">💵 Já recebido até o mês {result.mesAtual}:</span>
+                      <span className="font-semibold text-vivant-navy">{result.recebidoAteOMomento}</span>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-200">
-                      <span className="text-slate-500 text-xs">
-                        ↳ Recebíveis futuros nominais:
-                      </span>
+                    <div className="flex justify-between items-center py-2.5 border-b border-vivant-gold/20">
+                      <span className="text-slate-500 text-xs">↳ Recebíveis futuros nominais:</span>
                       <span className="font-medium text-blue-600">{result.totalFluxoFuturo}</span>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-200">
-                      <span className="text-slate-500 text-xs pl-3">
-                        − Desconto financeiro ({taxaDesconto}% a.a.):
-                      </span>
-                      <span className="font-medium text-orange-600">
-                        -{result.descontoAplicado}
-                      </span>
+                    <div className="flex justify-between items-center py-2.5 border-b border-vivant-gold/20">
+                      <span className="text-slate-500 text-xs pl-3">− Desconto financeiro ({taxaDesconto}% a.a.):</span>
+                      <span className="font-medium text-vivant-gold-muted">-{result.descontoAplicado}</span>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b-2 border-slate-300">
-                      <span className="text-slate-500 text-xs pl-3">
-                        − Taxa de estruturação (10%):
-                      </span>
-                      <span className="font-medium text-slate-600">
-                        -{result.taxaEstruturacao}
-                      </span>
+                    <div className="flex justify-between items-center py-2.5 border-b-2 border-vivant-gold/30">
+                      <span className="text-slate-500 text-xs pl-3">− Taxa de estruturação (10%):</span>
+                      <span className="font-medium text-slate-600">-{result.taxaEstruturacao}</span>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-200">
+                    <div className="flex justify-between items-center py-2.5 border-b border-vivant-gold/20">
                       <span className="text-slate-600">➕ Valor antecipado líquido:</span>
-                      <span className="font-semibold text-vivant-green">
-                        {result.valorVendaVista}
-                      </span>
+                      <span className="font-semibold text-vivant-navy">{result.valorVendaVista}</span>
                     </div>
-                    <div className="flex justify-between items-center py-3 bg-emerald-50 -mx-5 px-5 mt-2">
-                      <span className="font-bold text-slate-700 text-base">Total Final:</span>
-                      <span className="font-bold text-2xl text-vivant-green">
-                        {result.totalRecebidoComVenda}
-                      </span>
+                    <div className="flex justify-between items-center py-3 bg-vivant-navy -mx-5 px-5 mt-1 rounded-b-lg">
+                      <span className="font-bold text-white text-base">Total Final Recebido:</span>
+                      <span className="font-bold text-2xl text-vivant-gold">{result.totalRecebidoComVenda}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Interpretação */}
-                <div className="bg-vivant-gold-muted/10 border-2 border-vivant-gold-muted/30 rounded-lg p-5">
+                <div className="bg-vivant-gold/10 border-2 border-vivant-gold/30 rounded-lg p-5">
                   <h4 className="text-base font-bold text-vivant-navy mb-3 flex items-center gap-2">
                     💡 Interpretação da Simulação
                   </h4>
                   <div className="text-sm text-slate-700 leading-relaxed space-y-3">
                     <p>
                       <strong>Contexto:</strong> Você está no mês{" "}
-                      <strong>{result.mesAtual}</strong> de {mesMaximo} (
-                      {result.percentualConcluido}% do investimento concluído).
+                      <strong>{result.mesAtual}</strong> de {mesMaximo} ({result.percentualConcluido}%
+                      do período concluído).
                     </p>
-
                     <p>
-                      <strong>Operação:</strong> Ao antecipar seus recebíveis futuros, são
-                      aplicadas duas deduções sobre o saldo nominal de{" "}
-                      <strong className="text-blue-600">{result.totalFluxoFuturo}</strong>: o
-                      desconto financeiro de mercado de{" "}
-                      <strong className="text-orange-600">{taxaDesconto}% a.a.</strong>{" "}
+                      <strong>Operação:</strong> Ao antecipar seus recebíveis futuros, são aplicadas
+                      duas deduções sobre o saldo nominal de{" "}
+                      <strong className="text-blue-600">{result.totalFluxoFuturo}</strong>:{" "}
+                      o desconto financeiro de mercado de{" "}
+                      <strong className="text-vivant-gold-muted">{taxaDesconto}% a.a.</strong>{" "}
                       (−{result.descontoAplicado}) e a taxa de estruturação da Vivant de{" "}
                       <strong>10%</strong> (−{result.taxaEstruturacao}). O valor líquido que você
                       recebe à vista é de{" "}
-                      <strong className="text-vivant-green">{result.valorVendaVista}</strong>.
+                      <strong className="text-vivant-navy">{result.valorVendaVista}</strong>.
                     </p>
-
                     <p>
-                      <strong>Resultado Total:</strong> Somando o que você já recebeu com o
-                      valor antecipado líquido, o total é de{" "}
-                      <strong className="text-vivant-navy">{result.totalRecebidoComVenda}</strong>{" "}
-                      sobre um aporte inicial de {analysis.valorInvestido}.
+                      <strong>Resultado Total:</strong> Somando o que você já recebeu com o valor
+                      antecipado líquido, o total é de{" "}
+                      <strong className="text-vivant-navy">{result.totalRecebidoComVenda}</strong>.
                     </p>
-
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mt-3">
-                      <p className="font-semibold text-emerald-900 mb-2">
-                        Resultado Final da Operação:
-                      </p>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <span className="text-slate-600">Lucro:</span>
-                          <span className="font-bold text-vivant-navy ml-2">
-                            {result.lucroTotalComVenda}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-slate-600">ROI:</span>
-                          <span className="font-bold text-purple-600 ml-2">
-                            {result.roiTotalComVenda}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-slate-600">TIR:</span>
-                          <span className="font-bold text-orange-600 ml-2">
-                            {result.tirTotalComVenda}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-slate-600">Rentabilidade:</span>
-                          <span className="font-bold text-vivant-green ml-2">
-                            {result.rentabilidadeTotalComVenda}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                    <p className="text-xs text-slate-500 italic">
+                      {result.mesesRestantes} meses de recebíveis restantes foram antecipados.
+                    </p>
                   </div>
                 </div>
               </div>

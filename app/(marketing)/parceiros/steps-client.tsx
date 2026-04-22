@@ -450,6 +450,41 @@ export function ParceirosStepsClient(): JSX.Element {
         </div>
       </div>
 
+      {/* CTA Simulador de Recebíveis */}
+      <section className="py-12 lg:py-16 bg-gradient-to-r from-vivant-navy to-[#2A4F6B]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="text-center md:text-left">
+              <div className="inline-flex items-center gap-2 bg-vivant-gold/20 border border-vivant-gold/40 rounded-full px-4 py-2 mb-4 text-vivant-gold text-sm font-semibold">
+                <DollarSign className="w-4 h-4" />
+                Novo — Simulador Partners
+              </div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-white mb-3 leading-tight">
+                Simule seus Recebíveis agora
+              </h2>
+              <p className="text-base sm:text-lg text-white/80 max-w-xl">
+                Insira o valor do seu imóvel e veja uma projeção detalhada de quanto você receberia ao fracionar em 6 cotas com a Vivant — parcelas, reforços anuais e liquidez antecipada.
+              </p>
+            </div>
+            <div className="flex-shrink-0 flex flex-col gap-3 w-full md:w-auto">
+              <Button
+                asChild
+                size="lg"
+                className="bg-vivant-gold text-vivant-navy hover:bg-vivant-gold/90 text-base sm:text-lg min-h-[52px] h-auto py-3 px-8 font-semibold shadow-lg"
+              >
+                <Link href="/simulador-parceiros">
+                  Simular Meus Recebíveis
+                  <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+                </Link>
+              </Button>
+              <p className="text-center text-xs text-white/60">
+                Gratuito · Sem compromisso · Resultado em segundos
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="py-16 lg:py-20 bg-[#F8F9FA]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-10">

@@ -1,12 +1,28 @@
 import Decimal from "decimal.js";
 
-// Configuração global do Decimal.js para precisão financeira
 Decimal.set({ precision: 20, rounding: Decimal.ROUND_HALF_UP });
 
-/**
- * Interface para pagamento mensal da carteira
- */
-export interface MonthlyPayment {
+// ─── Parâmetros fixos do modelo Capital ──────────────────────────────────────
+const DESCONTO_AVISTA = 0.20;       // 20% desconto na compra à vista do imóvel
+const MARKUP = 0.50;                // 50% markup sobre o valor de mercado
+const NUM_COTAS = 6;                // 6 cotas internas (transparente ao usuário)
+const ENTRADA_PCT = 0.20;           // 20% de entrada por cota
+const SALDO_MENSAL_PCT = 0.40;      // 40% da cota → 60 parcelas mensais
+const SALDO_ANUAL_PCT = 0.40;       // 40% da cota → 5 reforços anuais
+const TAXA_MENSAL = 0.01;           // 1% a.m.
+const PRAZO_PARCELAS = 60;          // 60 meses
+const PRAZO_REFORCOS = 5;           // 5 reforços anuais
+const SPLIT_CLIENTE = 0.70;         // 70% para o investidor Capital
+const CUSTO_IMPLANTACAO_PCT = 0.03; // 3% do valor de mercado do imóvel
+const COMISSAO_PCT = 0.05;          // 5% do valor da cota por venda
+const TAXA_ESTRUTURACAO_LIQUIDEZ = 0.10; // 10% sobre recebíveis futuros na antecipação
+
+// Cronograma interno: 1 cota por mês (invisível ao usuário)
+const CRONOGRAMA_INTERNO: readonly number[] = [1, 2, 3, 4, 5, 6];
+
+// ─── Interfaces internas ─────────────────────────────────────────────────────
+
+interface InternalMonthlyPayment {
   mes: number;
   saldoInicial: number;
   correcaoIPCA: number;
@@ -16,10 +32,7 @@ export interface MonthlyPayment {
   saldoFinal: number;
 }
 
-/**
- * Interface para pagamento anual (balão)
- */
-export interface AnnualPayment {
+interface InternalAnnualPayment {
   ano: number;
   principal: number;
   jurosAcumulados: number;
@@ -27,46 +40,76 @@ export interface AnnualPayment {
   totalBalao: number;
 }
 
-/**
- * Interface para fluxo agregado anual
- */
-export interface YearlyFlow {
-  ano: number;
-  recebimentoMensal: number;
-  balaoAnual: number;
-  totalAno: number;
+// ─── Interfaces públicas ─────────────────────────────────────────────────────
+
+export interface InvestmentMonthlyFlow {
+  mes: number;
+  fluxoBruto: number;
+  reembolso: number;
+  fluxoCliente: number;
+  fluxoClienteAcumulado: number;
+  entradaMes: number;    // bruto (antes do split)
+  parcelasMes: number;   // bruto
+  reforcosMes: number;   // bruto
 }
 
-/**
- * Interface para dados do gráfico
- */
+export interface InvestmentYearlyFlow {
+  ano: number;
+  entradas: number;      // bruto
+  parcelas: number;      // bruto
+  reforcos: number;      // bruto
+  totalBruto: number;
+  reembolso: number;
+  totalCliente: number;  // líquido do cliente (70%)
+}
+
 export interface ChartDataPoint {
   ano: number;
   investimento: number;
   retornoAcumulado: number;
 }
 
-/**
- * Interface para análise de investimento completa
- */
 export interface InvestmentAnalysis {
+  // Valores de entrada
   valorInvestido: string;
-  totalReceber: string;
-  lucroLiquido: string;
+
+  // Derivados do aporte
+  valorMercadoImovel: string;  // aporte / 0.80 (compra à vista com desconto)
+  vgv: string;                 // valorMercado × 1.50
+
+  // Custos
+  custoImplantacao: string;
+  totalComissoes: string;
+
+  // Totais do cliente (70%)
+  totalEntradas: string;
+  totalParcelas: string;
+  totalReforcos: string;
+  totalReceber: string;        // totalEntradas + totalParcelas + totalReforcos
+
+  // Médias
+  parcelaMensalMedia: string;
+  reforcoAnualMedio: string;
+
+  // KPIs financeiros
+  lucroLiquido: string;        // totalReceber - valorInvestido
   roi: string;
   tir: string;
-  carteirasMensais: MonthlyPayment[];
-  carteirasAnuais: AnnualPayment[];
-  fluxoAnualAgregado: YearlyFlow[];
+
+  // Prazos
+  mesesParaQuitarCusto: number;
+  mesUltimoRecebimento: number;
+
+  // Fluxos
+  fluxoMensal: InvestmentMonthlyFlow[];
+  fluxoAnualAgregado: InvestmentYearlyFlow[];
   chartData: ChartDataPoint[];
 }
 
-/**
- * Interface para resultado de simulação de liquidez
- */
 export interface LiquidezResult {
   valorVendaVista: string;
   descontoAplicado: string;
+  taxaEstruturacao: string;
   mesesRestantes: number;
   totalFluxoFuturo: string;
   mesAtual: number;
@@ -79,66 +122,36 @@ export interface LiquidezResult {
   rentabilidadeTotalComVenda: string;
 }
 
-/**
- * Calcula o PMT (parcela fixa) usando Tabela Price
- * PMT = PV * i / (1 - (1 + i)^-n)
- */
-function calculatePMT(
-  principal: number,
-  taxa: number,
-  periodos: number
-): number {
+// ─── Funções internas ─────────────────────────────────────────────────────────
+
+function calculatePMT(principal: number, taxa: number, periodos: number): number {
   const p = new Decimal(principal);
   const i = new Decimal(taxa);
   const n = new Decimal(periodos);
-  
-  // PMT = PV * i / (1 - (1 + i)^-n)
   const onePlusI = Decimal.add(1, i);
   const divisor = Decimal.sub(1, onePlusI.pow(n.neg()));
-  const pmt = p.times(i).dividedBy(divisor);
-  
-  return pmt.toNumber();
+  return p.times(i).dividedBy(divisor).toNumber();
 }
 
-/**
- * Gera o fluxo de caixa mensal com correção IPCA e juros
- */
 function generateMonthlyFlow(
   principal: number,
   taxaJuros: number,
   ipcaMensal: number,
   periodos: number
-): MonthlyPayment[] {
-  const flows: MonthlyPayment[] = [];
+): InternalMonthlyPayment[] {
+  const flows: InternalMonthlyPayment[] = [];
   let saldoDevedor = new Decimal(principal);
-  
-  // Calcular PMT base (sem IPCA ainda)
-  const pmt = calculatePMT(principal, taxaJuros, periodos);
-  
+
   for (let mes = 1; mes <= periodos; mes++) {
     const saldoInicial = saldoDevedor.toNumber();
-    
-    // Aplicar correção IPCA no saldo devedor
     const correcaoIPCA = saldoDevedor.times(ipcaMensal).toNumber();
     saldoDevedor = saldoDevedor.times(Decimal.add(1, ipcaMensal));
-    
-    // Calcular juros sobre o saldo corrigido
     const juros = saldoDevedor.times(taxaJuros).toNumber();
-    
-    // Recalcular parcela considerando novo saldo
     const periodosRestantes = periodos - mes + 1;
-    const parcelaAtual = calculatePMT(
-      saldoDevedor.toNumber(),
-      taxaJuros,
-      periodosRestantes
-    );
-    
-    // Amortização = Parcela - Juros
+    const parcelaAtual = calculatePMT(saldoDevedor.toNumber(), taxaJuros, periodosRestantes);
     const amortizacao = new Decimal(parcelaAtual).minus(juros).toNumber();
-    
-    // Atualizar saldo devedor
     saldoDevedor = saldoDevedor.minus(amortizacao);
-    
+
     flows.push({
       mes,
       saldoInicial,
@@ -149,31 +162,26 @@ function generateMonthlyFlow(
       saldoFinal: saldoDevedor.toNumber(),
     });
   }
-  
   return flows;
 }
 
-/**
- * Gera o fluxo de caixa anual (balões) com correção IPCA e juros compostos
- */
 function generateAnnualFlow(
   principal: number,
   taxaJuros: number,
   ipcaAnual: number,
   anos: number
-): AnnualPayment[] {
-  const flows: AnnualPayment[] = [];
+): InternalAnnualPayment[] {
+  const flows: InternalAnnualPayment[] = [];
   const principalPorAno = principal / anos;
-  
+
   for (let ano = 1; ano <= anos; ano++) {
     const p = new Decimal(principalPorAno);
     const ipcaAcum = Decimal.add(1, ipcaAnual).pow(ano);
-    const jurosAcum = Decimal.add(1, taxaJuros * 12).pow(ano); // Taxa mensal para anual
-    
+    const jurosAcum = Decimal.add(1, taxaJuros * 12).pow(ano);
     const principalCorrigido = p.times(ipcaAcum);
     const jurosAcumulados = principalCorrigido.times(jurosAcum.minus(1));
     const totalBalao = principalCorrigido.plus(jurosAcumulados);
-    
+
     flows.push({
       ano,
       principal: principalPorAno,
@@ -182,245 +190,307 @@ function generateAnnualFlow(
       totalBalao: totalBalao.toNumber(),
     });
   }
-  
   return flows;
 }
 
-/**
- * Calcula a TIR (Taxa Interna de Retorno) usando método Newton-Raphson
- * Encontra a taxa que zera o NPV (Valor Presente Líquido)
- */
 function calculateIRR(cashFlows: number[], guess: number = 0.1): number {
   const maxIterations = 1000;
   const tolerance = 0.00001;
   let rate = guess;
-  
+
   for (let i = 0; i < maxIterations; i++) {
     let npv = 0;
     let dnpv = 0;
-    
-    // Calcular NPV e sua derivada
+
     for (let t = 0; t < cashFlows.length; t++) {
       const discount = Math.pow(1 + rate, t);
       npv += cashFlows[t] / discount;
       dnpv -= (t * cashFlows[t]) / (discount * (1 + rate));
     }
-    
-    // Verificar convergência
-    if (Math.abs(npv) < tolerance) {
-      return rate;
-    }
-    
-    // Atualização Newton-Raphson
+
+    if (Math.abs(npv) < tolerance) return rate;
     rate = rate - npv / dnpv;
-    
-    // Evitar taxas negativas ou muito altas
     if (rate < -0.99) rate = -0.99;
     if (rate > 10) rate = 10;
   }
-  
   return rate;
 }
 
-/**
- * Calcula a análise completa de investimento
- */
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function parseCurrencyPtBr(str: string): number {
+  const cleaned = str
+    .replace(/\s/g, "")
+    .replace("R$", "")
+    .replace(/\./g, "")
+    .replace(",", ".");
+  const n = parseFloat(cleaned);
+  return Number.isNaN(n) ? 0 : n;
+}
+
+// ─── Função principal ─────────────────────────────────────────────────────────
+
 export function calculateInvestmentAnalysis(
   valorInvestido: number,
   ipcaProjetado: number
 ): InvestmentAnalysis {
-  // Parâmetros fixos
-  const PRAZO_MESES = 60;
-  const PRAZO_ANOS = 5;
-  const TAXA_JUROS_MENSAL = 0.01; // 1% a.m.
-  const SPLIT = 0.5; // 50/50
-  
-  // Converter IPCA anual para mensal (aproximação)
-  const ipcaMensal = Math.pow(1 + ipcaProjetado, 1/12) - 1;
-  
-  // Dividir capital em duas carteiras
-  const carteiraMensal = valorInvestido * SPLIT;
-  const carteiraAnual = valorInvestido * SPLIT;
-  
-  // Gerar fluxos
-  const fluxosMensais = generateMonthlyFlow(
-    carteiraMensal,
-    TAXA_JUROS_MENSAL,
-    ipcaMensal,
-    PRAZO_MESES
-  );
-  
-  const fluxosAnuais = generateAnnualFlow(
-    carteiraAnual,
-    TAXA_JUROS_MENSAL,
-    ipcaProjetado,
-    PRAZO_ANOS
-  );
-  
-  // Calcular totais
-  const totalMensal = fluxosMensais.reduce((sum, f) => sum + f.parcela, 0);
-  const totalAnual = fluxosAnuais.reduce((sum, f) => sum + f.totalBalao, 0);
-  const totalReceber = totalMensal + totalAnual;
-  const lucroLiquido = totalReceber - valorInvestido;
-  const roi = (lucroLiquido / valorInvestido) * 100;
-  
-  // Preparar fluxo de caixa para TIR
-  const cashFlows: number[] = [-valorInvestido]; // Investimento inicial negativo
-  
-  for (let mes = 1; mes <= PRAZO_MESES; mes++) {
-    const parcelaMensal = fluxosMensais[mes - 1].parcela;
-    let fluxoMes = parcelaMensal;
-    
-    // Adicionar balão anual se for o último mês do ano
-    if (mes % 12 === 0) {
-      const ano = mes / 12;
-      const balao = fluxosAnuais[ano - 1].totalBalao;
-      fluxoMes += balao;
-    }
-    
-    cashFlows.push(fluxoMes);
+  const ipcaMensal = Math.pow(1 + ipcaProjetado, 1 / 12) - 1;
+
+  // O aporte permite comprar um imóvel à vista com 20% de desconto:
+  // aporte = preço à vista = valorMercado × (1 - 0.20) → valorMercado = aporte / 0.80
+  const valorMercadoImovel = valorInvestido / (1 - DESCONTO_AVISTA);
+  const vgv = valorMercadoImovel * (1 + MARKUP);
+  const valorCota = vgv / NUM_COTAS;
+  const custoImplantacao = valorMercadoImovel * CUSTO_IMPLANTACAO_PCT;
+  const comissaoPorCota = valorCota * COMISSAO_PCT;
+  const totalComissoes = comissaoPorCota * NUM_COTAS;
+
+  // Gerar pagamentos por cota
+  const parcelasMensaisPorCota: {
+    cotaIdx: number;
+    mesVenda: number;
+    pagamentos: InternalMonthlyPayment[];
+  }[] = [];
+  const reforcosPorCota: {
+    cotaIdx: number;
+    mesVenda: number;
+    pagamentos: InternalAnnualPayment[];
+  }[] = [];
+
+  for (let c = 0; c < NUM_COTAS; c++) {
+    const mesVenda = CRONOGRAMA_INTERNO[c];
+    parcelasMensaisPorCota.push({
+      cotaIdx: c,
+      mesVenda,
+      pagamentos: generateMonthlyFlow(
+        valorCota * SALDO_MENSAL_PCT,
+        TAXA_MENSAL,
+        ipcaMensal,
+        PRAZO_PARCELAS
+      ),
+    });
+    reforcosPorCota.push({
+      cotaIdx: c,
+      mesVenda,
+      pagamentos: generateAnnualFlow(
+        valorCota * SALDO_ANUAL_PCT,
+        TAXA_MENSAL,
+        ipcaProjetado,
+        PRAZO_REFORCOS
+      ),
+    });
   }
-  
-  // Calcular TIR
+
+  const ultimoMesVenda = Math.max(...CRONOGRAMA_INTERNO);
+  const tamanhoFluxo = ultimoMesVenda + PRAZO_PARCELAS + 1;
+
+  const fluxoBrutoArr = new Array<number>(tamanhoFluxo + 1).fill(0);
+  const entradaArr = new Array<number>(tamanhoFluxo + 1).fill(0);
+  const parcelasArr = new Array<number>(tamanhoFluxo + 1).fill(0);
+  const reforcosArr = new Array<number>(tamanhoFluxo + 1).fill(0);
+
+  for (let c = 0; c < NUM_COTAS; c++) {
+    const mesVenda = CRONOGRAMA_INTERNO[c];
+    const entradaLiquida = valorCota * ENTRADA_PCT - comissaoPorCota;
+
+    fluxoBrutoArr[mesVenda] += entradaLiquida;
+    entradaArr[mesVenda] += entradaLiquida;
+
+    for (let p = 0; p < parcelasMensaisPorCota[c].pagamentos.length; p++) {
+      const mesAbs = mesVenda + p + 1;
+      if (mesAbs < fluxoBrutoArr.length) {
+        fluxoBrutoArr[mesAbs] += parcelasMensaisPorCota[c].pagamentos[p].parcela;
+        parcelasArr[mesAbs] += parcelasMensaisPorCota[c].pagamentos[p].parcela;
+      }
+    }
+
+    for (let r = 0; r < reforcosPorCota[c].pagamentos.length; r++) {
+      const mesAbs = mesVenda + (r + 1) * 12;
+      if (mesAbs < fluxoBrutoArr.length) {
+        fluxoBrutoArr[mesAbs] += reforcosPorCota[c].pagamentos[r].totalBalao;
+        reforcosArr[mesAbs] += reforcosPorCota[c].pagamentos[r].totalBalao;
+      }
+    }
+  }
+
+  // Reembolso do custo de implantação + split 70/30
+  const fluxoMensal: InvestmentMonthlyFlow[] = [];
+  let reembolsoAcumulado = 0;
+  let fluxoClienteAcumulado = 0;
+  let mesesParaQuitarCusto = 0;
+
+  for (let t = 1; t < fluxoBrutoArr.length; t++) {
+    const bruto = fluxoBrutoArr[t];
+    if (bruto === 0 && t > ultimoMesVenda + PRAZO_PARCELAS) break;
+
+    let reembolsoMes = 0;
+    if (reembolsoAcumulado < custoImplantacao) {
+      reembolsoMes = Math.min(bruto, custoImplantacao - reembolsoAcumulado);
+      reembolsoAcumulado += reembolsoMes;
+      if (reembolsoAcumulado >= custoImplantacao && mesesParaQuitarCusto === 0) {
+        mesesParaQuitarCusto = t;
+      }
+    }
+
+    const clienteMes = (bruto - reembolsoMes) * SPLIT_CLIENTE;
+    fluxoClienteAcumulado += clienteMes;
+
+    fluxoMensal.push({
+      mes: t,
+      fluxoBruto: bruto,
+      reembolso: reembolsoMes,
+      fluxoCliente: clienteMes,
+      fluxoClienteAcumulado,
+      entradaMes: entradaArr[t],
+      parcelasMes: parcelasArr[t],
+      reforcosMes: reforcosArr[t],
+    });
+  }
+
+  if (mesesParaQuitarCusto === 0 && custoImplantacao > 0) {
+    mesesParaQuitarCusto = fluxoMensal.length;
+  }
+
+  // Agregar por ano
+  const anoMaximo = Math.ceil((ultimoMesVenda + PRAZO_PARCELAS) / 12);
+  const fluxoAnualAgregado: InvestmentYearlyFlow[] = [];
+
+  for (let ano = 1; ano <= anoMaximo; ano++) {
+    const inicioMes = (ano - 1) * 12 + 1;
+    const fimMes = ano * 12;
+    const mesesDoAno = fluxoMensal.filter((m) => m.mes >= inicioMes && m.mes <= fimMes);
+
+    const entradas = mesesDoAno.reduce((s, m) => s + m.entradaMes, 0);
+    const parcelas = mesesDoAno.reduce((s, m) => s + m.parcelasMes, 0);
+    const reforcos = mesesDoAno.reduce((s, m) => s + m.reforcosMes, 0);
+    const totalBruto = mesesDoAno.reduce((s, m) => s + m.fluxoBruto, 0);
+    const reembolso = mesesDoAno.reduce((s, m) => s + m.reembolso, 0);
+    const totalCliente = mesesDoAno.reduce((s, m) => s + m.fluxoCliente, 0);
+
+    if (totalBruto > 0 || ano <= 6) {
+      fluxoAnualAgregado.push({
+        ano,
+        entradas,
+        parcelas,
+        reforcos,
+        totalBruto,
+        reembolso,
+        totalCliente,
+      });
+    }
+  }
+
+  // Dados do gráfico (anual)
+  let acumulado = 0;
+  const chartData: ChartDataPoint[] = fluxoAnualAgregado.map((a) => {
+    acumulado += a.totalCliente;
+    return { ano: a.ano, investimento: valorInvestido, retornoAcumulado: acumulado };
+  });
+
+  // KPI totais
+  const totalEntradas = fluxoMensal.reduce((s, m) => s + m.entradaMes * SPLIT_CLIENTE, 0);
+  const totalParcelas = fluxoMensal.reduce((s, m) => s + m.parcelasMes * SPLIT_CLIENTE, 0);
+  const totalReforcos = fluxoMensal.reduce((s, m) => s + m.reforcosMes * SPLIT_CLIENTE, 0);
+  const totalReceberCliente = fluxoMensal.reduce((s, m) => s + m.fluxoCliente, 0);
+  const mesUltimoRecebimento =
+    fluxoMensal.filter((m) => m.fluxoBruto > 0).slice(-1)[0]?.mes ?? 0;
+
+  const mesesComParcela = fluxoMensal.filter((m) => m.parcelasMes > 0).length;
+  const parcelaMensalMedia = mesesComParcela > 0 ? totalParcelas / mesesComParcela : 0;
+
+  const anosComReforco = fluxoAnualAgregado.filter((a) => a.reforcos > 0).length;
+  const reforcoAnualMedio = anosComReforco > 0 ? totalReforcos / anosComReforco : 0;
+
+  const lucroLiquido = totalReceberCliente - valorInvestido;
+  const roi = valorInvestido > 0 ? (lucroLiquido / valorInvestido) * 100 : 0;
+
+  // TIR: -valorInvestido no mês 0, fluxoCliente em cada mês subsequente
+  const cashFlows: number[] = [-valorInvestido];
+  for (const m of fluxoMensal) {
+    cashFlows.push(m.fluxoCliente);
+  }
   const tirMensal = calculateIRR(cashFlows);
   const tirAnual = Math.pow(1 + tirMensal, 12) - 1;
-  
-  // Agregar fluxo por ano
-  const fluxoAnualAgregado: YearlyFlow[] = [];
-  for (let ano = 1; ano <= PRAZO_ANOS; ano++) {
-    const inicioMes = (ano - 1) * 12;
-    const fimMes = ano * 12;
-    
-    const recebimentoMensal = fluxosMensais
-      .slice(inicioMes, fimMes)
-      .reduce((sum, f) => sum + f.parcela, 0);
-    
-    const balaoAnual = fluxosAnuais[ano - 1].totalBalao;
-    const totalAno = recebimentoMensal + balaoAnual;
-    
-    fluxoAnualAgregado.push({
-      ano,
-      recebimentoMensal,
-      balaoAnual,
-      totalAno,
-    });
-  }
-  
-  // Preparar dados para o gráfico
-  const chartData: ChartDataPoint[] = [];
-  let retornoAcumulado = 0;
-  
-  for (let ano = 1; ano <= PRAZO_ANOS; ano++) {
-    retornoAcumulado += fluxoAnualAgregado[ano - 1].totalAno;
-    
-    chartData.push({
-      ano,
-      investimento: valorInvestido,
-      retornoAcumulado,
-    });
-  }
-  
+
   return {
     valorInvestido: formatCurrency(valorInvestido),
-    totalReceber: formatCurrency(totalReceber),
+    valorMercadoImovel: formatCurrency(valorMercadoImovel),
+    vgv: formatCurrency(vgv),
+    custoImplantacao: formatCurrency(custoImplantacao),
+    totalComissoes: formatCurrency(totalComissoes),
+    totalEntradas: formatCurrency(totalEntradas),
+    totalParcelas: formatCurrency(totalParcelas),
+    totalReforcos: formatCurrency(totalReforcos),
+    totalReceber: formatCurrency(totalReceberCliente),
+    parcelaMensalMedia: formatCurrency(parcelaMensalMedia),
+    reforcoAnualMedio: formatCurrency(reforcoAnualMedio),
     lucroLiquido: formatCurrency(lucroLiquido),
     roi: roi.toFixed(2) + "%",
-    tir: (tirAnual * 100).toFixed(2) + "% a.a.",
-    carteirasMensais: fluxosMensais,
-    carteirasAnuais: fluxosAnuais,
+    tir: `${(tirAnual * 100).toFixed(2)}% a.a.`,
+    mesesParaQuitarCusto,
+    mesUltimoRecebimento,
+    fluxoMensal,
     fluxoAnualAgregado,
     chartData,
   };
 }
 
-/**
- * Soma parcelas mensais + balões anuais recebidos até o fim do mês informado (1–60).
- * Alinha com o fluxo de `calculateInvestmentAnalysis` (balão no fim de cada ano civil do cronograma).
- */
-function sumRecebidoAteMesInclusive(
-  analysis: InvestmentAnalysis,
-  mesAtual: number
-): number {
-  let total = 0;
-  const ate = Math.min(
-    Math.max(0, mesAtual),
-    analysis.carteirasMensais.length
-  );
-  for (let i = 0; i < ate; i++) {
-    total += analysis.carteirasMensais[i].parcela;
-    const mesNum = i + 1;
-    if (mesNum % 12 === 0) {
-      const ano = mesNum / 12;
-      total += analysis.carteirasAnuais[ano - 1].totalBalao;
-    }
-  }
-  return total;
-}
+// ─── Liquidez Antecipada ──────────────────────────────────────────────────────
 
-/**
- * Simula a liquidez antecipada (venda de recebíveis)
- */
 export function simulateLiquidez(
   analysis: InvestmentAnalysis,
   mesAtual: number,
   taxaDesconto: number
 ): LiquidezResult {
-  const mesesRestantes = 60 - mesAtual;
-  
-  // Coletar fluxos futuros
-  const fluxosFuturos: number[] = [];
-  
-  // Adicionar parcelas mensais futuras
-  for (let mes = mesAtual; mes < analysis.carteirasMensais.length; mes++) {
-    const parcela = analysis.carteirasMensais[mes].parcela;
-    fluxosFuturos.push(parcela);
-  }
-  
-  // Adicionar balões anuais futuros
-  const anoAtual = Math.ceil(mesAtual / 12);
-  for (let ano = anoAtual; ano <= 5; ano++) {
-    const balao = analysis.carteirasAnuais[ano - 1].totalBalao;
-    // Adicionar no mês correspondente
-    const mesBalao = ano * 12 - mesAtual;
-    if (mesBalao > 0 && mesBalao <= fluxosFuturos.length) {
-      fluxosFuturos[mesBalao - 1] += balao;
-    }
-  }
-  
-  // Calcular valor presente com taxa de desconto
-  const taxaDescontoMensal = Math.pow(1 + taxaDesconto, 1/12) - 1;
+  const mesMaximo = analysis.mesUltimoRecebimento;
+  const mesesRestantes = mesMaximo - mesAtual;
+
+  const fluxo = analysis.fluxoMensal;
+
+  const fluxosFuturos = fluxo
+    .filter((m) => m.mes > mesAtual)
+    .map((m) => m.fluxoCliente);
+
+  const totalFluxoFuturoNum = fluxosFuturos.reduce((s, v) => s + v, 0);
+
+  const taxaDescontoMensal = Math.pow(1 + taxaDesconto, 1 / 12) - 1;
   let valorPresente = 0;
-  let totalFluxoFuturo = 0;
-  
   for (let i = 0; i < fluxosFuturos.length; i++) {
-    totalFluxoFuturo += fluxosFuturos[i];
-    const vp = fluxosFuturos[i] / Math.pow(1 + taxaDescontoMensal, i + 1);
-    valorPresente += vp;
+    valorPresente += fluxosFuturos[i] / Math.pow(1 + taxaDescontoMensal, i + 1);
   }
-  
-  const descontoAplicado = totalFluxoFuturo - valorPresente;
 
-  // Recebido até o mês da simulação: parcelas + balões (ex.: meses 12, 24, …)
-  const recebidoAteOMomento = sumRecebidoAteMesInclusive(analysis, mesAtual);
-  const totalRecebidoNum = recebidoAteOMomento + valorPresente;
+  const descontoAplicado = totalFluxoFuturoNum - valorPresente;
 
+  // Taxa de estruturação: 5% fixo sobre o saldo nominal de recebíveis futuros
+  const taxaEstruturacaoNum = totalFluxoFuturoNum * TAXA_ESTRUTURACAO_LIQUIDEZ;
+  const valorLiquidoNum = valorPresente - taxaEstruturacaoNum;
+
+  const recebidoAteOMomento = fluxo
+    .filter((m) => m.mes <= mesAtual)
+    .reduce((s, m) => s + m.fluxoCliente, 0);
+
+  const totalRecebidoNum = recebidoAteOMomento + valorLiquidoNum;
   const valorInvestidoNum = parseCurrencyPtBr(analysis.valorInvestido);
+  const percentualConcluido = Math.round((mesAtual / mesMaximo) * 100);
+
   const lucroTotal = valorInvestidoNum > 0 ? totalRecebidoNum - valorInvestidoNum : 0;
   const roiTotal = valorInvestidoNum > 0 ? (lucroTotal / valorInvestidoNum) * 100 : 0;
-  const percentualConcluido = Math.round((mesAtual / 60) * 100);
 
-  // TIR do cenário com saída antecipada (não reutilizar a TIR do investimento até o mês 60)
+  // TIR com saída antecipada
   const cashFlowsLiquidez: number[] = [-valorInvestidoNum];
   for (let m = 1; m <= mesAtual; m++) {
-    let fluxoMes = analysis.carteirasMensais[m - 1].parcela;
-    if (m % 12 === 0) {
-      fluxoMes += analysis.carteirasAnuais[m / 12 - 1].totalBalao;
-    }
-    if (m === mesAtual) {
-      fluxoMes += valorPresente;
-    }
-    cashFlowsLiquidez.push(fluxoMes);
+    const fluxoMes = fluxo.find((f) => f.mes === m)?.fluxoCliente ?? 0;
+    const terminacao = m === mesAtual ? valorLiquidoNum : 0;
+    cashFlowsLiquidez.push(fluxoMes + terminacao);
   }
+
   let tirTotalComVendaStr = "—";
   const tirMensalLiquidez = calculateIRR(cashFlowsLiquidez);
   if (Number.isFinite(tirMensalLiquidez)) {
@@ -429,10 +499,11 @@ export function simulateLiquidez(
   }
 
   return {
-    valorVendaVista: formatCurrency(valorPresente),
+    valorVendaVista: formatCurrency(valorLiquidoNum),
     descontoAplicado: formatCurrency(descontoAplicado),
+    taxaEstruturacao: formatCurrency(taxaEstruturacaoNum),
     mesesRestantes,
-    totalFluxoFuturo: formatCurrency(totalFluxoFuturo),
+    totalFluxoFuturo: formatCurrency(totalFluxoFuturoNum),
     mesAtual,
     percentualConcluido,
     recebidoAteOMomento: formatCurrency(recebidoAteOMomento),
@@ -444,37 +515,10 @@ export function simulateLiquidez(
   };
 }
 
-/**
- * Formata um valor numérico para moeda brasileira
- */
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
-/**
- * Parseia string em formato pt-BR (R$ 1.234,56) para número
- */
-function parseCurrencyPtBr(str: string): number {
-  const cleaned = str.replace(/\s/g, "").replace("R$", "").replace(/\./g, "").replace(",", ".");
-  const n = parseFloat(cleaned);
-  return Number.isNaN(n) ? 0 : n;
-}
-
-/**
- * Converte taxa anual para mensal
- */
 export function convertAnnualToMonthly(annualRate: number): number {
-  return Math.pow(1 + annualRate, 1/12) - 1;
+  return Math.pow(1 + annualRate, 1 / 12) - 1;
 }
 
-/**
- * Converte taxa mensal para anual
- */
 export function convertMonthlyToAnnual(monthlyRate: number): number {
   return Math.pow(1 + monthlyRate, 12) - 1;
 }

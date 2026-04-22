@@ -1,22 +1,137 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { InvestmentAnalysis } from "@/lib/math/investment-calculator";
 import {
   AreaChart,
   Area,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
   Legend,
+  ResponsiveContainer,
+  ReferenceLine,
 } from "recharts";
+import type { InvestmentAnalysis } from "@/lib/math/investment-calculator";
 import { TrendingUp } from "lucide-react";
 
 interface InvestmentChartProps {
   analysis: InvestmentAnalysis | null;
+}
+
+function formatCurrencyShort(value: number): string {
+  if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `R$ ${(value / 1_000).toFixed(0)}K`;
+  return `R$ ${value.toFixed(0)}`;
+}
+
+function formatCurrencyFull(value: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CustomTooltip({ active, payload }: any) {
+  if (!active || !payload || !payload.length) return null;
+
+  const mes = payload[0]?.payload?.mes as number;
+  const ano = Math.ceil(mes / 12);
+  const mesAno = mes % 12 === 0 ? 12 : mes % 12;
+
+  const isYearEnd = mes % 12 === 0;
+  const temEntrada = (payload[0]?.payload?.entradaMes ?? 0) > 0;
+  const temReforco = (payload[0]?.payload?.reforcosMes ?? 0) > 0;
+  const temParcela = (payload[0]?.payload?.parcelasMes ?? 0) > 0;
+
+  return (
+    <div className="bg-white border-2 border-vivant-green/30 rounded-xl p-3 shadow-xl text-sm min-w-[220px]">
+      {/* Cabeçalho */}
+      <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-100">
+        <span className="font-bold text-vivant-navy">Mês {mes}</span>
+        <span
+          className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+            isYearEnd
+              ? "bg-vivant-navy text-white"
+              : "bg-slate-100 text-slate-600"
+          }`}
+        >
+          Ano {ano} · {String(mesAno).padStart(2, "0")}/{ano}
+        </span>
+      </div>
+
+      {/* Recebimentos do mês */}
+      <div className="space-y-1 mb-2">
+        {temEntrada && (
+          <div className="flex justify-between gap-3">
+            <span className="text-vivant-green text-xs">Entrada:</span>
+            <span className="font-semibold text-vivant-green text-xs">
+              {formatCurrencyFull((payload[0]?.payload?.entradaMes ?? 0) * 0.7)}
+            </span>
+          </div>
+        )}
+        {temParcela && (
+          <div className="flex justify-between gap-3">
+            <span className="text-vivant-navy/70 text-xs">Parcela:</span>
+            <span className="font-semibold text-vivant-navy/80 text-xs">
+              {formatCurrencyFull((payload[0]?.payload?.parcelasMes ?? 0) * 0.7)}
+            </span>
+          </div>
+        )}
+        {temReforco && (
+          <div className="flex justify-between gap-3">
+            <span className="text-purple-600 text-xs">Reforço anual:</span>
+            <span className="font-semibold text-purple-600 text-xs">
+              {formatCurrencyFull((payload[0]?.payload?.reforcosMes ?? 0) * 0.7)}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Acumulado e aporte */}
+      <div className="border-t border-slate-100 pt-2 space-y-1">
+        {payload.map(
+          (entry: { name: string; value: number; color: string }) => (
+            <div key={entry.name} className="flex justify-between gap-3">
+              <span style={{ color: entry.color }} className="font-medium text-xs">
+                {entry.name}:
+              </span>
+              <span className="font-bold text-xs">
+                {formatCurrencyFull(entry.value)}
+              </span>
+            </div>
+          )
+        )}
+      </div>
+
+      {/* Badge fechamento de ano */}
+      {isYearEnd && (
+        <div className="mt-2 bg-vivant-navy rounded-lg px-2 py-1 text-center">
+          <span className="text-xs font-bold text-white">
+            ✦ Fechamento do Ano {ano}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Tick customizado do eixo X — exibe apenas nos múltiplos de 12 (fechamento de ano)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CustomXAxisTick({ x, y, payload }: any) {
+  const mes = payload?.value as number;
+  if (!mes || mes % 12 !== 0) return null;
+  const ano = mes / 12;
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text x={0} y={0} dy={14} textAnchor="middle" fill="#64748b" fontSize={11}>
+        Ano {ano}
+      </text>
+    </g>
+  );
 }
 
 export function InvestmentChart({ analysis }: InvestmentChartProps): JSX.Element {
@@ -38,156 +153,147 @@ export function InvestmentChart({ analysis }: InvestmentChartProps): JSX.Element
     );
   }
 
-  // Formatar valores para o tooltip
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
+  const valorInvestidoNum = parseFloat(
+    analysis.valorInvestido
+      .replace(/\s/g, "")
+      .replace("R$", "")
+      .replace(/\./g, "")
+      .replace(",", ".")
+  );
 
-  // Custom Tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white border-2 border-slate-200 rounded-lg shadow-xl p-4">
-          <p className="font-semibold text-vivant-navy mb-2">
-            Ano {payload[0].payload.ano}
-          </p>
-          <div className="space-y-1 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-slate-400 rounded-full" />
-              <span className="text-slate-600">Investimento:</span>
-              <span className="font-semibold">
-                {formatCurrency(payload[0].payload.investimento)}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-vivant-green rounded-full" />
-              <span className="text-slate-600">Retorno Acumulado:</span>
-              <span className="font-semibold text-vivant-green">
-                {formatCurrency(payload[0].payload.retornoAcumulado)}
-              </span>
-            </div>
-            <div className="pt-2 mt-2 border-t border-slate-200">
-              <span className="text-slate-600">Lucro até aqui:</span>
-              <span className="font-bold text-vivant-gold-muted ml-2">
-                {formatCurrency(
-                  payload[0].payload.retornoAcumulado -
-                    payload[0].payload.investimento
-                )}
-              </span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
+  // Dados mensais para o gráfico
+  const data = analysis.fluxoMensal
+    .filter((m) => m.fluxoBruto > 0 || m.fluxoCliente > 0)
+    .map((m) => ({
+      mes: m.mes,
+      "Retorno Acumulado (seu)": Math.round(m.fluxoClienteAcumulado),
+      "Valor Aportado": Math.round(valorInvestidoNum),
+      // campos extras para o tooltip
+      entradaMes: m.entradaMes,
+      parcelasMes: m.parcelasMes,
+      reforcosMes: m.reforcosMes,
+      fluxoCliente: m.fluxoCliente,
+    }));
+
+  // Linhas de fechamento de ano presentes nos dados
+  const anosPresentes = Array.from(
+    new Set(data.map((d) => d.mes).filter((m) => m % 12 === 0))
+  );
 
   return (
-    <Card className="border-2 border-vivant-navy/10">
-      <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50">
+    <Card className="border-2 border-vivant-navy/10 shadow-md">
+      <CardHeader className="border-b border-vivant-green/20">
         <CardTitle className="flex items-center gap-2 text-vivant-navy">
-          <TrendingUp className="w-6 h-6" />
-          Evolução do Retorno Acumulado (5 Anos)
+          <TrendingUp className="w-6 h-6 text-vivant-green" />
+          Evolução do Retorno Acumulado — Sua Parte (70%)
         </CardTitle>
-        <p className="text-sm text-slate-600 mt-1">
-          Comparação entre investimento inicial e receita acumulada ao longo do tempo
+        <p className="text-sm text-slate-500 mt-0.5">
+          Passe o mouse sobre a linha para ver os detalhes de cada mês
         </p>
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="h-96">
+        <div className="h-72 sm:h-96">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={analysis.chartData}
-              margin={{ top: 10, right: 30, left: 20, bottom: 5 }}
-            >
+            <AreaChart data={data} margin={{ top: 10, right: 20, left: 20, bottom: 0 }}>
               <defs>
-                <linearGradient id="colorRetorno" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#10B981" stopOpacity={0.1} />
+                <linearGradient id="gradRetornoCapital" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#10B981" stopOpacity={0.02} />
+                </linearGradient>
+                <linearGradient id="gradAporteCapital" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#94a3b8" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
-              
+
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              
+
               <XAxis
-                dataKey="ano"
-                label={{
-                  value: "Anos",
-                  position: "insideBottom",
-                  offset: -5,
-                  style: { fontSize: 14, fill: "#475569" },
-                }}
-                tick={{ fill: "#64748b" }}
+                dataKey="mes"
+                tick={<CustomXAxisTick />}
+                axisLine={{ stroke: "#cbd5e1" }}
+                tickLine={false}
+                interval={0}
               />
-              
+
               <YAxis
-                tickFormatter={(value) => {
-                  if (value >= 1000000) {
-                    return `R$ ${(value / 1000000).toFixed(1)}M`;
-                  }
-                  return `R$ ${(value / 1000).toFixed(0)}K`;
-                }}
-                tick={{ fill: "#64748b" }}
+                tickFormatter={formatCurrencyShort}
+                tick={{ fill: "#64748b", fontSize: 11 }}
+                axisLine={{ stroke: "#cbd5e1" }}
                 width={80}
               />
-              
-              <Tooltip content={<CustomTooltip />} />
-              
-              <Legend
-                wrapperStyle={{
-                  paddingTop: "20px",
-                }}
-                iconType="circle"
+
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ stroke: "#10B981", strokeWidth: 1.5, strokeDasharray: "4 2" }}
               />
-              
-              {/* Linha do Investimento (reta) */}
-              <Line
-                type="monotone"
-                dataKey="investimento"
+
+              <Legend wrapperStyle={{ paddingTop: "16px", fontSize: "13px" }} />
+
+              {/* Linha de referência do valor aportado */}
+              <ReferenceLine
+                y={valorInvestidoNum}
                 stroke="#94a3b8"
-                strokeWidth={3}
-                dot={false}
-                name="Investimento Inicial"
-                strokeDasharray="5 5"
+                strokeDasharray="6 3"
+                strokeWidth={1.5}
               />
-              
-              {/* Área do Retorno Acumulado */}
+
+              {/* Linhas verticais de fechamento de ano */}
+              {anosPresentes.map((mes) => (
+                <ReferenceLine
+                  key={mes}
+                  x={mes}
+                  stroke="#1A2F4B"
+                  strokeDasharray="3 4"
+                  strokeWidth={1}
+                  strokeOpacity={0.2}
+                />
+              ))}
+
+              {/* Linha do aporte inicial (tracejada) */}
               <Area
                 type="monotone"
-                dataKey="retornoAcumulado"
+                dataKey="Valor Aportado"
+                stroke="#94a3b8"
+                strokeWidth={1.5}
+                strokeDasharray="6 3"
+                fill="url(#gradAporteCapital)"
+                dot={false}
+                activeDot={false}
+              />
+
+              {/* Área do retorno acumulado */}
+              <Area
+                type="monotone"
+                dataKey="Retorno Acumulado (seu)"
                 stroke="#10B981"
-                strokeWidth={3}
-                fill="url(#colorRetorno)"
-                name="Retorno Acumulado"
+                strokeWidth={2}
+                fill="url(#gradRetornoCapital)"
+                dot={false}
+                activeDot={{ r: 5, fill: "#10B981", stroke: "#fff", strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Legenda Adicional */}
-        <div className="mt-6 grid md:grid-cols-2 gap-4 text-sm">
-          <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
-            <div className="w-4 h-4 bg-slate-400 rounded-full mt-0.5" />
-            <div>
-              <p className="font-semibold text-slate-700">Linha de Investimento</p>
-              <p className="text-xs text-slate-600">
-                Representa o capital inicial aportado (constante)
-              </p>
-            </div>
+        <div className="mt-4 grid sm:grid-cols-2 gap-3 text-sm">
+          <div className="bg-vivant-green/5 border border-vivant-green/20 rounded-lg p-3">
+            <p className="font-semibold text-vivant-green mb-1">
+              Linha Verde — Seus Recebimentos
+            </p>
+            <p className="text-slate-600 text-xs">
+              Acumulado mensal dos seus 70% sobre entradas, parcelas e reforços.
+              Passe o mouse para ver o detalhe de cada mês.
+            </p>
           </div>
-          <div className="flex items-start gap-3 p-3 bg-vivant-green/5 rounded-lg">
-            <div className="w-4 h-4 bg-vivant-green rounded-full mt-0.5" />
-            <div>
-              <p className="font-semibold text-vivant-green">Curva de Retorno</p>
-              <p className="text-xs text-slate-600">
-                Mostra o total recebido acumulado (crescente com juros + IPCA)
-              </p>
-            </div>
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+            <p className="font-semibold text-slate-700 mb-1">
+              Linha Cinza — Valor Aportado
+            </p>
+            <p className="text-slate-600 text-xs">
+              Referência do capital inicial investido. Quando a linha verde ultrapassa
+              esse patamar, seu retorno já superou o aporte original.
+            </p>
           </div>
         </div>
       </CardContent>

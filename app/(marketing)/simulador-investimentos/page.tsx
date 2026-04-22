@@ -45,8 +45,25 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
       maximumFractionDigits: 2,
     }).format(value)}%`;
 
+  const runAnalysis = (data: InvestmentInputFormData): void => {
+    const result = calculateInvestmentAnalysis(
+      data.valorInvestido,
+      data.ipcaProjetado
+    );
+    setAnalysis(result);
+    setLiquidezResult(null);
+    setTimeout(() => {
+      const el = document.getElementById("investment-results");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
+
   const handleFormSubmit = (data: InvestmentInputFormData): void => {
-    // Armazena os dados do investimento e abre o modal de captura de lead
+    // Lead já capturado: recalcula diretamente sem reabrir o dialog
+    if (leadData) {
+      runAnalysis(data);
+      return;
+    }
     setPendingInvestmentData(data);
     setShowLeadDialog(true);
   };
@@ -69,7 +86,7 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
       setAnalysis(result);
 
       const mensagemLead = [
-        "Solicitacao de analise completa - Simulador de Investimentos",
+        "Solicitacao de analise completa - Simulador de Investimentos Capital",
         `Nome: ${capturedLeadData.nome}`,
         `Email: ${capturedLeadData.email}`,
         `Telefone: ${capturedLeadData.telefone}`,
@@ -77,10 +94,12 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
         `IPCA projetado selecionado: ${formatPercent(pendingInvestmentData.ipcaProjetado * 100)} a.a.`,
         "",
         "Resultados calculados no simulador:",
-        `Valor investido: ${result.valorInvestido}`,
-        `Total a receber: ${result.totalReceber}`,
-        `Lucro liquido estimado: ${result.lucroLiquido}`,
-        `ROI em 60 meses: ${result.roi}`,
+        `Valor aportado: ${result.valorInvestido}`,
+        `Valor de mercado do imovel: ${result.valorMercadoImovel}`,
+        `VGV da operacao: ${result.vgv}`,
+        `Total a receber (70%): ${result.totalReceber}`,
+        `Lucro projetado: ${result.lucroLiquido}`,
+        `ROI: ${result.roi}`,
         `TIR anual estimada: ${result.tir}`,
       ].join("\n");
 
@@ -117,9 +136,9 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
     }
   };
 
-  const handleDownloadPDF = (): void => {
+  const handleDownloadPDF = async (): Promise<void> => {
     if (!analysis) return;
-    generateInvestmentProposal(
+    await generateInvestmentProposal(
       analysis,
       leadData || undefined,
       liquidezResult || undefined
@@ -252,10 +271,13 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
                         📊 Parâmetros Utilizados:
                       </h4>
                       <ul className="space-y-1">
-                        <li>• Prazo: 60 meses (5 anos)</li>
+                        <li>• Desconto na compra à vista: ~20% sobre valor de mercado</li>
+                        <li>• Markup sobre o VGV: 50% sobre o valor de mercado</li>
                         <li>• Taxa de Juros: 1% a.m. (~12,68% a.a.)</li>
-                        <li>• Split: 50% Mensal + 50% Anual</li>
+                        <li>• Entrada por unidade: 20% (−5% comissão de venda)</li>
+                        <li>• 40% em 60 parcelas mensais + 40% em 5 reforços anuais</li>
                         <li>• Correção: IPCA aplicado ao saldo devedor</li>
+                        <li>• Split: 70% investidor / 30% Vivant</li>
                       </ul>
                     </div>
 
@@ -264,10 +286,11 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
                         🔢 Cálculos Realizados:
                       </h4>
                       <ul className="space-y-1">
-                        <li>• <strong>Carteira Mensal:</strong> Tabela Price com IPCA</li>
-                        <li>• <strong>Carteira Anual:</strong> Balões com juros compostos</li>
+                        <li>• <strong>Parcelas:</strong> Tabela Price com IPCA sobre saldo devedor</li>
+                        <li>• <strong>Reforços:</strong> Balões anuais com juros compostos + IPCA</li>
                         <li>• <strong>TIR:</strong> Método Newton-Raphson (precisão 0,01%)</li>
                         <li>• <strong>Liquidez:</strong> Valor Presente com taxa de mercado</li>
+                        <li>• <strong>Taxa de estruturação:</strong> 10% s/ recebíveis futuros (antecipação)</li>
                       </ul>
                     </div>
                   </div>
