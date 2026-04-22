@@ -41,6 +41,20 @@ export default function LoginPage() {
       }
 
       if (result?.ok) {
+        // Valida que a sessão criada é de fato um usuário admin
+        const sessionRes = await fetch("/api/auth-admin/session");
+        const sessionData = await sessionRes.json();
+
+        if (!sessionData?.user || sessionData.user.userType !== "admin") {
+          // Sessão inválida ou não-admin — desfaz o login e bloqueia acesso
+          await import("next-auth/react").then(({ signOut }) =>
+            signOut({ redirect: false })
+          );
+          toast.error("Acesso não autorizado. Use o Portal do Cotista.");
+          setIsLoading(false);
+          return;
+        }
+
         toast.success("Login realizado com sucesso!");
         fetch("/api/telemetry/event", {
           method: "POST",

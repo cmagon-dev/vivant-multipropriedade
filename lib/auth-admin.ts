@@ -54,6 +54,16 @@ export const authOptionsAdmin: NextAuthOptions = {
           return null;
         }
 
+        // Rejeita usuários com papel COTISTA — eles devem usar o Portal do Cotista
+        const roleAssignment = await prisma.userRoleAssignment.findFirst({
+          where: { userId: user.id },
+          include: { role: { select: { key: true } } },
+        }).catch(() => null);
+
+        if (roleAssignment?.role?.key === "COTISTA") {
+          return null;
+        }
+
         return {
           id: user.id,
           email: user.email,
