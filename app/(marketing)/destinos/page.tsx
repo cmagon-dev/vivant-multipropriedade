@@ -15,7 +15,7 @@ export default async function DestinosPage() {
   // Converter para formato esperado pelo componente cliente
   const destinationsFormatted = allDestinations.map(dest => ({
     ...dest,
-    images: [] as string[],
+    images: (dest.images as string[]) ?? [],
     features: dest.features as Array<{
       icon: string;
       title: string;

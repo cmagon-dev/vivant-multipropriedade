@@ -487,6 +487,7 @@ model Destination {
   climate         String   @db.Text
   lifestyle       String   @db.Text
   features        Json
+  images          Json     @default("[]")
   appreciation    String
   published       Boolean  @default(false)
   publishedAt     DateTime?

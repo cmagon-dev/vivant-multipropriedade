@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { SlugInput } from "@/components/admin/slug-input";
 import { DestinationFeaturesInput } from "@/components/admin/destination-features-input";
 import { GradientColorPicker } from "@/components/admin/gradient-color-picker";
+import { ImageUpload } from "@/components/admin/image-upload";
 import { toast } from "sonner";
 
 interface DestinationFormProps {
@@ -38,6 +39,7 @@ export function DestinationForm({ destination }: DestinationFormProps) {
       climate: "",
       lifestyle: "",
       features: [],
+      images: [],
       appreciation: "",
       published: false,
       order: 0,
@@ -275,6 +277,27 @@ export function DestinationForm({ destination }: DestinationFormProps) {
         )}
       </div>
       
+      {/* Galeria de Imagens */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
+          Galeria de Imagens
+        </h2>
+        <p className="text-sm text-gray-500">
+          A primeira imagem será usada como capa do destino. Adicione até 10 imagens.
+        </p>
+        <Controller
+          name="images"
+          control={control}
+          render={({ field }) => (
+            <ImageUpload
+              value={field.value ?? []}
+              onChange={field.onChange}
+              maxImages={10}
+            />
+          )}
+        />
+      </div>
+
       {/* Publicação */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">

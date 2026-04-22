@@ -20,6 +20,7 @@ export const destinationCreateSchema = z.object({
   climate: z.string().min(20),
   lifestyle: z.string().min(20),
   features: z.array(featureSchema).min(4).max(4),
+  images: z.array(z.string().url()).default([]),
   appreciation: z.string(),
   published: z.boolean().default(false),
   order: z.number().int().nonnegative().default(0),
