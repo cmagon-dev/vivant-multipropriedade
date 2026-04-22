@@ -246,7 +246,11 @@ export default function SimuladorInvestimentosPage(): JSX.Element {
                     asChild
                     className="bg-vivant-green hover:bg-vivant-green/90 text-white min-h-[48px]"
                   >
-                    <a href="mailto:capital@vivantresidences.com.br">
+                    <a
+                      href="https://wa.me/5544999691196?text=Ol%C3%A1%2C%20simulei%20no%20Simulador%20Capital%20e%20gostaria%20de%20saber%20mais"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       Falar com Especialista
                     </a>
                   </Button>
