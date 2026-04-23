@@ -49,6 +49,8 @@ model User {
   systemTasksAssigned          SystemTask[]
   systemEvents                SystemEvent[]
   capitalInvestorProfile       CapitalInvestorProfile?
+  captacoesResponsavel         ImovelCaptacao[]        @relation("CaptacaoResponsavel")
+  captacoesCriadas             ImovelCaptacao[]        @relation("CaptacaoCriador")
 
   @@index([email])
   @@map("users")
@@ -495,6 +497,7 @@ model Destination {
   
   properties      Property[]
   targetedMensagens Mensagem[]          @relation("MensagemTargetDestino")
+  imovelCaptacoes ImovelCaptacao[]
   
   createdById     String
   createdBy       User     @relation(fields: [createdById], references: [id])
@@ -1357,6 +1360,89 @@ model WeekMarketplaceEventLog {
   @@index([listingId])
   @@index([createdAt])
   @@map("week_marketplace_event_logs")
+}
+
+// ===== COMERCIAL — CAPTAÇÃO DE IMÓVEIS =====
+// Pipeline de imóveis em análise para aquisição (antes de virarem Property)
+
+enum ImovelCaptacaoStatus {
+  ANALISE_INICIAL
+  EM_NEGOCIACAO
+  PROPOSTA_ENVIADA
+  DUE_DILIGENCE
+  CONTRATO_ASSINADO
+  ADQUIRIDO
+  DECLINADO
+  DESCARTADO
+}
+
+model ImovelCaptacao {
+  id              String                @id @default(cuid())
+  status          ImovelCaptacaoStatus  @default(ANALISE_INICIAL)
+
+  // Identificação
+  titulo          String
+  tipo            String?               // Casa, Apartamento, Terreno, etc.
+
+  // Localização
+  destinoId       String?
+  destino         Destination?          @relation(fields: [destinoId], references: [id], onDelete: SetNull)
+  condominio      String?
+  endereco        String?
+  numero          String?
+  complemento     String?
+  bairro          String?
+  cidade          String?
+  estado          String?
+  cep             String?
+
+  // Áreas (m²)
+  areaTotal       Decimal?              @db.Decimal(12, 2)
+  areaTerreno     Decimal?              @db.Decimal(12, 2)
+  areaConstruida  Decimal?              @db.Decimal(12, 2)
+
+  // Valores (R$)
+  valorPedido     Decimal?              @db.Decimal(15, 2) // Valor pedido pelo vendedor
+  valorProposta   Decimal?              @db.Decimal(15, 2) // Nossa proposta
+  valorAcordado   Decimal?              @db.Decimal(15, 2) // Valor final acordado
+  valorReforma    Decimal?              @db.Decimal(15, 2) // Estimativa de reforma/adequação
+
+  // Viabilidade financeira (dados para simulador de cotas)
+  numCotas        Int?                                     // Número de cotas previstas
+  valorCota       Decimal?              @db.Decimal(15, 2) // Valor por cota
+  vgvEstimado     Decimal?              @db.Decimal(15, 2) // VGV estimado total
+  margemEstimada  Decimal?              @db.Decimal(5, 2)  // Margem %
+  taxaOcupacao    Decimal?              @db.Decimal(5, 2)  // Taxa de ocupação estimada %
+  rentabilidadeAnual Decimal?           @db.Decimal(5, 2)  // Rentabilidade anual estimada %
+
+  // Dados do vendedor (opcionais)
+  vendedorNome      String?
+  vendedorTelefone  String?
+  vendedorEmail     String?
+  vendedorCpfCnpj   String?
+  vendedorObservacoes String?           @db.Text
+
+  // Geral
+  descricao           String?           @db.Text
+  observacoes         String?           @db.Text
+  motivoDeclinado     String?           @db.Text
+  origem              String?           // Indicação, Google, Instagram, Parceiro, Visita, etc.
+
+  // Responsável pela captação
+  responsavelId   String?
+  responsavel     User?                 @relation("CaptacaoResponsavel", fields: [responsavelId], references: [id], onDelete: SetNull)
+
+  createdById     String
+  createdBy       User                  @relation("CaptacaoCriador", fields: [createdById], references: [id], onDelete: Restrict)
+
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([status])
+  @@index([destinoId])
+  @@index([responsavelId])
+  @@index([createdAt])
+  @@map("imoveis_captacao")
 }
 
 // ===== VIVANT CAPITAL (camada investimento sobre imóveis existentes) =====

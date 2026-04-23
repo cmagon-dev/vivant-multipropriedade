@@ -24,6 +24,7 @@ function isPublicPath(pathname: string): boolean {
   if (pathname.startsWith("/casas/")) return true;
   if (pathname === "/captar" || pathname.startsWith("/captar/")) return true;
   if (pathname.startsWith("/convite/")) return true;
+  if (pathname.startsWith("/simulador")) return true;
 
   return false;
 }

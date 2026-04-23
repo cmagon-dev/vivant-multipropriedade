@@ -20,12 +20,12 @@ export type MenuItemConfig = {
   /** Ver hasPermissionKey: usuário precisa de pelo menos uma destas permissões para ver o item. */
   requiredPermissions: string[];
   /** Seção da sidebar para agrupamento visual. */
-  section?: "dashboard" | "comercial" | "propriedades" | "vivantcare" | "capital" | "administracao" | "suporte";
+  section?: "dashboard" | "crm" | "comercial" | "propriedades" | "vivantcare" | "capital" | "administracao" | "suporte";
   /** Sublinks (não usar a chave "children": reservada na serialização RSC → cliente). */
   subItems?: MenuSubItemConfig[];
 };
 
-const SECTIONS_ORDER: MenuItemConfig["section"][] = ["dashboard", "comercial", "propriedades", "vivantcare", "capital", "administracao", "suporte"];
+const SECTIONS_ORDER: MenuItemConfig["section"][] = ["dashboard", "crm", "comercial", "propriedades", "vivantcare", "capital", "administracao", "suporte"];
 
 /** Ordem padrão: todos os itens possíveis do sistema, agrupados por seção. */
 export const UNIFIED_MENU_CONFIG: MenuItemConfig[] = [
@@ -48,20 +48,41 @@ export const UNIFIED_MENU_CONFIG: MenuItemConfig[] = [
     href: "/dashboard/comercial/leads",
     iconKey: "LayoutGrid",
     requiredPermissions: ["comercial.view", "crm.view"],
-    section: "comercial",
+    section: "crm",
   },
   {
     label: "Parâmetros",
     href: "/admin/crm",
     iconKey: "GitBranch",
     requiredPermissions: ["crm.manage"],
-    section: "comercial",
+    section: "crm",
   },
   {
     label: "Tarefas",
     href: "/admin/tasks",
     iconKey: "CheckSquare",
     requiredPermissions: ["tasks.view", "tasks.manage"],
+    section: "crm",
+  },
+  {
+    label: "Cadastros",
+    href: "/dashboard/comercial/cadastros",
+    iconKey: "ClipboardList",
+    requiredPermissions: ["comercial.view"],
+    section: "comercial",
+  },
+  {
+    label: "Simulador de Vendas",
+    href: "/dashboard/comercial/simuladores-cotas",
+    iconKey: "Calculator",
+    requiredPermissions: ["comercial.view"],
+    section: "comercial",
+  },
+  {
+    label: "Simuladores Aquisição",
+    href: "/dashboard/comercial/simuladores-aquisicao",
+    iconKey: "TrendingUp",
+    requiredPermissions: ["comercial.view"],
     section: "comercial",
   },
   {
@@ -288,6 +309,7 @@ export type ShellMenuItem = {
 /** Títulos das seções para exibição na sidebar. */
 export const SECTION_TITLES: Record<NonNullable<MenuItemConfig["section"]>, string> = {
   dashboard: "DASHBOARD",
+  crm: "CRM",
   comercial: "COMERCIAL",
   propriedades: "PROPRIEDADES",
   vivantcare: "VIVANT CARE",
