@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 
   const secret = process.env.NEXTAUTH_SECRET!;
   const token = await encode({
-    token: { comercialAccess: true } as JWT,
+    token: { comercialAccess: true } as unknown as JWT,
     secret,
   });
 
