@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { encode } from "next-auth/jwt";
+import { encode, type JWT } from "next-auth/jwt";
 
 const COOKIE_NAME = "vivant.comercial.session";
 
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 
   const secret = process.env.NEXTAUTH_SECRET!;
   const token = await encode({
-    token: { role: "comercial" },
+    token: { comercialAccess: true } as JWT,
     secret,
   });
 

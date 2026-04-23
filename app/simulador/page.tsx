@@ -13,7 +13,7 @@ async function isAutenticado(): Promise<boolean> {
     if (!token) return false;
 
     const payload = await decode({ token, secret: process.env.NEXTAUTH_SECRET! });
-    return payload?.role === "comercial";
+    return (payload as Record<string, unknown>)?.comercialAccess === true;
   } catch {
     return false;
   }
