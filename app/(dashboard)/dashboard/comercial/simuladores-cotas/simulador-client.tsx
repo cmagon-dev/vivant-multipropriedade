@@ -843,7 +843,7 @@ export function SimuladorClient({ cadastros, forceClienteMode = false }: Props) 
       }
 
       // ── RODAPÉ em todas as páginas ───────────────────────────────────
-      const total = (pdf.internal as { getNumberOfPages(): number }).getNumberOfPages();
+      const total = (pdf.internal as unknown as { getNumberOfPages(): number }).getNumberOfPages();
       for (let p = 1; p <= total; p++) {
         pdf.setPage(p);
         pdf.setDrawColor(210, 210, 210); pdf.setLineWidth(0.3);
