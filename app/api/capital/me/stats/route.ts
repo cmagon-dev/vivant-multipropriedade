@@ -1,6 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { getCapitalInvestorProfileId, isCapitalInvestor } from "@/lib/capital-auth";
+import { getCapitalInvestorContext, isCapitalInvestor } from "@/lib/capital-auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -8,21 +8,33 @@ export async function GET() {
     const session = await getSession();
     if (!isCapitalInvestor(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
-    const profileId = await getCapitalInvestorProfileId(session);
-    if (!profileId) return NextResponse.json({ error: "Perfil de investidor não encontrado" }, { status: 403 });
+    const context = await getCapitalInvestorContext(session);
+    if (!context) return NextResponse.json({ error: "Perfil de investidor não encontrado" }, { status: 403 });
 
     const [participations, lastDistribution, liquidityOpen] = await Promise.all([
       prisma.capitalParticipation.findMany({
-        where: { investorProfileId: profileId, status: "ATIVO" },
+        where: {
+          investorProfileId: context.investorProfileId,
+          companyId: context.companyId,
+          status: { in: ["ATIVO", "PAGO", "RESERVADO"] },
+        },
         include: { assetConfig: { select: { valorPorCota: true } } },
       }),
       prisma.capitalDistributionItem.findFirst({
-        where: { investorProfileId: profileId, status: "PAGO" },
+        where: {
+          investorProfileId: context.investorProfileId,
+          companyId: context.companyId,
+          status: "PAGO",
+        },
         orderBy: { createdAt: "desc" },
         select: { valorPago: true, createdAt: true, distribution: { select: { competencia: true } } },
       }),
       prisma.capitalLiquidityRequest.count({
-        where: { investorProfileId: profileId, status: "PENDENTE" },
+        where: {
+          investorProfileId: context.investorProfileId,
+          companyId: context.companyId,
+          status: "PENDENTE",
+        },
       }),
     ]);
 
@@ -34,7 +46,10 @@ export async function GET() {
     }, 0);
 
     const rendimentoItems = await prisma.capitalDistributionItem.findMany({
-      where: { investorProfileId: profileId },
+      where: {
+        investorProfileId: context.investorProfileId,
+        companyId: context.companyId,
+      },
       select: { valorPago: true },
     });
     const rendimentoAcumulado = rendimentoItems.reduce((s, i) => s + Number(i.valorPago), 0);

@@ -268,9 +268,17 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const pathname = usePathname();
+  const hasCapitalAccess = useMemo(
+    () => menuItems.some((item) => item.href.startsWith("/admin/capital")),
+    [menuItems]
+  );
   const bySection = useMemo(() => groupItemsBySection(menuItems), [menuItems]);
-  const [sidebarMode, setSidebarMode] = useState<"vivant" | "vivantcare">(
-    pathname.startsWith("/admin/vivant-care") ? "vivantcare" : "vivant"
+  const [sidebarMode, setSidebarMode] = useState<"vivant" | "vivantcare" | "capital">(
+    pathname.startsWith("/admin/vivant-care")
+      ? "vivantcare"
+      : pathname.startsWith("/admin/capital")
+        ? "capital"
+        : "vivant"
   );
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
@@ -279,6 +287,8 @@ export function AppShell({
   useEffect(() => {
     if (pathname.startsWith("/admin/vivant-care")) {
       setSidebarMode("vivantcare");
+    } else if (pathname.startsWith("/admin/capital")) {
+      setSidebarMode("capital");
     } else if (pathname.startsWith("/admin")) {
       setSidebarMode("vivant");
     }
@@ -305,6 +315,8 @@ export function AppShell({
   useEffect(() => {
     if (sidebarMode === "vivantcare") {
       setOpenSections(["vivantcare"]);
+    } else if (sidebarMode === "capital") {
+      setOpenSections(["capital"]);
     }
   }, [sidebarMode]);
 
@@ -313,6 +325,8 @@ export function AppShell({
     if (active) {
       if (sidebarMode === "vivantcare") {
         setOpenSections(["vivantcare"]);
+      } else if (sidebarMode === "capital") {
+        setOpenSections(["capital"]);
       } else {
         setOpenSections((prev) => (prev.includes(active) ? prev : [...prev, active]));
       }
@@ -322,7 +336,9 @@ export function AppShell({
   const preferredSections =
     sidebarMode === "vivantcare"
       ? (["vivantcare"] as const)
-      : SECTION_ORDER.filter((section) => section !== "vivantcare");
+      : sidebarMode === "capital"
+        ? (["capital"] as const)
+      : SECTION_ORDER.filter((section) => section !== "vivantcare" && section !== "capital");
 
   const hasPreferredSections = preferredSections.some((sectionKey) => {
     const items = sectionKey ? bySection.get(sectionKey) : undefined;
@@ -330,7 +346,11 @@ export function AppShell({
   });
 
   const visibleSections = hasPreferredSections ? preferredSections : SECTION_ORDER;
-  const activeArea = PANEL_AREAS.find((area) => area.isMatch(pathname)) ?? PANEL_AREAS[0];
+  const availableAreas = useMemo(
+    () => PANEL_AREAS.filter((area) => area.key !== "capital" || hasCapitalAccess),
+    [hasCapitalAccess]
+  );
+  const activeArea = availableAreas.find((area) => area.isMatch(pathname)) ?? availableAreas[0];
 
   const onLogoError = (logoSrc: string) => {
     setHiddenLogos((prev) => ({ ...prev, [logoSrc]: true }));
@@ -373,9 +393,9 @@ export function AppShell({
           </button>
           {contextMenuOpen && (
             <div className="absolute top-16 left-4 right-4 z-20 rounded-xl border border-gray-200 bg-white shadow-lg p-2.5 space-y-2">
-              {PANEL_AREAS.map((area) => {
+              {availableAreas.map((area) => {
                 const active = area.key === activeArea.key;
-                const isDisabled = area.key === "partners" || area.key === "capital";
+                const isDisabled = area.key === "partners";
                 return (
                   isDisabled ? (
                     <button
@@ -409,7 +429,13 @@ export function AppShell({
                       key={area.key}
                       href={area.href}
                       onClick={() => {
-                        setSidebarMode(area.key === "vivantcare" ? "vivantcare" : "vivant");
+                        setSidebarMode(
+                          area.key === "vivantcare"
+                            ? "vivantcare"
+                            : area.key === "capital"
+                              ? "capital"
+                              : "vivant"
+                        );
                         setContextMenuOpen(false);
                       }}
                       className={cn(

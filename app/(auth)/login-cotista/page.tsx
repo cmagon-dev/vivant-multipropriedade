@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Lock, Heart, ArrowRight, Users, Eye, EyeOff } from "lucide-react";
 import { PublicMarketingShell } from "@/components/public/PublicMarketingShell";
 
-export default function LoginCotistaPage() {
+function LoginCotistaPageContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -152,5 +152,13 @@ export default function LoginCotistaPage() {
         </Button>
       </form>
     </PublicMarketingShell>
+  );
+}
+
+export default function LoginCotistaPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginCotistaPageContent />
+    </Suspense>
   );
 }

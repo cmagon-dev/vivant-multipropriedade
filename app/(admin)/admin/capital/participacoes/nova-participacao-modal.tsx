@@ -40,6 +40,10 @@ export function NovaParticipacaoModal() {
   const [assetConfigId, setAssetConfigId] = useState("");
   const [numeroCotas, setNumeroCotas] = useState("");
   const [valorAportado, setValorAportado] = useState("");
+  const [statusInvestimento, setStatusInvestimento] = useState("INTERESSE");
+  const [dataReserva, setDataReserva] = useState("");
+  const [dataPagamento, setDataPagamento] = useState("");
+  const [observacoes, setObservacoes] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -48,6 +52,10 @@ export function NovaParticipacaoModal() {
       setAssetConfigId("");
       setNumeroCotas("");
       setValorAportado("");
+      setStatusInvestimento("INTERESSE");
+      setDataReserva("");
+      setDataPagamento("");
+      setObservacoes("");
       Promise.all([
         fetch("/api/admin/capital/investidores").then((r) => r.json()),
         fetch("/api/admin/capital/ativos").then((r) => r.json()),
@@ -76,14 +84,29 @@ export function NovaParticipacaoModal() {
     }
     setSubmitting(true);
     try {
-      const body: { investorProfileId: string; assetConfigId: string; numeroCotas: number; valorAportado?: number } = {
+      const body: {
+        investorProfileId: string;
+        assetConfigId: string;
+        numeroCotas: number;
+        valorAportado?: number;
+        status: string;
+        dataEntrada?: string;
+        observacoes?: string;
+      } = {
         investorProfileId,
         assetConfigId,
         numeroCotas: cotas,
+        status: statusInvestimento,
       };
       if (valorAportado.trim() && !isNaN(Number(valorAportado))) {
         body.valorAportado = Number(valorAportado);
       }
+      if (dataPagamento) {
+        body.dataEntrada = dataPagamento;
+      } else if (dataReserva) {
+        body.dataEntrada = dataReserva;
+      }
+      if (observacoes.trim()) body.observacoes = observacoes.trim();
       const res = await fetch("/api/admin/capital/participacoes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -192,6 +215,33 @@ export function NovaParticipacaoModal() {
                 {valorSugerido != null && !valorAportado && (
                   <p className="text-xs text-gray-500">Sugestão: {fmt(valorSugerido)} ({numeroCotas} × {fmt(ativoSelecionado!.valorPorCota)}/cota)</p>
                 )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select value={statusInvestimento} onValueChange={setStatusInvestimento}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="INTERESSE">INTERESSE</SelectItem>
+                      <SelectItem value="RESERVADO">RESERVADO</SelectItem>
+                      <SelectItem value="CONTRATO_ENVIADO">CONTRATO_ENVIADO</SelectItem>
+                      <SelectItem value="PAGO">PAGO</SelectItem>
+                      <SelectItem value="CANCELADO">CANCELADO</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dataReserva">Data da reserva</Label>
+                  <Input id="dataReserva" type="date" value={dataReserva} onChange={(e) => setDataReserva(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dataPagamento">Data do pagamento</Label>
+                  <Input id="dataPagamento" type="date" value={dataPagamento} onChange={(e) => setDataPagamento(e.target.value)} />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="observacoes">Observações</Label>
+                  <Input id="observacoes" value={observacoes} onChange={(e) => setObservacoes(e.target.value)} />
+                </div>
               </div>
             </>
           )}

@@ -2,6 +2,7 @@
 import { canAccessCapitalAdmin } from "@/lib/capital-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getCapitalCompanyId } from "@/lib/capital/company-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Building2 } from "lucide-react";
 import Link from "next/link";
@@ -22,8 +23,10 @@ export default async function CapitalSolicitacoesPage() {
   const session = await getSession();
   if (!session) redirect("/login");
   if (!canAccessCapitalAdmin(session)) redirect("/403");
+  const companyId = await getCapitalCompanyId(session);
 
   const solicitacoes = await prisma.capitalLiquidityRequest.findMany({
+    where: { companyId },
     include: {
       investorProfile: { include: { user: { select: { name: true, email: true } } } },
       assetConfig: { include: { property: { select: { name: true } } } },

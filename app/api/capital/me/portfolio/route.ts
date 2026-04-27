@@ -1,6 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { getCapitalInvestorProfileId, isCapitalInvestor } from "@/lib/capital-auth";
+import { getCapitalInvestorContext, isCapitalInvestor } from "@/lib/capital-auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -8,11 +8,15 @@ export async function GET() {
     const session = await getSession();
     if (!isCapitalInvestor(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
-    const profileId = await getCapitalInvestorProfileId(session);
-    if (!profileId) return NextResponse.json({ error: "Perfil de investidor não encontrado" }, { status: 403 });
+    const context = await getCapitalInvestorContext(session);
+    if (!context) return NextResponse.json({ error: "Perfil de investidor não encontrado" }, { status: 403 });
 
     const participations = await prisma.capitalParticipation.findMany({
-      where: { investorProfileId: profileId, status: "ATIVO" },
+      where: {
+        investorProfileId: context.investorProfileId,
+        companyId: context.companyId,
+        status: { in: ["ATIVO", "PAGO", "RESERVADO"] },
+      },
       include: {
         assetConfig: {
           include: {

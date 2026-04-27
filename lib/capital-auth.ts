@@ -20,11 +20,25 @@ export function canManageCapital(session: Session | null): boolean {
 /** Retorna o ID do perfil de investidor do usuário logado, ou null se não for investidor. */
 export async function getCapitalInvestorProfileId(session: Session | null): Promise<string | null> {
   if (!session?.user?.id) return null;
-  const profile = await prisma.capitalInvestorProfile.findUnique({
+  const profile = await prisma.capitalInvestorProfile.findFirst({
     where: { userId: session.user.id },
     select: { id: true },
+    orderBy: { createdAt: "asc" },
   });
   return profile?.id ?? null;
+}
+
+export async function getCapitalInvestorContext(
+  session: Session | null
+): Promise<{ investorProfileId: string; companyId: string } | null> {
+  if (!session?.user?.id) return null;
+  const profile = await prisma.capitalInvestorProfile.findFirst({
+    where: { userId: session.user.id },
+    select: { id: true, companyId: true },
+    orderBy: { createdAt: "asc" },
+  });
+  if (!profile) return null;
+  return { investorProfileId: profile.id, companyId: profile.companyId };
 }
 
 /** Verifica se o usuário é investidor (tem perfil ou role INVESTOR). */

@@ -2,17 +2,24 @@
 import { getSession } from "@/lib/auth";
 import { canAccessCapitalAdmin } from "@/lib/capital-auth";
 import { prisma } from "@/lib/prisma";
+import { getCapitalCompanyId } from "@/lib/capital/company-context";
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
     if (!canAccessCapitalAdmin(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const companyId = await getCapitalCompanyId(session);
 
     const sp = request.nextUrl.searchParams;
     const status = sp.get("status") ?? undefined;
 
     const solicitacoes = await prisma.capitalLiquidityRequest.findMany({
-      where: status && ["PENDENTE", "APROVADA", "RECUSADA", "PAGA"].includes(status) ? { status } : undefined,
+      where: {
+        companyId,
+        ...(status && ["PENDENTE", "APROVADA", "RECUSADA", "PAGA"].includes(status)
+          ? { status }
+          : {}),
+      },
       include: {
         investorProfile: { include: { user: { select: { id: true, name: true, email: true } } } },
         assetConfig: { include: { property: { select: { id: true, name: true } } } },

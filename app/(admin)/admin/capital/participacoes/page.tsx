@@ -2,6 +2,7 @@
 import { canAccessCapitalAdmin, canManageCapital } from "@/lib/capital-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getCapitalCompanyId } from "@/lib/capital/company-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { PieChart, Building2 } from "lucide-react";
 import { format } from "date-fns";
@@ -16,8 +17,10 @@ export default async function CapitalParticipacoesPage() {
   const session = await getSession();
   if (!session) redirect("/login");
   if (!canAccessCapitalAdmin(session)) redirect("/403");
+  const companyId = await getCapitalCompanyId(session);
 
   const participations = await prisma.capitalParticipation.findMany({
+    where: { companyId },
     include: {
       investorProfile: { include: { user: { select: { name: true, email: true } } } },
       assetConfig: { include: { property: { select: { name: true } } } },
@@ -65,6 +68,8 @@ export default async function CapitalParticipacoesPage() {
                         <span>{p.numeroCotas} cotas</span>
                         <span>{Number(p.percentualTotal).toFixed(2)}%</span>
                         <span>{fmt(Number(p.valorAportado))}</span>
+                        <span>Retorno est.: {fmt(Number((p as any).expectedReturn ?? 0))}</span>
+                        <span>ROI: {Number((p as any).roiPercent ?? 0).toFixed(2)}%</span>
                         <span>{format(new Date(p.dataEntrada), "dd/MM/yyyy", { locale: ptBR })}</span>
                         <span className={`px-2 py-0.5 rounded ${p.status === "ATIVO" ? "bg-green-100 text-green-700" : "bg-gray-100"}`}>
                           {p.status}

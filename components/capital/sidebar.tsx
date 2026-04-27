@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 
 const menuItems = [
   { href: "/capital/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/capital/portfolio", label: "Portfólio", icon: PieChart },
-  { href: "/capital/rendimentos", label: "Rendimentos", icon: DollarSign },
+  { href: "/capital/investimentos", label: "Meus Investimentos", icon: PieChart },
+  { href: "/capital/pagamentos", label: "Pagamentos / Extrato", icon: DollarSign },
   { href: "/capital/documentos", label: "Documentos", icon: FileText },
   { href: "/capital/solicitacoes", label: "Solicitações", icon: Send },
 ];

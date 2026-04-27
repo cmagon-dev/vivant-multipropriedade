@@ -1,5 +1,5 @@
 ﻿import { getSession } from "@/lib/auth";
-import { getCapitalInvestorProfileId, isCapitalInvestor } from "@/lib/capital-auth";
+import { getCapitalInvestorContext, isCapitalInvestor } from "@/lib/capital-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,17 +24,24 @@ export default async function CapitalSolicitacoesPage() {
   if (!session) redirect("/login");
   if (!isCapitalInvestor(session)) redirect("/403");
 
-  const profileId = await getCapitalInvestorProfileId(session);
-  if (!profileId) redirect("/403");
+  const context = await getCapitalInvestorContext(session);
+  if (!context) redirect("/403");
 
   const [solicitacoes, participations] = await Promise.all([
     prisma.capitalLiquidityRequest.findMany({
-      where: { investorProfileId: profileId },
+      where: {
+        investorProfileId: context.investorProfileId,
+        companyId: context.companyId,
+      },
       include: { assetConfig: { include: { property: { select: { id: true, name: true } } } } },
       orderBy: { dataSolicitacao: "desc" },
     }),
     prisma.capitalParticipation.findMany({
-      where: { investorProfileId: profileId, status: "ATIVO" },
+      where: {
+        investorProfileId: context.investorProfileId,
+        companyId: context.companyId,
+        status: { in: ["ATIVO", "PAGO", "RESERVADO"] },
+      },
       include: { assetConfig: { include: { property: { select: { id: true, name: true } } } } },
     }),
   ]);

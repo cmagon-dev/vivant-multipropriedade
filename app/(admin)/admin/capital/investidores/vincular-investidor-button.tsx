@@ -34,6 +34,12 @@ export function VincularInvestidorButton() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [filter, setFilter] = useState("");
+  const [tipo, setTipo] = useState("PESSOA_FISICA");
+  const [documento, setDocumento] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [perfil, setPerfil] = useState("QUALIFICADO");
+  const [kycStatus, setKycStatus] = useState("PENDENTE");
+  const [observacoes, setObservacoes] = useState("");
 
   const filteredUsers = useMemo(() => {
     if (!filter.trim()) return users;
@@ -50,6 +56,12 @@ export function VincularInvestidorButton() {
       setLoading(true);
       setSelectedUserId("");
       setFilter("");
+      setTipo("PESSOA_FISICA");
+      setDocumento("");
+      setTelefone("");
+      setPerfil("QUALIFICADO");
+      setKycStatus("PENDENTE");
+      setObservacoes("");
       fetch("/api/admin/capital/investidores/available-users")
         .then((r) => r.json())
         .then((data) => {
@@ -71,7 +83,15 @@ export function VincularInvestidorButton() {
       const res = await fetch("/api/admin/capital/investidores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: selectedUserId }),
+        body: JSON.stringify({
+          userId: selectedUserId,
+          tipo,
+          documento,
+          telefone,
+          perfil,
+          kycStatus,
+          observacoes,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -144,6 +164,53 @@ export function VincularInvestidorButton() {
                 )}
               </>
             )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label>Tipo</Label>
+              <Select value={tipo} onValueChange={setTipo}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PESSOA_FISICA">Pessoa Física</SelectItem>
+                  <SelectItem value="PESSOA_JURIDICA">Pessoa Jurídica</SelectItem>
+                  <SelectItem value="INSTITUCIONAL">Institucional</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>Perfil</Label>
+              <Select value={perfil} onValueChange={setPerfil}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="QUALIFICADO">Qualificado</SelectItem>
+                  <SelectItem value="PROFISSIONAL">Profissional</SelectItem>
+                  <SelectItem value="INSTITUCIONAL">Institucional</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>KYC</Label>
+              <Select value={kycStatus} onValueChange={setKycStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PENDENTE">Pendente</SelectItem>
+                  <SelectItem value="APROVADO">Aprovado</SelectItem>
+                  <SelectItem value="REPROVADO">Reprovado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>Documento</Label>
+              <Input value={documento} onChange={(e) => setDocumento(e.target.value)} placeholder="CPF/CNPJ" />
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <Label>Telefone</Label>
+              <Input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 99999-9999" />
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <Label>Observações</Label>
+              <Input value={observacoes} onChange={(e) => setObservacoes(e.target.value)} placeholder="Observações internas" />
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

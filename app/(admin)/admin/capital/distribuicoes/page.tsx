@@ -2,6 +2,7 @@
 import { canAccessCapitalAdmin, canManageCapital } from "@/lib/capital-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getCapitalCompanyId } from "@/lib/capital/company-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { DollarSign } from "lucide-react";
 import Link from "next/link";
@@ -20,8 +21,10 @@ export default async function CapitalDistribuicoesPage() {
   const session = await getSession();
   if (!session) redirect("/login");
   if (!canAccessCapitalAdmin(session)) redirect("/403");
+  const companyId = await getCapitalCompanyId(session);
 
   const distributions = await prisma.capitalDistribution.findMany({
+    where: { companyId },
     include: {
       assetConfig: { include: { property: { select: { name: true } } } },
       _count: { select: { items: true } },

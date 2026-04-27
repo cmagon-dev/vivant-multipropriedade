@@ -180,7 +180,7 @@ export async function DELETE(
     }
 
     await prisma.$transaction(async (tx) => {
-      const capitalCfg = await tx.capitalAssetConfig.findUnique({
+      const capitalCfg = await tx.capitalAssetConfig.findFirst({
         where: { propertyId: params.id },
         select: { id: true },
       });

@@ -22,7 +22,18 @@ type Initial = {
   taxaAdministracaoPercent: number;
   reservaPercent: number;
   ativoStatus: string;
-  observacoes: string;
+  nomeAtivo: string;
+  localizacao: string;
+  descricao: string;
+  vgv: string | number;
+  valorAquisicao: string | number;
+  valorTotalEstruturado: string | number;
+  capRateProjetado: string | number;
+  rentabilidadeProjetada: string | number;
+  margemOperacionalPrevista: string | number;
+  statusAtivo: string;
+  documentosRelacionados: string;
+  observacoesInternas: string;
 };
 
 export function CapitalAtivoEditForm({ ativoId, initial }: { ativoId: string; initial: Initial }) {
@@ -46,7 +57,25 @@ export function CapitalAtivoEditForm({ ativoId, initial }: { ativoId: string; in
           taxaAdministracaoPercent: form.taxaAdministracaoPercent,
           reservaPercent: form.reservaPercent,
           ativoStatus: form.ativoStatus,
-          observacoes: form.observacoes || undefined,
+          nomeAtivo: form.nomeAtivo || undefined,
+          localizacao: form.localizacao || undefined,
+          descricao: form.descricao || undefined,
+          vgv: form.vgv !== "" ? Number(form.vgv) : undefined,
+          valorAquisicao: form.valorAquisicao !== "" ? Number(form.valorAquisicao) : undefined,
+          valorTotalEstruturado:
+            form.valorTotalEstruturado !== "" ? Number(form.valorTotalEstruturado) : undefined,
+          capRateProjetado: form.capRateProjetado !== "" ? Number(form.capRateProjetado) : undefined,
+          rentabilidadeProjetada:
+            form.rentabilidadeProjetada !== "" ? Number(form.rentabilidadeProjetada) : undefined,
+          margemOperacionalPrevista:
+            form.margemOperacionalPrevista !== ""
+              ? Number(form.margemOperacionalPrevista)
+              : undefined,
+          statusAtivo: form.statusAtivo,
+          documentosRelacionados: form.documentosRelacionados
+            ? form.documentosRelacionados.split(",").map((x) => x.trim()).filter(Boolean)
+            : [],
+          observacoesInternas: form.observacoesInternas || undefined,
         }),
       });
       if (!res.ok) {
@@ -96,6 +125,75 @@ export function CapitalAtivoEditForm({ ativoId, initial }: { ativoId: string; in
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
+              <Label>Nome do ativo</Label>
+              <Input value={form.nomeAtivo} onChange={(e) => setForm((f) => ({ ...f, nomeAtivo: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Localização</Label>
+              <Input value={form.localizacao} onChange={(e) => setForm((f) => ({ ...f, localizacao: e.target.value }))} />
+            </div>
+          </div>
+          <div>
+            <Label>Descrição</Label>
+            <textarea
+              className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={form.descricao}
+              onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label>VGV</Label>
+              <Input type="number" step="0.01" value={form.vgv} onChange={(e) => setForm((f) => ({ ...f, vgv: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Valor de aquisição</Label>
+              <Input type="number" step="0.01" value={form.valorAquisicao} onChange={(e) => setForm((f) => ({ ...f, valorAquisicao: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Valor total estruturado</Label>
+              <Input type="number" step="0.01" value={form.valorTotalEstruturado} onChange={(e) => setForm((f) => ({ ...f, valorTotalEstruturado: e.target.value }))} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label>Cap rate projetado (%)</Label>
+              <Input type="number" step="0.01" value={form.capRateProjetado} onChange={(e) => setForm((f) => ({ ...f, capRateProjetado: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Rentabilidade projetada (%)</Label>
+              <Input type="number" step="0.01" value={form.rentabilidadeProjetada} onChange={(e) => setForm((f) => ({ ...f, rentabilidadeProjetada: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Margem operacional prevista (%)</Label>
+              <Input type="number" step="0.01" value={form.margemOperacionalPrevista} onChange={(e) => setForm((f) => ({ ...f, margemOperacionalPrevista: e.target.value }))} />
+            </div>
+          </div>
+          <div>
+            <Label>Status do ativo (ciclo Capital)</Label>
+            <Select value={form.statusAtivo} onValueChange={(v) => setForm((f) => ({ ...f, statusAtivo: v }))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="EM_ESTRUTURACAO">EM_ESTRUTURACAO</SelectItem>
+                <SelectItem value="EM_CAPTACAO">EM_CAPTACAO</SelectItem>
+                <SelectItem value="CAPTADO">CAPTADO</SelectItem>
+                <SelectItem value="EM_OPERACAO">EM_OPERACAO</SelectItem>
+                <SelectItem value="ENCERRADO">ENCERRADO</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Documentos relacionados (separados por vírgula)</Label>
+            <Input
+              value={form.documentosRelacionados}
+              onChange={(e) => setForm((f) => ({ ...f, documentosRelacionados: e.target.value }))}
+              placeholder="Prospecto, Contrato, Escritura..."
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
               <Label>Taxa de administração (%)</Label>
               <Input
                 type="number"
@@ -128,11 +226,11 @@ export function CapitalAtivoEditForm({ ativoId, initial }: { ativoId: string; in
             </Select>
           </div>
           <div>
-            <Label>Observações</Label>
+            <Label>Observações internas</Label>
             <textarea
               className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-              value={form.observacoes}
-              onChange={(e) => setForm((f) => ({ ...f, observacoes: e.target.value }))}
+              value={form.observacoesInternas}
+              onChange={(e) => setForm((f) => ({ ...f, observacoesInternas: e.target.value }))}
             />
           </div>
           <div className="flex gap-2">

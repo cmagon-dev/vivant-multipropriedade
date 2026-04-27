@@ -2,6 +2,7 @@
 import { canAccessCapitalAdmin } from "@/lib/capital-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getCapitalCompanyId } from "@/lib/capital/company-context";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { CapitalAtivosList } from "./capital-ativos-list";
@@ -12,8 +13,10 @@ export default async function CapitalAtivosPage() {
   const session = await getSession();
   if (!session) redirect("/login");
   if (!canAccessCapitalAdmin(session)) redirect("/403");
+  const companyId = await getCapitalCompanyId(session);
 
   const ativos = await prisma.capitalAssetConfig.findMany({
+    where: { companyId },
     include: {
       property: { select: { id: true, name: true, slug: true, location: true, priceValue: true } },
       _count: { select: { participations: true } },
@@ -30,6 +33,15 @@ export default async function CapitalAtivosPage() {
     ativoStatus: a.ativoStatus,
     property: a.property ? { id: a.property.id, name: a.property.name, slug: a.property.slug, location: a.property.location ?? "", priceValue: a.property.priceValue ?? null } : null,
     _count: a._count,
+    meta: a.observacoes?.startsWith("__CAPITAL_META__:")
+      ? (() => {
+          try {
+            return JSON.parse(a.observacoes.replace("__CAPITAL_META__:", ""));
+          } catch {
+            return {};
+          }
+        })()
+      : {},
   }));
 
   return (

@@ -2,6 +2,7 @@ import { getSession } from "@/lib/auth";
 import { canAccessCapitalAdmin } from "@/lib/capital-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getCapitalCompanyId } from "@/lib/capital/company-context";
 import Link from "next/link";
 import { CapitalAtivoEditForm } from "./capital-ativo-edit-form";
 
@@ -11,13 +12,34 @@ export default async function EditarAtivoCapitalPage({ params }: { params: Promi
   const session = await getSession();
   if (!session) redirect("/login");
   if (!canAccessCapitalAdmin(session)) redirect("/403");
+  const companyId = await getCapitalCompanyId(session);
 
   const { id } = await params;
   const ativo = await prisma.capitalAssetConfig.findUnique({
     where: { id },
-    include: { property: { select: { id: true, name: true, location: true } } },
+    select: {
+      id: true,
+      companyId: true,
+      enabled: true,
+      totalCotas: true,
+      valorPorCota: true,
+      taxaAdministracaoPercent: true,
+      reservaPercent: true,
+      ativoStatus: true,
+      observacoes: true,
+      property: { select: { id: true, name: true, location: true } },
+    },
   });
   if (!ativo) redirect("/admin/capital/ativos");
+  if (ativo.companyId !== companyId) redirect("/403");
+  let meta: any = {};
+  if (ativo.observacoes?.startsWith("__CAPITAL_META__:")) {
+    try {
+      meta = JSON.parse(ativo.observacoes.replace("__CAPITAL_META__:", ""));
+    } catch {
+      meta = {};
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -35,7 +57,20 @@ export default async function EditarAtivoCapitalPage({ params }: { params: Promi
           taxaAdministracaoPercent: Number(ativo.taxaAdministracaoPercent),
           reservaPercent: Number(ativo.reservaPercent),
           ativoStatus: ativo.ativoStatus,
-          observacoes: ativo.observacoes ?? "",
+          nomeAtivo: meta.nomeAtivo ?? "",
+          localizacao: meta.localizacao ?? "",
+          descricao: meta.descricao ?? "",
+          vgv: meta.vgv ?? "",
+          valorAquisicao: meta.valorAquisicao ?? "",
+          valorTotalEstruturado: meta.valorTotalEstruturado ?? "",
+          capRateProjetado: meta.capRateProjetado ?? "",
+          rentabilidadeProjetada: meta.rentabilidadeProjetada ?? "",
+          margemOperacionalPrevista: meta.margemOperacionalPrevista ?? "",
+          statusAtivo: meta.statusAtivo ?? "EM_ESTRUTURACAO",
+          documentosRelacionados: Array.isArray(meta.documentosRelacionados)
+            ? meta.documentosRelacionados.join(", ")
+            : "",
+          observacoesInternas: meta.observacoesInternas ?? "",
         }}
       />
     </div>

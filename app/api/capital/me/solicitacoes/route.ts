@@ -11,9 +11,14 @@ export async function GET() {
 
     const profileId = await getCapitalInvestorProfileId(session);
     if (!profileId) return NextResponse.json({ error: "Perfil de investidor não encontrado" }, { status: 403 });
+    const profile = await prisma.capitalInvestorProfile.findUnique({
+      where: { id: profileId },
+      select: { companyId: true },
+    });
+    if (!profile) return NextResponse.json({ error: "Perfil de investidor não encontrado" }, { status: 403 });
 
     const solicitacoes = await prisma.capitalLiquidityRequest.findMany({
-      where: { investorProfileId: profileId },
+      where: { investorProfileId: profileId, companyId: profile.companyId },
       include: {
         assetConfig: { include: { property: { select: { id: true, name: true } } } },
       },
@@ -39,6 +44,11 @@ export async function POST(request: NextRequest) {
 
     const profileId = await getCapitalInvestorProfileId(session);
     if (!profileId) return NextResponse.json({ error: "Perfil de investidor não encontrado" }, { status: 403 });
+    const profile = await prisma.capitalInvestorProfile.findUnique({
+      where: { id: profileId },
+      select: { companyId: true },
+    });
+    if (!profile) return NextResponse.json({ error: "Perfil de investidor não encontrado" }, { status: 403 });
 
     const body = await request.json();
     const { assetConfigId, tipoSolicitacao, valorSolicitado, motivo } = body;
@@ -47,10 +57,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "assetConfigId, tipoSolicitacao e valorSolicitado são obrigatórios" }, { status: 400 });
     }
 
-    const hasParticipation = await prisma.capitalParticipation.findUnique({
+    const hasParticipation = await prisma.capitalParticipation.findFirst({
       where: {
-        investorProfileId_assetConfigId: { investorProfileId: profileId, assetConfigId },
+        investorProfileId: profileId,
+        assetConfigId,
         status: "ATIVO",
+        companyId: profile.companyId,
       },
     });
     if (!hasParticipation) return NextResponse.json({ error: "Você não possui participação neste ativo" }, { status: 400 });
@@ -58,6 +70,7 @@ export async function POST(request: NextRequest) {
     const sol = await prisma.capitalLiquidityRequest.create({
       data: {
         investorProfileId: profileId,
+        companyId: profile.companyId,
         assetConfigId,
         tipoSolicitacao: tipoSolicitacao === "RESGATE" ? "RESGATE" : "ANTECIPACAO",
         valorSolicitado: new Decimal(Number(valorSolicitado)),

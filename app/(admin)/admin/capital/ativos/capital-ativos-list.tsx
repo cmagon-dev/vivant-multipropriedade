@@ -15,6 +15,11 @@ type Ativo = {
   taxaAdministracaoPercent: number;
   enabled: boolean;
   ativoStatus: string;
+  meta?: {
+    statusAtivo?: string;
+    capRateProjetado?: number;
+    rentabilidadeProjetada?: number;
+  };
   property: { id: string; name: string; slug: string; location: string; priceValue: number | null } | null;
   _count: { participations: number };
 };
@@ -64,10 +69,12 @@ export function CapitalAtivosList({ ativos }: { ativos: Ativo[] }) {
                       <span>Valor/cota: {fmt(a.valorPorCota)}</span>
                       <span>Taxa adm: {a.taxaAdministracaoPercent}%</span>
                       <span>{a._count.participations} participação(ões)</span>
+                      <span>Cap rate: {a.meta?.capRateProjetado != null ? `${Number(a.meta.capRateProjetado).toFixed(2)}%` : "—"}</span>
+                      <span>Rentab. proj.: {a.meta?.rentabilidadeProjetada != null ? `${Number(a.meta.rentabilidadeProjetada).toFixed(2)}%` : "—"}</span>
                       <span className={`px-2 py-0.5 rounded ${a.enabled ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
                         {a.enabled ? "Ativo" : "Inativo"}
                       </span>
-                      <span className="px-2 py-0.5 rounded bg-slate-100">{a.ativoStatus}</span>
+                      <span className="px-2 py-0.5 rounded bg-slate-100">{a.meta?.statusAtivo ?? a.ativoStatus}</span>
                     </div>
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { getCapitalInvestorProfileId, isCapitalInvestor } from "@/lib/capital-auth";
+import { getCapitalInvestorContext, isCapitalInvestor } from "@/lib/capital-auth";
 import { prisma } from "@/lib/prisma";
 
 /** id = assetConfigId. Só retorna se o investidor tiver participação nesse ativo. */
@@ -12,14 +12,16 @@ export async function GET(
     const session = await getSession();
     if (!isCapitalInvestor(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
-    const profileId = await getCapitalInvestorProfileId(session);
-    if (!profileId) return NextResponse.json({ error: "Perfil de investidor não encontrado" }, { status: 403 });
+    const context = await getCapitalInvestorContext(session);
+    if (!context) return NextResponse.json({ error: "Perfil de investidor não encontrado" }, { status: 403 });
 
     const { id: assetConfigId } = await params;
 
-    const participation = await prisma.capitalParticipation.findUnique({
+    const participation = await prisma.capitalParticipation.findFirst({
       where: {
-        investorProfileId_assetConfigId: { investorProfileId: profileId, assetConfigId },
+        investorProfileId: context.investorProfileId,
+        companyId: context.companyId,
+        assetConfigId,
         status: "ATIVO",
       },
       include: {
@@ -35,7 +37,7 @@ export async function GET(
     if (!participation) return NextResponse.json({ error: "Ativo não encontrado ou sem participação" }, { status: 404 });
 
     const latestValuation = await prisma.capitalValuation.findFirst({
-      where: { assetConfigId },
+      where: { assetConfigId, companyId: context.companyId },
       orderBy: { dataReferencia: "desc" },
       select: { valorImovel: true, dataReferencia: true },
     });

@@ -2,6 +2,7 @@
 import { canManageCapital } from "@/lib/capital-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getCapitalCompanyId } from "@/lib/capital/company-context";
 import Link from "next/link";
 import { CapitalAtivoForm } from "./capital-ativo-form";
 
@@ -11,9 +12,14 @@ export default async function NovoAtivoCapitalPage() {
   const session = await getSession();
   if (!session) redirect("/login");
   if (!canManageCapital(session)) redirect("/403");
+  const companyId = await getCapitalCompanyId(session);
 
+  const usedPropertyIds = await prisma.capitalAssetConfig.findMany({
+    where: { companyId },
+    select: { propertyId: true },
+  });
   const properties = await prisma.property.findMany({
-    where: { id: { notIn: (await prisma.capitalAssetConfig.findMany({ select: { propertyId: true } })).map((c) => c.propertyId) } },
+    where: { id: { notIn: usedPropertyIds.map((c) => c.propertyId) } },
     select: { id: true, name: true, location: true, priceValue: true },
     orderBy: { name: "asc" },
   });

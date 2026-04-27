@@ -184,9 +184,9 @@ export const UNIFIED_MENU_CONFIG: MenuItemConfig[] = [
   },
   // Vivant Capital (investimentos sobre imóveis existentes)
   {
-    label: "Capital",
+    label: "Dashboard",
     href: "/admin/capital",
-    iconKey: "TrendingUp",
+    iconKey: "LayoutDashboard",
     requiredPermissions: ["capital.view", "capital.manage"],
     section: "capital",
   },
@@ -205,22 +205,22 @@ export const UNIFIED_MENU_CONFIG: MenuItemConfig[] = [
     section: "capital",
   },
   {
-    label: "Participações",
-    href: "/admin/capital/participacoes",
-    iconKey: "PieChart",
+    label: "Captações",
+    href: "/admin/capital/captacoes",
+    iconKey: "TrendingUp",
     requiredPermissions: ["capital.view", "capital.manage"],
     section: "capital",
   },
   {
-    label: "Distribuições",
-    href: "/admin/capital/distribuicoes",
+    label: "Pagamentos",
+    href: "/admin/capital/pagamentos",
     iconKey: "DollarSign",
     requiredPermissions: ["capital.view", "capital.manage"],
     section: "capital",
   },
   {
-    label: "Solicitações",
-    href: "/admin/capital/solicitacoes",
+    label: "Compliance",
+    href: "/admin/capital/compliance",
     iconKey: "FileText",
     requiredPermissions: ["capital.view", "capital.manage"],
     section: "capital",
@@ -229,6 +229,13 @@ export const UNIFIED_MENU_CONFIG: MenuItemConfig[] = [
     label: "Relatórios",
     href: "/admin/capital/relatorios",
     iconKey: "BarChart3",
+    requiredPermissions: ["capital.view", "capital.manage"],
+    section: "capital",
+  },
+  {
+    label: "Configurações",
+    href: "/admin/capital/configuracoes",
+    iconKey: "Shield",
     requiredPermissions: ["capital.view", "capital.manage"],
     section: "capital",
   },
@@ -256,7 +263,7 @@ export const UNIFIED_MENU_CONFIG: MenuItemConfig[] = [
 ];
 
 const FULL_ACCESS_ROLES = ["OWNER", "SUPER_ADMIN"];
-const HIDDEN_MENU_SECTIONS: Array<NonNullable<MenuItemConfig["section"]>> = ["capital"];
+const HIDDEN_MENU_SECTIONS: Array<NonNullable<MenuItemConfig["section"]>> = [];
 
 /**
  * Filtra itens do menu pelo conjunto de permissões (e role).

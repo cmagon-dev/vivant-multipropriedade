@@ -1,5 +1,5 @@
 ﻿import { getSession } from "@/lib/auth";
-import { getCapitalInvestorProfileId, isCapitalInvestor } from "@/lib/capital-auth";
+import { getCapitalInvestorContext, isCapitalInvestor } from "@/lib/capital-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,36 +15,63 @@ export default async function CapitalInvestorDashboardPage() {
   if (!session) redirect("/login");
   if (!isCapitalInvestor(session)) redirect("/403");
 
-  const profileId = await getCapitalInvestorProfileId(session);
-  if (!profileId) redirect("/403");
+  const context = await getCapitalInvestorContext(session);
+  if (!context) redirect("/403");
 
-  const [participations, lastDistribution, liquidityOpen] = await Promise.all([
+  const [participations, lastDistribution, liquidityOpen, distributions] = await Promise.all([
     prisma.capitalParticipation.findMany({
-      where: { investorProfileId: profileId, status: "ATIVO" },
+      where: {
+        investorProfileId: context.investorProfileId,
+        companyId: context.companyId,
+        status: { in: ["ATIVO", "PAGO", "RESERVADO"] },
+      },
       include: { assetConfig: { select: { valorPorCota: true } } },
     }),
     prisma.capitalDistributionItem.findFirst({
-      where: { investorProfileId: profileId, status: "PAGO" },
+      where: {
+        investorProfileId: context.investorProfileId,
+        companyId: context.companyId,
+        status: "PAGO",
+      },
       orderBy: { createdAt: "desc" },
       select: { valorPago: true, distribution: { select: { competencia: true } } },
     }),
-    prisma.capitalLiquidityRequest.count({ where: { investorProfileId: profileId, status: "PENDENTE" } }),
+    prisma.capitalLiquidityRequest.count({
+      where: {
+        investorProfileId: context.investorProfileId,
+        companyId: context.companyId,
+        status: "PENDENTE",
+      },
+    }),
+    prisma.capitalDistributionItem.findMany({
+      where: {
+        investorProfileId: context.investorProfileId,
+        companyId: context.companyId,
+      },
+      include: { distribution: { select: { competencia: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
   ]);
 
-  const patrimonioInvestido = participations.reduce((s, p) => s + Number(p.valorAportado), 0);
-  const valorEstimado = participations.reduce((s, p) => s + p.numeroCotas * Number(p.assetConfig.valorPorCota), 0);
-  const rendimentoItems = await prisma.capitalDistributionItem.findMany({
-    where: { investorProfileId: profileId },
-    select: { valorPago: true },
-  });
-  const rendimentoAcumulado = rendimentoItems.reduce((s, i) => s + Number(i.valorPago), 0);
+  const totalInvestido = participations.reduce((s, p) => s + Number(p.valorAportado), 0);
+  const retornoProjetado = participations.reduce((s, p) => s + Number(p.expectedReturn ?? 0), 0);
+  const roiPercent = totalInvestido > 0 ? (retornoProjetado / totalInvestido) * 100 : 0;
+  const ativosParticipa = participations.length;
+
+  const evolutionMap = new Map<string, number>();
+  for (const item of distributions) {
+    const key = item.distribution.competencia;
+    evolutionMap.set(key, (evolutionMap.get(key) ?? 0) + Number(item.valorPago));
+  }
+  const evolution = Array.from(evolutionMap.entries()).map(([competencia, valor]) => ({ competencia, valor }));
+  const maxEvolutionValue = Math.max(...evolution.map((e) => e.valor), 1);
 
   const cards = [
-    { title: "Patrimônio investido", value: fmt(patrimonioInvestido), icon: TrendingUp, href: "/capital/portfolio" },
-    { title: "Valor estimado atual", value: fmt(valorEstimado), icon: PieChart, href: "/capital/portfolio" },
-    { title: "Rendimento acumulado", value: fmt(rendimentoAcumulado), icon: DollarSign, href: "/capital/rendimentos" },
-    { title: "Último recebimento", value: lastDistribution ? fmt(Number(lastDistribution.valorPago)) : "—", sub: lastDistribution?.distribution.competencia, icon: DollarSign, href: "/capital/rendimentos" },
-    { title: "Ativos", value: String(participations.length), icon: PieChart, href: "/capital/portfolio" },
+    { title: "Total investido", value: fmt(totalInvestido), icon: TrendingUp, href: "/capital/investimentos" },
+    { title: "Retorno projetado", value: fmt(retornoProjetado), icon: PieChart, href: "/capital/investimentos" },
+    { title: "ROI projetado", value: `${roiPercent.toFixed(2)}%`, icon: DollarSign, href: "/capital/investimentos" },
+    { title: "Último recebimento", value: lastDistribution ? fmt(Number(lastDistribution.valorPago)) : "—", sub: lastDistribution?.distribution.competencia, icon: DollarSign, href: "/capital/pagamentos" },
+    { title: "Ativos que participa", value: String(ativosParticipa), icon: PieChart, href: "/capital/investimentos" },
     { title: "Solicitações em aberto", value: String(liquidityOpen), icon: FileText, href: "/capital/solicitacoes" },
   ];
 
@@ -70,6 +97,33 @@ export default async function CapitalInvestorDashboardPage() {
           </Link>
         ))}
       </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base text-vivant-navy">Evolução de distribuições</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {evolution.length === 0 ? (
+            <p className="text-sm text-gray-500">Sem histórico de distribuições para exibir.</p>
+          ) : (
+            <div className="space-y-3">
+              {evolution.map((item) => (
+                <div key={item.competencia} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">{item.competencia}</span>
+                    <span className="font-medium text-vivant-navy">{fmt(item.valor)}</span>
+                  </div>
+                  <div className="h-2 rounded bg-slate-100 overflow-hidden">
+                    <div
+                      className="h-full bg-vivant-navy"
+                      style={{ width: `${Math.max(6, (item.valor / maxEvolutionValue) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

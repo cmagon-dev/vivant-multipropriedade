@@ -1,5 +1,5 @@
 import { getSession } from "@/lib/auth";
-import { getCapitalInvestorProfileId, isCapitalInvestor } from "@/lib/capital-auth";
+import { getCapitalInvestorContext, isCapitalInvestor } from "@/lib/capital-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
@@ -22,12 +22,16 @@ export default async function CapitalSolicitacaoDetailPage({ params }: { params:
   if (!session) redirect("/login");
   if (!isCapitalInvestor(session)) redirect("/403");
 
-  const profileId = await getCapitalInvestorProfileId(session);
-  if (!profileId) redirect("/403");
+  const context = await getCapitalInvestorContext(session);
+  if (!context) redirect("/403");
 
   const { id } = await params;
   const sol = await prisma.capitalLiquidityRequest.findFirst({
-    where: { id, investorProfileId: profileId },
+    where: {
+      id,
+      investorProfileId: context.investorProfileId,
+      companyId: context.companyId,
+    },
     include: { assetConfig: { include: { property: { select: { name: true } } } } },
   });
   if (!sol) redirect("/capital/solicitacoes");

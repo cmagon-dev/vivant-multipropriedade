@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { canAccessCapitalAdmin, canManageCapital } from "@/lib/capital-auth";
 import { prisma } from "@/lib/prisma";
+import { getCapitalCompanyId } from "@/lib/capital/company-context";
 
 export async function GET(
   _request: NextRequest,
@@ -10,10 +11,11 @@ export async function GET(
   try {
     const session = await getSession();
     if (!canAccessCapitalAdmin(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const companyId = await getCapitalCompanyId(session);
 
     const { id } = await params;
-    const sol = await prisma.capitalLiquidityRequest.findUnique({
-      where: { id },
+    const sol = await prisma.capitalLiquidityRequest.findFirst({
+      where: { id, companyId },
       include: {
         investorProfile: { include: { user: { select: { id: true, name: true, email: true } } } },
         assetConfig: { include: { property: { select: { id: true, name: true } } } },
@@ -35,6 +37,7 @@ export async function PUT(
   try {
     const session = await getSession();
     if (!canManageCapital(session)) return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+    const companyId = await getCapitalCompanyId(session);
 
     const { id } = await params;
     const body = await request.json();
@@ -42,6 +45,14 @@ export async function PUT(
 
     if (!status || !["PENDENTE", "APROVADA", "RECUSADA", "PAGA"].includes(status)) {
       return NextResponse.json({ error: "status inválido (PENDENTE, APROVADA, RECUSADA, PAGA)" }, { status: 400 });
+    }
+
+    const current = await prisma.capitalLiquidityRequest.findFirst({
+      where: { id, companyId },
+      select: { id: true, companyId: true },
+    });
+    if (!current) {
+      return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
     }
 
     const sol = await prisma.capitalLiquidityRequest.update({

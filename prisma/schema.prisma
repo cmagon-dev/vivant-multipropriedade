@@ -18,6 +18,19 @@ model Company {
 
   userRoleAssignments UserRoleAssignment[]
   userPermissions UserPermission[]
+  capitalFunds CapitalFund[]
+  capitalAssetConfigs CapitalAssetConfig[]
+  capitalInvestorProfiles CapitalInvestorProfile[]
+  capitalParticipations CapitalParticipation[]
+  capitalDistributions CapitalDistribution[]
+  capitalDistributionItems CapitalDistributionItem[]
+  capitalValuations CapitalValuation[]
+  capitalLiquidityRequests CapitalLiquidityRequest[]
+  capitalPayments CapitalPayment[]
+  capitalWallets CapitalWallet[]
+  capitalTransactions CapitalTransaction[]
+  capitalComplianceDocuments CapitalComplianceDocument[]
+  capitalSettings CapitalSettings[]
 
   @@map("companies")
 }
@@ -48,7 +61,7 @@ model User {
   leadTypeAssignmentsAsDefault LeadTypeAssignment[]
   systemTasksAssigned          SystemTask[]
   systemEvents                SystemEvent[]
-  capitalInvestorProfile       CapitalInvestorProfile?
+  capitalInvestorProfiles      CapitalInvestorProfile[]
   captacoesResponsavel         ImovelCaptacao[]        @relation("CaptacaoResponsavel")
   captacoesCriadas             ImovelCaptacao[]        @relation("CaptacaoCriador")
 
@@ -1450,13 +1463,23 @@ model ImovelCaptacao {
 
 model CapitalAssetConfig {
   id                    String    @id @default(cuid())
-  propertyId            String    @unique
+  companyId             String
+  company               Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  propertyId            String
   property              Property  @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  fundId                String?
+  fund                  CapitalFund? @relation(fields: [fundId], references: [id], onDelete: SetNull)
   enabled               Boolean   @default(true)
   totalCotas            Int       @default(100)
   valorPorCota          Decimal   @db.Decimal(15, 2)
   taxaAdministracaoPercent Decimal @db.Decimal(5, 2)
   reservaPercent        Decimal   @db.Decimal(5, 2)
+  acquisitionValue      Decimal   @default(0) @db.Decimal(15, 2)
+  structuredValue       Decimal   @default(0) @db.Decimal(15, 2)
+  expectedReturnRate    Decimal   @default(0) @db.Decimal(8, 4)
+  capRate               Decimal   @default(0) @db.Decimal(8, 4)
+  operationalMarginMin  Decimal   @default(0) @db.Decimal(8, 4)
+  operationalMarginMax  Decimal   @default(0) @db.Decimal(8, 4)
   ativoStatus           String    @default("ATIVO")  // ATIVO, PAUSADO, ENCERRADO
   observacoes           String?   @db.Text
   createdAt             DateTime  @default(now())
@@ -1464,10 +1487,15 @@ model CapitalAssetConfig {
 
   participations        CapitalParticipation[]
   distributions         CapitalDistribution[]
+  payments              CapitalPayment[]
   valuations           CapitalValuation[]
   liquidityRequests    CapitalLiquidityRequest[]
+  complianceDocuments  CapitalComplianceDocument[]
 
+  @@unique([companyId, propertyId])
+  @@index([companyId])
   @@index([propertyId])
+  @@index([fundId])
   @@index([enabled])
   @@index([ativoStatus])
   @@map("capital_asset_configs")
@@ -1475,7 +1503,9 @@ model CapitalAssetConfig {
 
 model CapitalInvestorProfile {
   id          String    @id @default(cuid())
-  userId      String    @unique
+  companyId   String
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   tipoPessoa  String    @default("PF")  // PF, PJ
   documento   String?
@@ -1486,7 +1516,10 @@ model CapitalInvestorProfile {
   participations      CapitalParticipation[]
   distributionItems   CapitalDistributionItem[]
   liquidityRequests   CapitalLiquidityRequest[]
+  payments            CapitalPayment[]
 
+  @@unique([companyId, userId])
+  @@index([companyId])
   @@index([userId])
   @@index([status])
   @@map("capital_investor_profiles")
@@ -1494,19 +1527,33 @@ model CapitalInvestorProfile {
 
 model CapitalParticipation {
   id                String    @id @default(cuid())
+  companyId         String
+  company           Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   investorProfileId String
   investorProfile   CapitalInvestorProfile @relation(fields: [investorProfileId], references: [id], onDelete: Cascade)
   assetConfigId     String
   assetConfig       CapitalAssetConfig @relation(fields: [assetConfigId], references: [id], onDelete: Restrict)
+  investorId        String?
+  assetId           String?
   numeroCotas       Int
+  quotas            Int       @default(0)
   percentualTotal   Decimal  @db.Decimal(5, 2)
   valorAportado     Decimal  @db.Decimal(15, 2)
+  totalInvested     Decimal   @default(0) @db.Decimal(15, 2)
+  expectedReturn    Decimal   @default(0) @db.Decimal(15, 2)
+  roiPercent        Decimal   @default(0) @db.Decimal(8, 4)
   dataEntrada       DateTime @default(now())
   status            String   @default("ATIVO")  // ATIVO, RESGATADO, CANCELADO
+  observacoes       String?  @db.Text
+  reserveDate       DateTime?
+  paymentDate       DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  @@unique([investorProfileId, assetConfigId])
+  payments          CapitalPayment[]
+
+  @@unique([companyId, investorProfileId, assetConfigId])
+  @@index([companyId])
   @@index([investorProfileId])
   @@index([assetConfigId])
   @@index([status])
@@ -1515,6 +1562,8 @@ model CapitalParticipation {
 
 model CapitalDistribution {
   id                    String    @id @default(cuid())
+  companyId             String
+  company               Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   assetConfigId         String
   assetConfig           CapitalAssetConfig @relation(fields: [assetConfigId], references: [id], onDelete: Restrict)
   competencia          String    // ex: "2025-01"
@@ -1531,7 +1580,8 @@ model CapitalDistribution {
 
   items                CapitalDistributionItem[]
 
-  @@unique([assetConfigId, competencia])
+  @@unique([companyId, assetConfigId, competencia])
+  @@index([companyId])
   @@index([assetConfigId])
   @@index([status])
   @@index([competencia])
@@ -1540,6 +1590,8 @@ model CapitalDistribution {
 
 model CapitalDistributionItem {
   id                String    @id @default(cuid())
+  companyId         String
+  company           Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   distributionId    String
   distribution      CapitalDistribution @relation(fields: [distributionId], references: [id], onDelete: Cascade)
   investorProfileId String
@@ -1551,7 +1603,8 @@ model CapitalDistributionItem {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  @@unique([distributionId, investorProfileId])
+  @@unique([companyId, distributionId, investorProfileId])
+  @@index([companyId])
   @@index([distributionId])
   @@index([investorProfileId])
   @@map("capital_distribution_items")
@@ -1559,6 +1612,8 @@ model CapitalDistributionItem {
 
 model CapitalValuation {
   id            String    @id @default(cuid())
+  companyId     String
+  company       Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   assetConfigId String
   assetConfig   CapitalAssetConfig @relation(fields: [assetConfigId], references: [id], onDelete: Cascade)
   dataReferencia DateTime
@@ -1567,6 +1622,7 @@ model CapitalValuation {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  @@index([companyId])
   @@index([assetConfigId])
   @@index([dataReferencia])
   @@map("capital_valuations")
@@ -1574,6 +1630,8 @@ model CapitalValuation {
 
 model CapitalLiquidityRequest {
   id                String    @id @default(cuid())
+  companyId         String
+  company           Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   investorProfileId String
   investorProfile   CapitalInvestorProfile @relation(fields: [investorProfileId], references: [id], onDelete: Cascade)
   assetConfigId     String
@@ -1588,8 +1646,128 @@ model CapitalLiquidityRequest {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
+  @@index([companyId])
   @@index([investorProfileId])
   @@index([assetConfigId])
   @@index([status])
   @@map("capital_liquidity_requests")
+}
+
+model CapitalFund {
+  id         String   @id @default(cuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  assets     CapitalAssetConfig[]
+
+  @@index([companyId])
+  @@unique([companyId, name])
+  @@map("capital_funds")
+}
+
+model CapitalPayment {
+  id                          String    @id @default(cuid())
+  companyId                   String
+  company                     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  investmentId                String
+  investment                  CapitalParticipation @relation(fields: [investmentId], references: [id], onDelete: Restrict)
+  investorId                  String
+  investor                    CapitalInvestorProfile @relation(fields: [investorId], references: [id], onDelete: Restrict)
+  assetId                     String
+  asset                       CapitalAssetConfig @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  amount                      Decimal   @db.Decimal(15, 2)
+  guaranteeAmount             Decimal   @db.Decimal(15, 2)
+  operationAmount             Decimal   @db.Decimal(15, 2)
+  splitPercentageGuarantee    Decimal   @db.Decimal(5, 2)
+  splitPercentageOperation    Decimal   @db.Decimal(5, 2)
+  paidAt                      DateTime?
+  status                      String    @default("PENDENTE")
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([investmentId])
+  @@index([investorId])
+  @@index([assetId])
+  @@index([status])
+  @@map("capital_payments")
+}
+
+model CapitalWallet {
+  id                     String   @id @default(cuid())
+  companyId              String   @unique
+  company                Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  totalGuaranteeBalance  Decimal  @default(0) @db.Decimal(15, 2)
+  totalOperationBalance  Decimal  @default(0) @db.Decimal(15, 2)
+  totalReceived          Decimal  @default(0) @db.Decimal(15, 2)
+  totalDistributed       Decimal  @default(0) @db.Decimal(15, 2)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  transactions           CapitalTransaction[]
+
+  @@index([companyId])
+  @@map("capital_wallets")
+}
+
+model CapitalTransaction {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  walletId    String?
+  wallet      CapitalWallet? @relation(fields: [walletId], references: [id], onDelete: SetNull)
+  type        String   // IN | OUT
+  category    String   // INVESTMENT | GUARANTEE | OPERATION | DISTRIBUTION
+  amount      Decimal  @db.Decimal(15, 2)
+  referenceId String?
+  createdAt   DateTime @default(now())
+
+  @@index([companyId])
+  @@index([walletId])
+  @@index([referenceId])
+  @@index([type])
+  @@index([category])
+  @@map("capital_transactions")
+}
+
+model CapitalComplianceDocument {
+  id             String   @id @default(cuid())
+  companyId      String
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  assetId        String
+  asset          CapitalAssetConfig @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  type           String   // AFETACAO, FIDUCIARIA, CRI, ESCROW, AUDITORIA
+  status         String   @default("PENDENTE")
+  fileUrl        String?
+  observations   String?  @db.Text
+  concludedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([companyId, assetId, type])
+  @@index([companyId])
+  @@index([assetId])
+  @@index([type])
+  @@index([status])
+  @@map("capital_compliance_documents")
+}
+
+model CapitalSettings {
+  id                  String   @id @default(cuid())
+  companyId           String   @unique
+  company             Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  guaranteePercentage Decimal  @default(50) @db.Decimal(5, 2)
+  operationPercentage Decimal  @default(50) @db.Decimal(5, 2)
+  defaultReturnRate   Decimal  @default(12) @db.Decimal(8, 4)
+  marginMin           Decimal  @default(18) @db.Decimal(8, 4)
+  marginMax           Decimal  @default(35) @db.Decimal(8, 4)
+  disclaimer          String?  @db.Text
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([companyId])
+  @@map("capital_settings")
 }
