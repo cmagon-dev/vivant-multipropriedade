@@ -3,8 +3,9 @@ import { hasPermission } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
-import { Building2, Users, FileText, Bell } from "lucide-react";
+import { Building2, Users, FileText, Bell, CalendarDays } from "lucide-react";
 import Link from "next/link";
+import { PropriedadeDeleteButton } from "@/components/admin/propriedade-delete-button";
 
 export const dynamic = "force-dynamic";
 
@@ -93,19 +94,19 @@ export default async function VivantCarePropriedadesPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Link
-                      href={`/admin/vivant-care/propriedades/${prop.id}`}
-                      className="text-sm font-medium text-vivant-navy hover:underline"
-                    >
-                      Editar
-                    </Link>
-                    <span className="text-gray-300">|</span>
+                  <div className="ml-auto inline-flex items-center gap-2 whitespace-nowrap self-start shrink-0">
+                    <PropriedadeDeleteButton
+                      propriedadeId={prop.id}
+                      propriedadeNome={prop.name}
+                      className="h-8 w-8 self-center border border-red-200 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    />
                     <Link
                       href={`/admin/vivant-care/propriedades/${prop.id}/calendario`}
-                      className="text-sm font-medium text-vivant-navy hover:underline"
+                      aria-label="Calendário da propriedade"
+                      title="Calendário da propriedade"
+                      className="inline-flex h-8 w-8 items-center justify-center self-center rounded border border-gray-200 text-vivant-navy hover:bg-gray-50 leading-none"
                     >
-                      Calendário
+                      <CalendarDays className="w-4.5 h-4.5" />
                     </Link>
                   </div>
                 </div>

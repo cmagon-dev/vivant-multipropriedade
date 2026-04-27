@@ -8,6 +8,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { ConviteDeleteButton } from "@/components/admin/convite-delete-button";
 
 interface ConviteCota {
   id: string;
@@ -155,17 +156,23 @@ export default function VivantCareConvitesPage() {
                           <h3 className="text-lg font-bold text-vivant-navy">{convite.name}</h3>
                           <p className="text-sm text-gray-600">{convite.email}</p>
                         </div>
-                        {expired ? (
-                          <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium flex items-center gap-1 shrink-0">
-                            <AlertCircle className="w-3 h-3" />
-                            Expirado
-                          </span>
-                        ) : (
-                          <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium flex items-center gap-1 shrink-0">
-                            <Clock className="w-3 h-3" />
-                            Pendente
-                          </span>
-                        )}
+                        <span className="ml-auto inline-flex items-center gap-2 whitespace-nowrap self-start">
+                          {expired ? (
+                            <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium flex items-center gap-1 shrink-0">
+                              <AlertCircle className="w-3 h-3" />
+                              Expirado
+                            </span>
+                          ) : (
+                            <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium flex items-center gap-1 shrink-0">
+                              <Clock className="w-3 h-3" />
+                              Pendente
+                            </span>
+                          )}
+                          <ConviteDeleteButton
+                            conviteId={convite.id}
+                            className="h-8 w-8 self-center border border-red-200 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          />
+                        </span>
                       </div>
                       {convite.cotas?.length > 0 && (
                         <p className="text-xs text-gray-500 mb-2">

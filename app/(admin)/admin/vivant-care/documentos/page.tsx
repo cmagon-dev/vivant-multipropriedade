@@ -3,10 +3,11 @@ import { hasPermission } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Building2 } from "lucide-react";
+import { FileText, Building2, Pencil } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { DocumentoDeleteButton } from "@/components/admin/documento-delete-button";
 
 export const dynamic = "force-dynamic";
 
@@ -81,9 +82,6 @@ export default async function VivantCareDocumentosPage() {
                     <Link href={"/admin/vivant-care/documentos/" + doc.id} className="text-lg font-semibold text-vivant-navy hover:underline">
                       {doc.titulo}
                     </Link>
-                    {!doc.ativo && (
-                      <span className="ml-2 px-2 py-0.5 bg-gray-200 text-gray-600 rounded text-xs">Inativo</span>
-                    )}
                     {doc.descricao && (
                       <p className="text-sm text-gray-600 mt-0.5 line-clamp-2">
                         {doc.descricao}
@@ -105,20 +103,26 @@ export default async function VivantCareDocumentosPage() {
                           locale: ptBR,
                         })}
                       </span>
-                      <Link href={"/admin/vivant-care/documentos/" + doc.id + "/editar"} className="text-vivant-navy hover:underline">
-                        Editar
-                      </Link>
+                      <span className="ml-auto inline-flex items-center gap-2 whitespace-nowrap self-center">
+                        {!doc.ativo ? (
+                          <span className="px-2.5 py-1 bg-gray-200 text-gray-600 rounded text-[11px]">
+                            Inativo
+                          </span>
+                        ) : null}
+                        <Link
+                          href={"/admin/vivant-care/documentos/" + doc.id + "/editar"}
+                          aria-label="Editar documento"
+                          title="Editar documento"
+                          className="inline-flex h-8 w-8 items-center justify-center self-center rounded border border-gray-200 text-vivant-navy hover:bg-gray-50 leading-none"
+                        >
+                          <Pencil className="w-4.5 h-4.5" />
+                        </Link>
+                        <DocumentoDeleteButton
+                          documentoId={doc.id}
+                          className="h-8 w-8 self-center border border-red-200 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        />
+                      </span>
                     </div>
-                    {doc.url && (
-                      <a
-                        href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm font-medium text-vivant-navy hover:underline mt-2 inline-block"
-                      >
-                        Abrir documento →
-                      </a>
-                    )}
                   </div>
                 </div>
               </CardContent>

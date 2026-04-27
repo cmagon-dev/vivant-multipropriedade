@@ -3,10 +3,11 @@ import { hasPermission } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
-import { Bell, Building2 } from "lucide-react";
+import { Bell, Building2, Pencil } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AvisoDeleteButton } from "@/components/admin/aviso-delete-button";
 
 export const dynamic = "force-dynamic";
 
@@ -119,9 +120,20 @@ export default async function VivantCareAvisosPage() {
                           locale: ptBR,
                         })}
                       </span>
-                      <Link href={`/admin/vivant-care/avisos/${msg.id}/editar`} className="text-vivant-navy hover:underline">
-                        Editar
-                      </Link>
+                      <span className="ml-auto inline-flex items-center gap-2 whitespace-nowrap self-center">
+                        <Link
+                          href={`/admin/vivant-care/avisos/${msg.id}/editar`}
+                          aria-label="Editar aviso"
+                          title="Editar aviso"
+                          className="inline-flex h-8 w-8 items-center justify-center self-center rounded border border-gray-200 text-vivant-navy hover:bg-gray-50 leading-none"
+                        >
+                          <Pencil className="w-4.5 h-4.5" />
+                        </Link>
+                        <AvisoDeleteButton
+                          avisoId={msg.id}
+                          className="h-8 w-8 self-center border border-red-200 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        />
+                      </span>
                     </div>
                   </div>
                 </div>
